@@ -1,0 +1,766 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import SEO from "@/components/SEO";
+import { 
+  Clock, Users, Sparkles, Play, CheckCircle, X, 
+  TrendingUp, BookOpen, MessageSquare, Video, Calendar as CalendarIcon,
+  Star, AlertCircle, Lightbulb, Target, Zap
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface Question {
+  question: string;
+  type: string;
+  difficulty: string;
+  tips?: string;
+}
+
+interface Feedback {
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+  overall: string;
+}
+
+interface Package {
+  id: string;
+  title: string;
+  sessions: number;
+  description: string;
+  price: number;
+  features: string[];
+}
+
+const InterviewPractice = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [activeTab, setActiveTab] = useState("practice");
+  const [questionCategory, setQuestionCategory] = useState("behavioral");
+  const [difficulty, setDifficulty] = useState("medium");
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [mySessions, setMySessions] = useState<any[]>([]);
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+  // Load packages on mount
+  useEffect(() => {
+    loadPackages();
+    if (user) {
+      loadMySessions();
+    }
+  }, [user]);
+
+  // Load available slots when date changes
+  useEffect(() => {
+    if (date && user) {
+      loadAvailableSlots();
+    }
+  }, [date, questionCategory, user]);
+
+  const loadPackages = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/interview-practice/packages`);
+      const data = await response.json();
+      if (data.success) {
+        setPackages(data.packages);
+      }
+    } catch (error) {
+      console.error('Error loading packages:', error);
+    }
+  };
+
+  const loadAvailableSlots = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `${apiUrl}/interview-practice/available-slots?date=${date?.toISOString().split('T')[0]}&type=${questionCategory}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setAvailableSlots(data.slots);
+      }
+    } catch (error) {
+      console.error('Error loading slots:', error);
+    }
+  };
+
+  const loadMySessions = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${apiUrl}/interview-practice/my-sessions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMySessions(data.sessions);
+      }
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+    }
+  };
+
+  const generateQuestions = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await fetch(`${apiUrl}/interview-practice/generate-questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: questionCategory,
+          difficulty: difficulty,
+          count: 5,
+          role: 'Software Engineer'
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.questions) {
+        setQuestions(data.questions);
+        setCurrentQuestionIndex(0);
+        setUserAnswer("");
+        setFeedback(null);
+        toast({
+          title: "Questions generated!",
+          description: `Generated ${data.questions.length} ${questionCategory} questions.`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to generate questions');
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate questions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const evaluateAnswer = async () => {
+    if (!userAnswer.trim()) {
+      toast({
+        title: "Answer required",
+        description: "Please provide an answer before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEvaluating(true);
+    try {
+      const response = await fetch(`${apiUrl}/interview-practice/evaluate-answer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: questions[currentQuestionIndex].question,
+          answer: userAnswer,
+          category: questionCategory
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.feedback) {
+        setFeedback(data.feedback);
+        toast({
+          title: "Answer evaluated!",
+          description: `Your score: ${data.feedback.score}/100`,
+        });
+      } else {
+        throw new Error(data.message || 'Failed to evaluate answer');
+      }
+    } catch (error) {
+      console.error('Error evaluating answer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to evaluate answer. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setUserAnswer("");
+      setFeedback(null);
+    }
+  };
+
+  const bookSession = async (slotId: string) => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please login to book a session.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedPackage) {
+      toast({
+        title: "Package required",
+        description: "Please select a package first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${apiUrl}/interview-practice/book-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          slotId: slotId,
+          packageId: selectedPackage,
+          type: questionCategory
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast({
+          title: "Session booked!",
+          description: "Your interview practice session has been confirmed.",
+        });
+        setSelectedSlot(null);
+        loadMySessions();
+        loadAvailableSlots();
+      } else {
+        throw new Error(data.message || 'Failed to book session');
+      }
+    } catch (error) {
+      console.error('Error booking session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to book session. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Interview Practice Studio - CodeAcademy Pro",
+    "description": "AI-powered interview practice with real-time feedback, session booking, and mentor matching.",
+    "provider": {
+      "@type": "Organization",
+      "name": "CodeAcademy Pro"
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <SEO
+        title="Interview Practice Studio - AI-Powered Interview Prep"
+        description="Practice interviews with AI-powered questions, get real-time feedback, and book sessions with industry mentors. Prepare for your dream tech job."
+        keywords="interview practice, interview prep, mock interview, AI interview, technical interview, behavioral interview, interview coaching"
+        structuredData={structuredData}
+      />
+
+      {/* Header */}
+      <div className="container mx-auto px-6 pt-6">
+        <BackButton label="Back to Home" className="text-white" />
+      </div>
+
+      {/* Hero Section */}
+      <motion.div
+        className="bg-gradient-to-r from-violet-900/40 via-blue-900/40 to-violet-900/40 border-b border-white/10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="container mx-auto px-6 py-20 text-center">
+          <Badge className="mb-4 bg-violet-500/20 text-violet-300 border-violet-500/30">
+            <Sparkles className="w-3 h-3 mr-2" />
+            AI-Powered Interview Practice
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Interview Practice Studio
+          </h1>
+          <p className="text-lg text-white/70 max-w-3xl mx-auto">
+            Practice with AI-generated questions, get instant feedback, and book sessions with real interviewers from top tech companies.
+          </p>
+        </div>
+      </motion.div>
+
+      <div className="container mx-auto px-6 py-12">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-4 bg-slate-800/50 border border-white/10 p-1 mb-8">
+            <TabsTrigger value="practice" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+              <Play className="w-4 h-4 mr-2" />
+              Practice
+            </TabsTrigger>
+            <TabsTrigger value="book" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+              <CalendarIcon className="w-4 h-4 mr-2" />
+              Book Session
+            </TabsTrigger>
+            <TabsTrigger value="packages" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Packages
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+              <Video className="w-4 h-4 mr-2" />
+              My Sessions
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Practice Tab */}
+          <TabsContent value="practice" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-violet-400" />
+                  AI Interview Practice
+                </CardTitle>
+                <CardDescription className="text-white/60">
+                  Generate questions and practice your answers with AI-powered feedback
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Question Category</Label>
+                    <Select value={questionCategory} onValueChange={setQuestionCategory}>
+                      <SelectTrigger className="bg-slate-800/50 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="behavioral">Behavioral</SelectItem>
+                        <SelectItem value="technical">Technical</SelectItem>
+                        <SelectItem value="systemDesign">System Design</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Difficulty</Label>
+                    <Select value={difficulty} onValueChange={setDifficulty}>
+                      <SelectTrigger className="bg-slate-800/50 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button
+                  onClick={generateQuestions}
+                  disabled={isGenerating}
+                  className="w-full bg-violet-500 hover:bg-violet-600"
+                >
+                  {isGenerating ? (
+                    "Generating Questions..."
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Questions
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Questions Display */}
+            {questions.length > 0 && (
+              <Card className="bg-slate-900/70 border-white/10">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white">
+                      Question {currentQuestionIndex + 1} of {questions.length}
+                    </CardTitle>
+                    <Badge className="bg-violet-500/20 text-violet-300">
+                      {questions[currentQuestionIndex].difficulty}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
+                    <p className="text-white text-lg font-medium">
+                      {questions[currentQuestionIndex].question}
+                    </p>
+                    {questions[currentQuestionIndex].tips && (
+                      <div className="mt-3 p-3 bg-violet-500/10 rounded border border-violet-500/20">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="w-4 h-4 text-violet-400 mt-0.5" />
+                          <p className="text-violet-300 text-sm">{questions[currentQuestionIndex].tips}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white/80">Your Answer</Label>
+                    <Textarea
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      placeholder="Type your answer here..."
+                      className="bg-slate-800/50 border-white/20 text-white min-h-[150px]"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={evaluateAnswer}
+                      disabled={isEvaluating || !userAnswer.trim()}
+                      className="flex-1 bg-violet-500 hover:bg-violet-600"
+                    >
+                      {isEvaluating ? "Evaluating..." : (
+                        <>
+                          <Target className="w-4 h-4 mr-2" />
+                          Get Feedback
+                        </>
+                      )}
+                    </Button>
+                    {currentQuestionIndex < questions.length - 1 && (
+                      <Button
+                        onClick={nextQuestion}
+                        variant="outline"
+                        className="border-white/30 text-white bg-slate-700/50 hover:bg-slate-600/50"
+                      >
+                        Next Question
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Feedback Display */}
+                  {feedback && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 space-y-4"
+                    >
+                      <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-white font-semibold">Your Score</span>
+                          <Badge className={`${
+                            feedback.score >= 80 ? 'bg-green-500/20 text-green-300' :
+                            feedback.score >= 60 ? 'bg-yellow-500/20 text-yellow-300' :
+                            'bg-red-500/20 text-red-300'
+                          }`}>
+                            {feedback.score}/100
+                          </Badge>
+                        </div>
+                        <p className="text-white/80 text-sm mb-4">{feedback.overall}</p>
+
+                        {feedback.strengths.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="w-4 h-4 text-green-400" />
+                              <span className="text-green-400 text-sm font-semibold">Strengths</span>
+                            </div>
+                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
+                              {feedback.strengths.map((strength, i) => (
+                                <li key={i}>{strength}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {feedback.weaknesses.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertCircle className="w-4 h-4 text-yellow-400" />
+                              <span className="text-yellow-400 text-sm font-semibold">Areas to Improve</span>
+                            </div>
+                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
+                              {feedback.weaknesses.map((weakness, i) => (
+                                <li key={i}>{weakness}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {feedback.suggestions.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="w-4 h-4 text-violet-400" />
+                              <span className="text-violet-400 text-sm font-semibold">Suggestions</span>
+                            </div>
+                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
+                              {feedback.suggestions.map((suggestion, i) => (
+                                <li key={i}>{suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Book Session Tab */}
+          <TabsContent value="book" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white">Schedule a Session</CardTitle>
+                <CardDescription className="text-white/60">
+                  Pick a date and format that works for you
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label className="text-white/80 mb-2 block">Select Date</Label>
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border border-white/10 bg-slate-800/50"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-white/80 mb-2 block">Session Type</Label>
+                    <Tabs value={questionCategory} onValueChange={setQuestionCategory}>
+                      <TabsList className="grid grid-cols-3 bg-slate-800/50 border border-white/10">
+                        <TabsTrigger value="behavioral" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+                          Behavioral
+                        </TabsTrigger>
+                        <TabsTrigger value="technical" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+                          Technical
+                        </TabsTrigger>
+                        <TabsTrigger value="panel" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+                          Panel
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
+                  {availableSlots.length > 0 ? (
+                    <div className="space-y-2">
+                      <Label className="text-white/80">Available Time Slots</Label>
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        {availableSlots.map((slot) => (
+                          <Card
+                            key={slot.id}
+                            className={`p-3 cursor-pointer transition-all ${
+                              selectedSlot === slot.id
+                                ? 'bg-violet-500/20 border-violet-500'
+                                : 'bg-slate-800/50 border-white/10 hover:bg-slate-700/50'
+                            }`}
+                            onClick={() => setSelectedSlot(slot.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-white font-medium">{slot.time}</p>
+                                <p className="text-white/60 text-sm">
+                                  {slot.mentor.name} • {slot.mentor.company}
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="border-white/20 text-white/60">
+                                {slot.duration} min
+                              </Badge>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                      {selectedSlot && (
+                        <Button
+                          onClick={() => bookSession(selectedSlot)}
+                          className="w-full bg-violet-500 hover:bg-violet-600"
+                        >
+                          Book This Slot
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-white/50">
+                      {user ? "No available slots for this date. Try another date." : "Please login to view available slots."}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Packages Tab */}
+          <TabsContent value="packages" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white">Choose a Package</CardTitle>
+                <CardDescription className="text-white/60">
+                  Every session includes recordings, rubrics, and follow-up action plans
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-3">
+                {packages.map((pkg) => (
+                  <Card
+                    key={pkg.id}
+                    className={`border-2 transition-all cursor-pointer ${
+                      selectedPackage === pkg.id
+                        ? 'border-violet-500 bg-violet-500/10'
+                        : 'border-white/10 bg-slate-800/50 hover:border-violet-500/50'
+                    }`}
+                    onClick={() => setSelectedPackage(pkg.id)}
+                  >
+                    <CardHeader>
+                      <Badge variant="outline" className="mb-2 border-white/20 text-white/60">
+                        {pkg.sessions} sessions
+                      </Badge>
+                      <CardTitle className="text-white">{pkg.title}</CardTitle>
+                      <CardDescription className="text-white/60">{pkg.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <ul className="space-y-2 text-sm text-white/70">
+                        {pkg.features.map((feature, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-violet-400" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                        <span className="text-2xl font-bold text-white">${pkg.price}</span>
+                        <Button
+                          variant={selectedPackage === pkg.id ? "default" : "outline"}
+                          className={selectedPackage === pkg.id ? "bg-violet-500 hover:bg-violet-600" : ""}
+                        >
+                          Select
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* My Sessions Tab */}
+          <TabsContent value="sessions" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white">My Interview Sessions</CardTitle>
+                <CardDescription className="text-white/60">
+                  View your scheduled and completed practice sessions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!user ? (
+                  <div className="text-center py-8 text-white/50">
+                    Please login to view your sessions
+                  </div>
+                ) : mySessions.length === 0 ? (
+                  <div className="text-center py-8 text-white/50">
+                    No sessions yet. Book your first session to get started!
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {mySessions.map((session) => (
+                      <Card key={session.id} className="bg-slate-800/50 border-white/10">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className={
+                                  session.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                                  session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
+                                  'bg-gray-500/20 text-gray-300'
+                                }>
+                                  {session.status}
+                                </Badge>
+                                <span className="text-white font-medium">{session.type}</span>
+                              </div>
+                              <p className="text-white/60 text-sm">
+                                {new Date(session.date).toLocaleDateString()} • {session.mentor.name} ({session.mentor.company})
+                              </p>
+                              {session.feedback && (
+                                <div className="mt-2">
+                                  <div className="flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-400" />
+                                    <span className="text-white/80 text-sm">Score: {session.feedback.score}/100</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {session.status === 'scheduled' && (
+                              <Button variant="outline" size="sm" className="border-white/20 text-white">
+                                Join Session
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Mentor Bench */}
+        <Card className="bg-slate-900/70 border-white/10 mt-8">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-violet-400" />
+              Mentor Bench
+            </CardTitle>
+            <CardDescription className="text-white/60">
+              Real interviewers from top tech companies
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {["Google", "Meta", "Stripe", "Atlassian", "Twilio", "Amazon", "Microsoft", "Apple"].map((company) => (
+                <Badge key={company} variant="outline" className="border-white/20 text-white/60 px-4 py-2">
+                  {company}
+                </Badge>
+              ))}
+              <div className="ml-auto flex items-center gap-2 text-white/60 text-sm">
+                <Clock className="h-4 w-4 text-violet-400" />
+                Slots updated hourly
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default InterviewPractice;

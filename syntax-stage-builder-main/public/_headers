@@ -1,0 +1,21 @@
+/*
+  Cache static assets for 1 year
+*/
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  Cache HTML for 1 hour
+*/
+/*.html
+  Cache-Control: public, max-age=3600
+
+/*
+  Cache API responses for 5 minutes
+*/
+/api/*
+  Cache-Control: public, max-age=300
+
+
+
+

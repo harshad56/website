@@ -1,0 +1,284 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Programming Language Website Design System */
+
+@layer base {
+  :root {
+    /* Core Colors */
+    --background: 220 27% 98%;
+    --foreground: 220 15% 20%;
+
+    /* Card & Surface Colors */
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 20%;
+
+    /* Brand Colors */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 217 100% 70%;
+
+    --secondary: 220 20% 95%;
+    --secondary-foreground: 220 15% 20%;
+
+    --muted: 220 20% 95%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Status Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* UI Elements */
+    --border: 220 20% 90%;
+    --input: 220 20% 95%;
+    --ring: 217 91% 60%;
+
+    /* Code Colors */
+    --code-bg: 220 30% 18%;
+    --code-foreground: 220 20% 85%;
+    --code-accent: 142 76% 50%;
+    --code-keyword: 217 91% 70%;
+    --code-string: 142 76% 50%;
+    --code-comment: 220 10% 60%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 100% 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 27% 98%), hsl(217 91% 95%));
+    --gradient-code: linear-gradient(135deg, hsl(220 30% 18%), hsl(220 30% 25%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 20% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 20% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(220 20% 0% / 0.1);
+    --shadow-glow: 0 0 40px hsl(217 100% 70% / 0.3);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Core Colors */
+    --background: 220 30% 8%;
+    --foreground: 220 20% 85%;
+
+    /* Card & Surface Colors */
+    --card: 220 30% 12%;
+    --card-foreground: 220 20% 85%;
+
+    --popover: 220 30% 12%;
+    --popover-foreground: 220 20% 85%;
+
+    /* Brand Colors */
+    --primary: 217 91% 65%;
+    --primary-foreground: 220 30% 8%;
+    --primary-glow: 217 100% 75%;
+
+    --secondary: 220 30% 15%;
+    --secondary-foreground: 220 20% 85%;
+
+    --muted: 220 30% 15%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 142 76% 45%;
+    --accent-foreground: 220 30% 8%;
+
+    /* Status Colors */
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 220 30% 8%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 30% 8%;
+
+    /* UI Elements */
+    --border: 220 30% 20%;
+    --input: 220 30% 15%;
+    --ring: 217 91% 65%;
+
+    /* Code Colors */
+    --code-bg: 220 35% 12%;
+    --code-foreground: 220 20% 90%;
+    --code-accent: 142 76% 55%;
+    --code-keyword: 217 91% 75%;
+    --code-string: 142 76% 55%;
+    --code-comment: 220 15% 55%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 65%), hsl(217 100% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 30% 8%), hsl(220 30% 15%));
+    --gradient-code: linear-gradient(135deg, hsl(220 35% 12%), hsl(220 35% 18%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 30% 0% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(220 30% 0% / 0.4);
+    --shadow-lg: 0 10px 15px -3px hsl(220 30% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(217 100% 75% / 0.4);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent;
+  }
+
+  .code-block {
+    background: var(--gradient-code);
+    @apply rounded-lg p-6 text-sm overflow-x-auto;
+    color: hsl(var(--code-foreground));
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hero-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    /* Ensure minimum touch target size */
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"],
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Improve tap highlight */
+    * {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Better text rendering on mobile */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Prevent text size adjustment on orientation change */
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Performance optimizations for animations */
+    [data-framer-motion],
+    [data-language-card],
+    .motion-component {
+      will-change: transform, opacity;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+
+    /* GPU acceleration for animated elements */
+    .animate-3d {
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  }
+
+  /* Mobile-specific utilities */
+  @layer utilities {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    .mobile-padding {
+      @apply px-4 md:px-6;
+    }
+
+    .mobile-text {
+      @apply text-sm md:text-base;
+    }
+
+    .mobile-hide {
+      @apply hidden md:block;
+    }
+
+    .mobile-show {
+      @apply block md:hidden;
+    }
+  }
+}

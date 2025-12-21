@@ -1,0 +1,502 @@
+# 🚀 CodeAcademy Pro - Deployment & Setup Guide
+
+Complete guide for setting up, running, and deploying the CodeAcademy Pro application.
+
+---
+
+## 📋 Table of Contents
+
+1. [Prerequisites](#prerequisites)
+2. [Local Development Setup](#local-development-setup)
+3. [Frontend Configuration](#frontend-configuration)
+4. [Backend Configuration](#backend-configuration)
+5. [Running the Application](#running-the-application)
+6. [Production Deployment](#production-deployment)
+7. [Docker Deployment](#docker-deployment)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## Prerequisites
+
+### Required Software
+- **Node.js** 18.0.0 or higher
+- **npm** 9.0.0 or higher (or yarn/bun)
+- **MongoDB** 6.0 or higher (for production)
+- **Redis** 6.0 or higher (optional, for caching in production)
+- **Git** for version control
+
+### Recommended Tools
+- **VS Code** with ESLint and Prettier extensions
+- **MongoDB Compass** for database management
+- **Postman** for API testing
+- **Docker & Docker Compose** (for containerized deployment)
+
+---
+
+## Local Development Setup
+
+### Step 1: Clone the Repository
+
+```bash
+git clone <repository-url>
+cd syntax-stage-builder-main
+```
+
+### Step 2: Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+This installs all frontend dependencies including React, Vite, Tailwind CSS, and shadcn/ui components.
+
+### Step 3: Install Backend Dependencies
+
+```bash
+cd backend
+npm install
+cd ..
+```
+
+### Step 4: Create Environment Files
+
+#### Frontend Environment (.env file in root)
+
+Create a `.env` file in the project root:
+
+```env
+# API Configuration
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+
+# App Configuration
+VITE_APP_ENV=development
+VITE_APP_NAME=CodeAcademy Pro
+VITE_APP_VERSION=1.0.0
+```
+
+#### Backend Environment (backend/.env file)
+
+Create a `backend/.env` file:
+
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=5000
+FRONTEND_URL=http://localhost:3000
+
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/codeacademy-pro
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+
+# Redis Configuration (optional for development)
+REDIS_URL=redis://localhost:6379
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRE=7d
+
+# Payment Gateway (Stripe)
+STRIPE_SECRET_KEY=sk_test_your_stripe_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_key
+
+# Email Service (Gmail)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+
+# AI Service (OpenAI)
+OPENAI_API_KEY=sk-your-openai-api-key
+
+# AWS S3 (File Storage)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_S3_BUCKET=your-bucket-name
+AWS_REGION=us-east-1
+
+# OAuth (Social Authentication)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FACEBOOK_APP_ID=your-facebook-app-id
+FACEBOOK_APP_SECRET=your-facebook-app-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Session Configuration
+SESSION_SECRET=your-session-secret-key
+
+# Logging
+LOG_LEVEL=info
+```
+
+---
+
+## Frontend Configuration
+
+### Vite Configuration
+
+The frontend uses **Vite** as the build tool. Key features:
+
+- **Port**: 3000 (configurable in `vite.config.ts`)
+- **Hot Module Replacement (HMR)**: Automatic reload on file changes
+- **Build Output**: `dist/` directory
+
+### Environment Variables
+
+Frontend environment variables are prefixed with `VITE_`:
+
+```
+VITE_API_URL        - Backend API endpoint
+VITE_SOCKET_URL     - Socket.IO server URL
+VITE_APP_ENV        - Application environment
+VITE_APP_NAME       - Application name
+VITE_APP_VERSION    - Application version
+```
+
+---
+
+## Backend Configuration
+
+### Express Server
+
+The backend runs on **Express.js** with the following structure:
+
+```
+backend/
+├── config/        # Database and app configuration
+├── models/        # Data models (Supabase)
+├── routes/        # API endpoints
+├── middleware/    # Authentication and validation
+├── services/      # Business logic
+├── socket/        # Real-time handlers
+├── scripts/       # Database migrations and seeds
+└── server.js      # Main server file
+```
+
+### Key API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | User registration |
+| POST | `/api/auth/login` | User login |
+| GET | `/api/auth/verify` | Verify JWT token |
+| GET | `/api/users/:id` | Get user profile |
+| POST | `/api/courses` | Get available courses |
+| POST | `/api/code/execute` | Execute code |
+
+---
+
+## Running the Application
+
+### Development Environment
+
+#### Terminal 1: Start Backend Server
+
+```bash
+cd backend
+npm run dev
+```
+
+The backend will start on `http://localhost:5000`
+
+#### Terminal 2: Start Frontend Server
+
+```bash
+npm run dev
+```
+
+The frontend will start on `http://localhost:3000` and automatically open in your browser.
+
+### Production Build
+
+#### Build Frontend
+
+```bash
+npm run build
+```
+
+Output: `dist/` directory with optimized assets
+
+#### Build Backend
+
+```bash
+cd backend
+npm run build
+npm start
+```
+
+---
+
+## 🚀 Free Deployment Walkthrough (Render + Vercel)
+
+This section guides you through deploying the **Backend to Render** and **Frontend to Vercel** for free.
+
+### Part 1: Database Setup (MongoDB Atlas)
+
+1. **Create Account**: Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up.
+2. **Create Cluster**: Create a new "Shared" cluster (Select "M0 Sandbox" for free tier).
+3. **Network Access**: Go to "Network Access" in the sidebar -> "Add IP Address" -> "Allow Access from Anywhere" (`0.0.0.0/0`).
+4. **Database User**: Go to "Database Access" -> "Add New Database User". Create a user (e.g., `admin`) and password. **Remember this password**.
+5. **Get Connection String**:
+   - Click "Connect" on your cluster.
+   - Select "Drivers".
+   - Copy the string: `mongodb+srv://admin:<password>@cluster0.example.mongodb.net/?retryWrites=true&w=majority`
+   - Replace `<password>` with your actual password.
+
+### Part 2: Backend Deployment (Render)
+
+1. **Push to GitHub**: Ensure your code is pushed to a GitHub repository.
+2. **Create Web Service**:
+   - Go to [Render Dashboard](https://dashboard.render.com/).
+   - Click "New +" -> "Web Service".
+   - Connect your GitHub repository.
+3. **Configure Service**:
+   - **Name**: `codeacademy-api` (or similar)
+   - **Root Directory**: `backend` (Important! This tells Render the app is in the subfolder)
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+4. **Environment Variables**:
+   - Scroll down to "Environment Variables" and add these:
+     - `NODE_ENV`: `production`
+     - `MONGODB_URI`: (Paste your MongoDB connection string from Part 1)
+     - `JWT_SECRET`: (Generate a random string)
+     - `FRONTEND_URL`: `https://your-frontend-project.vercel.app` (You will update this later after deploying frontend)
+5. **Deploy**: Click "Create Web Service".
+   - Wait for it to build. Once live, Render will give you a URL like `https://codeacademy-api.onrender.com`.
+   - **Copy this URL**.
+
+> [!NOTE] 
+> Render Free Tier spins down after 15 minutes of inactivity. The first request might take 30-60 seconds.
+
+### Part 3: Frontend Deployment (Vercel)
+
+1. **Import Project**:
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard).
+   - "Add New" -> "Project".
+   - Import your same GitHub repository.
+2. **Configure Project**:
+   - **Framework Preset**: Vite (should detect automatically).
+   - **Root Directory**: Click "Edit" and select `.` (root) or leave as default if it detects the root properly.
+3. **Environment Variables**:
+   - Expand the "Environment Variables" section.
+   - Add:
+     - `VITE_API_URL`: `https://codeacademy-api.onrender.com/api` (Use your Render Backend URL + `/api`)
+     - `VITE_SOCKET_URL`: `https://codeacademy-api.onrender.com` (Your Render Backend URL)
+4. **Deploy**: Click "Deploy".
+5. **Final Step**:
+   - Once deployed, Vercel gives you a domain (e.g., `https://codeacademy-project.vercel.app`).
+   - Go back to **Render Dashboard** -> Your Web Service -> Environment Variables.
+   - Update `FRONTEND_URL` to your new Vercel domain.
+   - **Save Changes** in Render (this will restart the backend).
+
+🎉 **You are live!**
+
+---
+
+## Production Deployment
+
+### Deployment Checklist
+
+- [ ] Environment variables configured for production
+- [ ] Database backups enabled
+- [ ] SSL certificates obtained
+- [ ] Monitoring and logging setup
+- [ ] CDN configuration (if applicable)
+- [ ] Email service verified
+- [ ] Payment gateway keys secured
+- [ ] API rate limiting configured
+
+### Deploy on Vercel (Frontend Only)
+
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Set environment variables
+4. Deploy
+
+```bash
+npm run build  # Vercel automatically runs this
+```
+
+### Deploy on AWS/GCP/Azure (Full Stack)
+
+1. Set up cloud VM/Container instance
+2. Configure environment variables
+3. Install dependencies: `npm install`
+4. Build application: `npm run build`
+5. Start server: `npm start`
+6. Set up CI/CD pipeline (GitHub Actions, GitLab CI, etc.)
+
+### Deploy on Heroku
+
+```bash
+heroku create your-app-name
+heroku config:set NODE_ENV=production
+heroku config:set MONGODB_URI=<your-mongodb-uri>
+git push heroku main
+```
+
+---
+
+## Docker Deployment
+
+### Build Docker Image
+
+```bash
+docker build -t codeacademy-pro:latest .
+```
+
+### Run Docker Container
+
+```bash
+docker run -p 3000:3000 -p 5000:5000 \
+  -e MONGODB_URI=mongodb://mongo:27017/codeacademy \
+  -e NODE_ENV=production \
+  codeacademy-pro:latest
+```
+
+### Docker Compose (Recommended)
+
+```bash
+docker-compose up -d
+```
+
+This starts:
+- Frontend (port 3000)
+- Backend (port 5000)
+- MongoDB (port 27017)
+- Redis (port 6379)
+
+---
+
+## Troubleshooting
+
+### Issue: Port Already in Use
+
+**Frontend (3000)**:
+```bash
+# Linux/Mac
+lsof -i :3000
+kill -9 <PID>
+
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
+**Backend (5000)**:
+```bash
+# Linux/Mac
+lsof -i :5000
+kill -9 <PID>
+
+# Windows
+netstat -ano | findstr :5000
+taskkill /PID <PID> /F
+```
+
+### Issue: Cannot Connect to Backend
+
+1. Verify backend is running on port 5000
+2. Check `VITE_API_URL` in frontend `.env`
+3. Check CORS configuration in `backend/server.js`
+4. Verify `FRONTEND_URL` in backend `.env`
+
+### Issue: Database Connection Failed
+
+1. Verify MongoDB is running
+2. Check `MONGODB_URI` format
+3. Verify database credentials
+4. Check network connectivity
+
+### Issue: Build Fails
+
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Clear Vite cache
+rm -rf node_modules/.vite
+
+# Try building again
+npm run build
+```
+
+### Issue: ESLint Errors
+
+```bash
+# Fix linting issues automatically
+npm run lint -- --fix
+```
+
+---
+
+## Performance Optimization
+
+### Frontend
+
+- Enable Gzip compression
+- Minimize bundle size with tree-shaking
+- Use lazy loading for routes
+- Optimize images with proper formats
+- Cache static assets
+
+### Backend
+
+- Enable Redis caching
+- Use database indexing
+- Implement pagination for large datasets
+- Enable compression middleware
+- Use CDN for static files
+
+---
+
+## Security Checklist
+
+- [ ] All secrets in `.env` (never in code)
+- [ ] HTTPS enabled in production
+- [ ] JWT tokens have expiration
+- [ ] Rate limiting enabled
+- [ ] Input validation on all endpoints
+- [ ] CORS properly configured
+- [ ] SQL injection prevention (parameterized queries)
+- [ ] XSS protection enabled
+- [ ] CSRF tokens implemented
+- [ ] Regular security audits
+
+---
+
+## Monitoring & Logging
+
+### Frontend Logs
+
+Access browser console: `F12` → Console tab
+
+### Backend Logs
+
+Check Winston logs in `backend/logs/` directory
+
+### Application Monitoring
+
+Integrate with:
+- Sentry (error tracking)
+- New Relic (performance monitoring)
+- DataDog (infrastructure monitoring)
+
+---
+
+## Support & Resources
+
+- **Documentation**: See `README.md`
+- **API Documentation**: `backend/README.md`
+- **Issues**: Create GitHub issue
+- **Contact**: harsh@example.com
+
+---
+
+**Last Updated**: November 2025
+**Version**: 1.0.0
