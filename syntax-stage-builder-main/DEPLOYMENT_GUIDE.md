@@ -448,6 +448,18 @@ rm -rf node_modules/.vite
 npm run build
 ```
 
+### Issue: Netlify Build Failed (package.json not found)
+**Error**: `npm error enoent Could not read package.json`
+
+**Cause**: Your project files are likely inside a subdirectory in your GitHub repository (e.g., `repo-name/project-folder/package.json`) instead of the root.
+
+**Solution**:
+1. Go to Netlify Dashboard -> Site Settings -> Build & Deploy.
+2. Click "Edit settings".
+3. Set **Base directory** to your project folder name (e.g., `syntax-stage-builder-main`).
+4. Set **Publish directory** to `syntax-stage-builder-main/dist` (or just `dist` if it auto-detects).
+5. Click "Save" and "Trigger deploy".
+
 ### Issue: ESLint Errors
 
 ```bash

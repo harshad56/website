@@ -20,7 +20,7 @@ const clauses = [
   },
   {
     title: "Liability",
-    description: "The service is provided "as-is". We limit liability to the fees paid for the current term as permitted by law."
+    description: "The service is provided \"as-is\". We limit liability to the fees paid for the current term as permitted by law."
   }
 ];
 
