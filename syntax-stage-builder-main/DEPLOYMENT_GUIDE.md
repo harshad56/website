@@ -230,9 +230,11 @@ npm start
 
 ---
 
-## 🚀 Free Deployment Walkthrough (Render + Vercel)
+---
 
-This section guides you through deploying the **Backend to Render** and **Frontend to Vercel** for free.
+## 🚀 Free Deployment Walkthrough (Render + Vercel + Netlify)
+
+This section guides you through deploying the **Backend to Render** and **Frontend to Vercel OR Netlify** for free.
 
 ### Part 1: Database Setup (MongoDB Atlas)
 
@@ -272,7 +274,7 @@ This section guides you through deploying the **Backend to Render** and **Fronte
 > [!NOTE] 
 > Render Free Tier spins down after 15 minutes of inactivity. The first request might take 30-60 seconds.
 
-### Part 3: Frontend Deployment (Vercel)
+### Part 3 Option A: Frontend Deployment (Vercel) - Recommended
 
 1. **Import Project**:
    - Go to [Vercel Dashboard](https://vercel.com/dashboard).
@@ -292,6 +294,26 @@ This section guides you through deploying the **Backend to Render** and **Fronte
    - Go back to **Render Dashboard** -> Your Web Service -> Environment Variables.
    - Update `FRONTEND_URL` to your new Vercel domain.
    - **Save Changes** in Render (this will restart the backend).
+
+### Part 3 Option B: Frontend Deployment (Netlify)
+
+> [!IMPORTANT]
+> **Fix for 404 Errors**: I have added a `netlify.toml` file to your project. This fixes the "Page Not Found" error by correctly handling client-side routing.
+
+1. **Import Project**:
+   - Go to [Netlify Dashboard](https://app.netlify.com/).
+   - "Add new site" -> "Import an existing project".
+   - Connect GitHub and select your repository.
+2. **Configure Build**:
+   - **Base directory**: (Leave empty or `/`)
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
+3. **Environment Variables**:
+   - Click "Show advanced" -> "New Variable".
+   - Add:
+     - Key: `VITE_API_URL`, Value: `https://codeacademy-api.onrender.com/api`
+     - Key: `VITE_SOCKET_URL`, Value: `https://codeacademy-api.onrender.com`
+4. **Deploy**: Click "Deploy site".
 
 🎉 **You are live!**
 
