@@ -48,7 +48,7 @@ const RTopicPage = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <Link to={`/r-learning?module=${currentModule.id}`}><Button variant="outline" size="sm">← Back to Module</Button></Link>
+              <Link to={`/r-learning?module=${currentModule.id}`} replace><Button variant="outline" size="sm">← Back to Module</Button></Link>
               <div className="h-6 w-px bg-border" />
               <div><p className="text-sm text-muted-foreground uppercase">Module {currentModule.id}</p><h1 className="text-2xl font-bold">{currentModule.title}</h1></div>
             </div>

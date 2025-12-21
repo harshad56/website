@@ -68,8 +68,8 @@ const GoTopicPage = () => {
     currentTopic?.difficulty === "Beginner"
       ? "default"
       : currentTopic?.difficulty === "Intermediate"
-      ? "secondary"
-      : "destructive";
+        ? "secondary"
+        : "destructive";
 
   if (!currentModule || !currentTopic) {
     return (
@@ -93,10 +93,10 @@ const GoTopicPage = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <Link to={`/go-learning?module=${currentModule.id}`}>
+              <Link to={`/go-learning?module=${currentModule.id}`} replace>
                 <Button variant="outline" size="sm">
                   ← Back to Module
-            </Button>
+                </Button>
               </Link>
               <div className="h-6 w-px bg-border" />
               <div>
@@ -104,14 +104,14 @@ const GoTopicPage = () => {
                   Module {currentModule.id}
                 </p>
                 <h1 className="text-2xl font-bold">{currentModule.title}</h1>
-                </div>
               </div>
+            </div>
             <div className="flex items-center gap-3">
               <Badge variant={difficultyVariant}>{currentTopic.difficulty}</Badge>
               <Badge variant="outline">{currentTopic.duration}</Badge>
-              </div>
             </div>
           </div>
+        </div>
       </header>
 
       <div className="container mx-auto px-6 py-8">
@@ -140,13 +140,13 @@ const GoTopicPage = () => {
                   <pre className="text-sm font-mono text-code-foreground">
                     <code>{currentModule.codeExample}</code>
                   </pre>
-                      </div>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   <Button onClick={runExample}>▶ Run Example</Button>
                   <Button variant="outline" onClick={() => setUserCode(currentModule.codeExample)}>
                     Load into editor
                   </Button>
-                    </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -160,7 +160,7 @@ const GoTopicPage = () => {
                   <div key={idx} className="rounded-lg border p-4">
                     <h4 className="font-semibold mb-1">Exercise {idx + 1}</h4>
                     <p className="text-sm text-muted-foreground">{exercise}</p>
-                      </div>
+                  </div>
                 ))}
               </CardContent>
             </Card>
@@ -180,11 +180,11 @@ const GoTopicPage = () => {
                 <div className="flex gap-3 mt-4">
                   <Button onClick={() => setOutput("Code executed successfully! (simulate output)")}>
                     ▶ Run Code
-                      </Button>
+                  </Button>
                   <Button variant="outline" onClick={() => setUserCode("")}>
                     Reset
-                      </Button>
-                    </div>
+                  </Button>
+                </div>
                 {output && (
                   <div className="mt-4 rounded-lg bg-muted p-4">
                     <h4 className="font-semibold mb-2">Output</h4>
@@ -206,18 +206,17 @@ const GoTopicPage = () => {
                   <button
                     key={topic.id}
                     onClick={() => navigate(`/go-learning/topic/${currentModule.id}/${topic.id}`)}
-                    className={`w-full rounded-lg border px-4 py-3 text-left transition ${
-                      topic.id === currentTopic.id
+                    className={`w-full rounded-lg border px-4 py-3 text-left transition ${topic.id === currentTopic.id
                         ? "border-primary bg-primary text-primary-foreground"
                         : "hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold">{topic.title}</span>
                       <Badge variant="outline" className="text-xs">
                         {topic.difficulty}
                       </Badge>
-                        </div>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">{topic.duration}</p>
                   </button>
                 ))}
@@ -229,13 +228,13 @@ const GoTopicPage = () => {
                 <CardTitle>Your Progress</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                  <div>
+                <div>
                   <div className="flex items-center justify-between mb-2 text-sm font-medium">
                     <span>Topic mastery</span>
                     <span>{progress}%</span>
                   </div>
                   <Progress value={progress} className="h-2" />
-                  </div>
+                </div>
                 <Button
                   className="w-full"
                   onClick={() => setProgress((prev) => (prev === 100 ? prev : 100))}

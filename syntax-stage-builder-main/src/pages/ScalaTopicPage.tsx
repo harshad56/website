@@ -71,8 +71,8 @@ const ScalaTopicPage = () => {
     currentTopic?.difficulty === "Beginner"
       ? "default"
       : currentTopic?.difficulty === "Intermediate"
-      ? "secondary"
-      : "destructive";
+        ? "secondary"
+        : "destructive";
 
   if (!currentModule || !currentTopic) {
     return (
@@ -96,7 +96,7 @@ const ScalaTopicPage = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <Link to={`/scala-learning?module=${currentModule.id}`}>
+              <Link to={`/scala-learning?module=${currentModule.id}`} replace>
                 <Button variant="outline" size="sm">
                   ← Back to Module
                 </Button>
@@ -211,11 +211,10 @@ const ScalaTopicPage = () => {
                     onClick={() =>
                       navigate(`/scala-learning/topic/${currentModule.id}/${topic.id}`)
                     }
-                    className={`w-full rounded-lg border px-4 py-3 text-left transition ${
-                      topic.id === currentTopic.id
+                    className={`w-full rounded-lg border px-4 py-3 text-left transition ${topic.id === currentTopic.id
                         ? "border-primary bg-primary text-primary-foreground"
                         : "hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold">{topic.title}</span>

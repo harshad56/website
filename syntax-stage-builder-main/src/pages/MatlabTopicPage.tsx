@@ -27,12 +27,12 @@ const MatlabTopicPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b"><div className="container mx-auto px-6 py-4 flex justify-between"><div className="flex items-center gap-4"><Link to={`/matlab-learning?module=${currentModule.id}`}><Button variant="outline" size="sm">← Back</Button></Link><h1 className="text-xl font-bold">{currentModule.title}</h1></div><Badge>{currentTopic.difficulty}</Badge></div></header>
+      <header className="bg-card border-b"><div className="container mx-auto px-6 py-4 flex justify-between"><div className="flex items-center gap-4"><Link to={`/matlab-learning?module=${currentModule.id}`} replace><Button variant="outline" size="sm">← Back to Module</Button></Link><h1 className="text-xl font-bold">{currentModule.title}</h1></div><Badge>{currentTopic.difficulty}</Badge></div></header>
       <div className="container mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card><CardHeader><CardTitle>{currentTopic.title}</CardTitle><CardDescription>{currentTopic.duration}</CardDescription></CardHeader><CardContent><div className="whitespace-pre-line">{currentTopic.content}</div></CardContent></Card>
           <Card><CardHeader><CardTitle>Code Example</CardTitle></CardHeader><CardContent><pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto"><code>{currentModule.codeExample}</code></pre></CardContent></Card>
-          <Card><CardHeader><CardTitle>Exercises</CardTitle></CardHeader><CardContent>{exercises.map((ex, i) => <div key={i} className="border rounded-lg p-4 mb-2"><strong>Exercise {i+1}:</strong> {ex}</div>)}</CardContent></Card>
+          <Card><CardHeader><CardTitle>Exercises</CardTitle></CardHeader><CardContent>{exercises.map((ex, i) => <div key={i} className="border rounded-lg p-4 mb-2"><strong>Exercise {i + 1}:</strong> {ex}</div>)}</CardContent></Card>
           <Card><CardHeader><CardTitle>Try It</CardTitle></CardHeader><CardContent><textarea className="w-full h-48 bg-muted p-4 rounded-lg font-mono" value={userCode} onChange={(e) => setUserCode(e.target.value)} /><Button className="mt-4" onClick={() => setOutput("Executed!")}>Run</Button>{output && <pre className="mt-4 bg-muted p-4 rounded-lg">{output}</pre>}</CardContent></Card>
         </div>
         <div className="space-y-6">
