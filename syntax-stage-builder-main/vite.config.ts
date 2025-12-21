@@ -32,51 +32,8 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunks - aggressive splitting for better caching
           if (id.includes('node_modules')) {
-            // React core - critical, load first
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react-core';
-            }
-            // React Router - separate chunk
-            if (id.includes('react-router')) {
-              return 'vendor-router';
-            }
-            // TanStack Query - separate chunk
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
-            }
-            // Framer Motion - large library, lazy load
-            if (id.includes('framer-motion')) {
-              return 'vendor-motion';
-            }
-            // Radix UI components - split by usage
-            if (id.includes('@radix-ui')) {
-              // Core components used frequently
-              if (id.includes('dialog') || id.includes('dropdown') || id.includes('select') || id.includes('tabs')) {
-                return 'vendor-radix-core';
-              }
-              // Less frequently used
-              return 'vendor-radix-other';
-            }
-            // Form libraries
-            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
-              return 'vendor-forms';
-            }
-            // Lucide icons - lazy load, split by usage
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            // Chart libraries
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            // Date libraries
-            if (id.includes('date-fns') || id.includes('react-day-picker')) {
-              return 'vendor-dates';
-            }
-            // All other node_modules
-            return 'vendor-misc';
+            return 'vendor';
           }
         },
         // Optimize chunk file names
