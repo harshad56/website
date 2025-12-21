@@ -98,7 +98,7 @@ export default defineConfig(({ mode }) => ({
     // Report compressed size
     reportCompressedSize: true,
     // Enable compression
-    cssMinify: 'lightningcss',
+    cssMinify: 'esbuild',
     // Chunk size warning limit
     chunkSizeWarningLimit: 1000,
   },
