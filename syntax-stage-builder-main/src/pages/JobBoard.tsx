@@ -14,14 +14,14 @@ import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
 import { apiService } from "@/services/ApiService";
 import { ShareDialog } from "@/components/ShareDialog";
-import { 
-  Search, 
-  Filter, 
-  MapPin, 
-  Clock, 
-  DollarSign, 
-  Building, 
-  Users, 
+import {
+  Search,
+  Filter,
+  MapPin,
+  Clock,
+  DollarSign,
+  Building,
+  Users,
   Star,
   Bookmark,
   Share2,
@@ -121,10 +121,10 @@ const JobBoard = () => {
           // Ensure postedDate is a Date object
           const processedJobs = jobsData.map((job: any) => ({
             ...job,
-            postedDate: job.postedDate instanceof Date 
-              ? job.postedDate 
-              : job.postedDate 
-                ? new Date(job.postedDate) 
+            postedDate: job.postedDate instanceof Date
+              ? job.postedDate
+              : job.postedDate
+                ? new Date(job.postedDate)
                 : new Date(),
           }));
           setJobs(processedJobs);
@@ -704,7 +704,7 @@ const JobBoard = () => {
         image={`${window.location.origin}/og-jobs.jpg`}
         structuredData={structuredData}
       />
-      
+
       {/* Header with Back Button */}
       <header className="bg-black/60 backdrop-blur border-b border-white/10 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4">
@@ -731,7 +731,7 @@ const JobBoard = () => {
               </span>
             </h1>
             <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto mb-8">
-              Discover thousands of programming and technology opportunities from top companies worldwide. 
+              Discover thousands of programming and technology opportunities from top companies worldwide.
               Full-time, part-time, contract, and internship positions available.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
@@ -840,19 +840,34 @@ const JobBoard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-black/40 border-white/10">
-                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400">All Jobs</TabsTrigger>
-                <TabsTrigger value="featured" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400">Featured</TabsTrigger>
-                <TabsTrigger value="remote" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400">Remote</TabsTrigger>
-                <TabsTrigger value="saved" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400">Saved</TabsTrigger>
-                <TabsTrigger value="recommended" className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400">Recommended</TabsTrigger>
-              </TabsList>
+              <div className="relative overflow-x-auto -mx-2 sm:mx-0">
+                <style>{`
+                  .job-tabs-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                  }
+                  .job-tabs-scroll::-webkit-scrollbar {
+                    display: none;
+                  }
+                  .job-tabs-scroll {
+                    scroll-behavior: smooth;
+                    -webkit-overflow-scrolling: touch;
+                  }
+                `}</style>
+                <TabsList className="flex overflow-x-auto sm:grid sm:grid-cols-5 bg-black/40 border-white/10 job-tabs-scroll min-w-full w-max sm:w-full">
+                  <TabsTrigger value="all" className="flex-shrink-0 min-w-[80px] sm:min-w-0 data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-xs sm:text-sm px-3 sm:px-4">All Jobs</TabsTrigger>
+                  <TabsTrigger value="featured" className="flex-shrink-0 min-w-[85px] sm:min-w-0 data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-xs sm:text-sm px-3 sm:px-4">Featured</TabsTrigger>
+                  <TabsTrigger value="remote" className="flex-shrink-0 min-w-[75px] sm:min-w-0 data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-xs sm:text-sm px-3 sm:px-4">Remote</TabsTrigger>
+                  <TabsTrigger value="saved" className="flex-shrink-0 min-w-[70px] sm:min-w-0 data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-xs sm:text-sm px-3 sm:px-4">Saved</TabsTrigger>
+                  <TabsTrigger value="recommended" className="flex-shrink-0 min-w-[110px] sm:min-w-0 data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400 text-xs sm:text-sm px-3 sm:px-4">Recommended</TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value={activeTab} className="mt-6">
                 <div className="space-y-6">
                   {getFilteredJobsByTab().map((job) => (
-                    <Card 
-                      key={job.id} 
+                    <Card
+                      key={job.id}
                       className={`bg-slate-900/70 border-white/20 hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/20 overflow-hidden group ${job.isFeatured ? 'ring-2 ring-blue-500/30' : ''}`}
                     >
                       <CardHeader className="pb-4">
@@ -900,8 +915,8 @@ const JobBoard = () => {
                                 <Calendar className="w-4 h-4 text-orange-400" />
                                 <span className="text-gray-300">
                                   {(() => {
-                                    const postedDate = job.postedDate instanceof Date 
-                                      ? job.postedDate 
+                                    const postedDate = job.postedDate instanceof Date
+                                      ? job.postedDate
                                       : new Date(job.postedDate || Date.now());
                                     const daysAgo = Math.floor((Date.now() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
                                     return daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`;
@@ -919,9 +934,9 @@ const JobBoard = () => {
                             >
                               <Bookmark className={`w-4 h-4 ${savedJobs.includes(job.id) ? 'fill-current' : ''}`} />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-gray-400 hover:text-white"
                               onClick={() => {
                                 setSelectedJobForShare(job);
@@ -937,7 +952,7 @@ const JobBoard = () => {
                       <CardContent className="pt-0">
                         <div className="space-y-4">
                           <p className="text-gray-300 line-clamp-2">{job.description}</p>
-                          
+
                           <div>
                             <h4 className="font-medium mb-2 text-white">Required Skills:</h4>
                             <div className="flex flex-wrap gap-2">
@@ -964,28 +979,28 @@ const JobBoard = () => {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                            <div className="flex items-center gap-3">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 pt-4 border-t border-white/10">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/50">{getExperienceLabel(job.experience)}</Badge>
                               <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/50">{job.category}</Badge>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <Button
+                                variant="outline"
                                 size="sm"
-                                className="border-blue-400/60 bg-white/5 text-blue-100 hover:bg-blue-500/20 hover:text-white"
+                                className="border-blue-400/60 bg-white/5 text-blue-100 hover:bg-blue-500/20 hover:text-white flex-1 sm:flex-initial min-h-[44px]"
                                 asChild
                               >
-                                <Link to={`/jobs/${job.id}`} className="inline-flex items-center">
+                                <Link to={`/jobs/${job.id}`} className="inline-flex items-center justify-center">
                                   <ExternalLink className="w-4 h-4 mr-2" />
                                   <span className="font-medium">View Details</span>
                                 </Link>
                               </Button>
-                              <Button 
+                              <Button
                                 size="sm"
                                 onClick={() => handleApplyJob(job)}
                                 disabled={appliedJobs.includes(job.id)}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 flex-1 sm:flex-initial min-h-[44px]"
                               >
                                 {appliedJobs.includes(job.id) ? (
                                   <>

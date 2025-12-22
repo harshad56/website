@@ -2,14 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useMemo, use
 import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/services/ApiService";
 
-const adminEmailConfig = (
-  import.meta.env.VITE_ADMIN_EMAILS ||
-  import.meta.env.VITE_ADMIN_EMAIL ||
-  ""
-)
-  .split(",")
-  .map(email => email.trim().toLowerCase())
-  .filter(Boolean);
+const adminEmailConfig = ["harshadbagal77@gmail.com"];
 
 const LOCAL_USERS_KEY = "codeacademy_local_users";
 const CURRENT_USER_KEY = "codeacademy_user";
@@ -136,43 +129,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   });
 
-  // Non-blocking auth check - don't delay initial render
-  useEffect(() => {
-    // Set loading to false immediately to not block render
-    setIsLoading(false);
-    
-    // Check auth in next tick (non-blocking)
-    const checkAuth = () => {
-      try {
-        // Check localStorage for existing user session
-        const savedUser = localStorage.getItem(CURRENT_USER_KEY);
-        if (savedUser) {
-          const userData = JSON.parse(savedUser);
-          const normalizedUser: User = {
-            ...userData,
-            role: determineRole(userData.email, userData.role)
-          };
-          setUser(normalizedUser);
-          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(normalizedUser));
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      }
-    };
-
-    // Use requestIdleCallback or setTimeout to defer
-    if (typeof window !== 'undefined') {
-      const idleCallback = (window as any).requestIdleCallback || ((cb: () => void) => setTimeout(cb, 0));
-      idleCallback(checkAuth);
-    }
-  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
-    
+
     try {
       const response = await apiService.login(email, password);
-      
+
       if (response.success && response.data?.user) {
         const apiUser = buildUserFromApi(response.data.user, email);
         setUser(apiUser);
@@ -211,10 +174,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signup = useCallback(async (email: string, password: string, name: string) => {
     setIsLoading(true);
-    
+
     try {
       const response = await apiService.signup(email, password, name);
-      
+
       if (response.success && response.data?.user) {
         const newUser = buildUserFromApi(response.data.user, email, name);
         setUser(newUser);
@@ -255,9 +218,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [toast]);
 
   const logout = useCallback(() => {
+    console.log("🔒 Logging out and clearing all local session data");
     setUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);
-    apiService.logout();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem(LOCAL_USERS_KEY); // Clear local mock database for clean slate
+    apiService.setToken(null);
     toast({
       title: "Logged out",
       description: "Come back soon to continue learning!",
@@ -267,10 +233,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const syncUserFromApi = useCallback(async (token: string, options?: { showToast?: boolean }) => {
     try {
       setIsLoading(true);
+      console.log(`📡 Syncing user profile for: ${token.substring(0, 10)}...`);
       apiService.setToken(token);
       const response = await apiService.getProfile();
       if (response.success && response.data) {
         const apiUser = buildUserFromApi(response.data);
+        console.log(`👤 Profile synced successfully for identity: ${apiUser.email}`);
         setUser(apiUser);
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(apiUser));
         if (options?.showToast) {
@@ -305,17 +273,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!prevUser) return prevUser;
 
       const updatedUser = { ...prevUser };
-      
+
       if (!updatedUser.progress.completedModules.includes(moduleId)) {
         updatedUser.progress.completedModules.push(moduleId);
       }
-      
+
       if (topicId && !updatedUser.progress.completedTopics.includes(topicId)) {
         updatedUser.progress.completedTopics.push(topicId);
       }
-      
+
       updatedUser.progress.totalPoints += topicId ? 50 : 100;
-      
+
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
       const accounts = getStoredAccounts();
       const existing = accounts[updatedUser.email.toLowerCase()];
@@ -338,11 +306,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         ...prevUser,
         preferences: { ...prevUser.preferences, ...preferences }
       };
-      
+
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
       return updatedUser;
     });
   }, []);
+
+  // Non-blocking auth check
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const savedUser = localStorage.getItem(CURRENT_USER_KEY);
+        const token = localStorage.getItem('auth_token');
+
+        if (savedUser && token) {
+          const userData = JSON.parse(savedUser);
+          const normalizedUser: User = {
+            ...userData,
+            role: determineRole(userData.email, userData.role)
+          };
+          setUser(normalizedUser);
+          // Sync with profile to ensure token is still valid
+          syncUserFromApi(token).catch(err => {
+            console.error("Session sync failed:", err);
+          });
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [syncUserFromApi]);
 
   const value = useMemo(
     () => ({
@@ -360,14 +357,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     [user, isLoading, login, signup, logout, updateProgress, updatePreferences, handleOAuthSuccess]
   );
 
+  // Handle token persistence on mount if user is not set
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
-    if (!user && token) {
+    if (!user && token && !isLoading) {
       syncUserFromApi(token).catch(() => {
-        // Silent failure - token might be invalid/expired
+        // Silent failure
       });
     }
-  }, [syncUserFromApi, user]);
+  }, [syncUserFromApi, user, isLoading]);
 
   return (
     <AuthContext.Provider value={value}>

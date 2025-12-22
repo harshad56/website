@@ -13,19 +13,21 @@ const AuthCallback = () => {
   const token = searchParams.get("token");
 
   useEffect(() => {
-    if (!token) {
-      setError("Missing authentication token.");
-      return;
-    }
+    if (token) {
+      // Clear any existing stale user data before accepting new identity
+      localStorage.removeItem("codeacademy_user");
 
-    handleOAuthSuccess(token)
-      .then(() => {
-        navigate("/", { replace: true });
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
-      });
-  }, [handleOAuthSuccess, navigate, token]);
+      handleOAuthSuccess(token)
+        .then(() => {
+          navigate("/", { replace: true });
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
+        });
+    } else if (!token && !error) {
+      setError("Missing authentication token.");
+    }
+  }, [handleOAuthSuccess, navigate, token, error]);
 
   if (error) {
     return (

@@ -65,6 +65,10 @@ export interface Exercise {
 class ApiService {
   private baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   private token: string | null = null;
+  private mockData = {
+    users: new Map<string, any>(),
+    courses: new Map<string, any>()
+  };
 
   constructor() {
     // Get token from localStorage
@@ -96,9 +100,9 @@ class ApiService {
     try {
       const url = `${this.baseUrl}${endpoint}`;
       const headers = this.getHeaders();
-      
+
       console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!this.token });
-      
+
       const response = await fetch(url, {
         ...options,
         headers,
@@ -106,11 +110,11 @@ class ApiService {
 
       // Get response text first to handle both JSON and non-JSON responses
       const responseText = await response.text();
-      
+
       // Handle non-JSON responses
       const contentType = response.headers.get('content-type');
       const isJSON = contentType?.includes('application/json');
-      
+
       if (!isJSON) {
         console.error('Non-JSON response:', { status: response.status, contentType, text: responseText.substring(0, 200) });
         if (!response.ok) {
@@ -127,11 +131,11 @@ class ApiService {
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('JSON parse error:', { 
-          status: response.status, 
-          contentType, 
+        console.error('JSON parse error:', {
+          status: response.status,
+          contentType,
           text: responseText.substring(0, 500),
-          parseError 
+          parseError
         });
         throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
       }
@@ -289,7 +293,7 @@ class ApiService {
 
   // User Management
   async login(email: string, password: string): Promise<ApiResponse<any>> {
-    const response = await this.request('/auth/login', {
+    const response = await this.request<any>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
@@ -302,7 +306,7 @@ class ApiService {
   }
 
   async signup(email: string, password: string, name: string): Promise<ApiResponse<any>> {
-    const response = await this.request('/auth/register', {
+    const response = await this.request<any>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name })
     });
@@ -319,7 +323,8 @@ class ApiService {
   }
 
   async getProfile(): Promise<ApiResponse<any>> {
-    return this.request('/users/profile', {
+    // Add cache buster to ensure we get fresh data across account switches
+    return this.request(`/users/profile?cb=${Date.now()}`, {
       method: 'GET'
     });
   }
@@ -410,6 +415,25 @@ class ApiService {
   async getCourse(courseId: string): Promise<ApiResponse<CourseContent>> {
     return this.request<CourseContent>(`/courses/${courseId}`, {
       method: 'GET',
+    });
+  }
+
+  // Language Interview Q&A
+  async getLanguages(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/languages', {
+      method: 'GET'
+    });
+  }
+
+  async getLanguageBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/languages/${slug}`, {
+      method: 'GET'
+    });
+  }
+
+  async getLanguageQuestions(languageId: string): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>(`/languages/${languageId}/questions`, {
+      method: 'GET'
     });
   }
 

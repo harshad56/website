@@ -115,13 +115,13 @@ const SignIn = () => {
       {/* Enhanced Animated Background - Reduced Brightness */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Static gradient mesh - No animation for better performance */}
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             background: "radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.12) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 50%)",
           }}
         />
-        
+
         {/* Floating code symbols - Reduced count for performance */}
         {['</>', '{ }', '()'].map((symbol, i) => (
           <motion.div
@@ -147,7 +147,7 @@ const SignIn = () => {
             {symbol}
           </motion.div>
         ))}
-        
+
         {/* Floating particles - Reduced count for performance */}
         {[...Array(4)].map((_, i) => (
           <motion.div
@@ -175,9 +175,30 @@ const SignIn = () => {
         ))}
       </div>
 
+      {/* Back Button Header */}
+      <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-lg border-b border-white/10">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <motion.div
+            whileHover={{ x: -5 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-block"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="text-white/90 hover:text-white hover:bg-white/10 font-medium min-h-[44px] px-4"
+            >
+              <span className="text-lg mr-2">←</span>
+              <span>Back to Home</span>
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+
       {/* Hero Section with Enhanced Design */}
       <motion.div
-        className="relative z-10 pt-16 pb-8"
+        className="relative z-10 pt-8 sm:pt-16 pb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -194,7 +215,7 @@ const SignIn = () => {
               Secure Sign In
             </Badge>
           </motion.div>
-          
+
           <motion.h1
             className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-white via-indigo-300 to-purple-300 bg-clip-text text-transparent"
             initial={{ opacity: 0, y: 20 }}
@@ -208,7 +229,7 @@ const SignIn = () => {
               CodeAcademy Pro
             </span>
           </motion.h1>
-          
+
           <motion.p
             className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
@@ -263,252 +284,252 @@ const SignIn = () => {
           <Card className="shadow-2xl border-2 border-indigo-500/40 backdrop-blur-xl bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-saturate-150">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-lg" />
             <div className="relative z-10">
-            <CardHeader className="relative z-10">
-              <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-                <motion.div whileHover={{ x: -5 }} whileTap={{ scale: 0.95 }}>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => navigate(-1)}
-                    className="text-white/80 hover:text-white hover:bg-white/10"
-                  >
-                    ← Back
-                  </Button>
-                </motion.div>
-                <motion.div
-                  key={mode}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0 text-xs uppercase px-3 py-1">
-                    {mode === "login" ? "✨ Returning learner" : "🎉 New learner"}
-                  </Badge>
-                </motion.div>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={mode}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <CardTitle className="text-3xl font-bold text-white mb-2">
-                    {mode === "login" ? "Welcome back! 👋" : "Join us today! 🚀"}
-                  </CardTitle>
-                  <CardDescription className="text-white/70 text-base">
-                    {mode === "login"
-                      ? "Continue your learning journey with personalized courses and AI mentorship."
-                      : "Start your coding journey with free courses, projects, and certifications."}
-                  </CardDescription>
-                </motion.div>
-              </AnimatePresence>
-            </CardHeader>
-          <CardContent className="space-y-6 relative z-10">
-            <div className="grid gap-3">
-              {socialProviders.map((provider, index) => (
-                <motion.div
-                  key={provider.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ willChange: "transform" }}
-                >
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 bg-slate-800/60 border-2 border-slate-700/50 text-white hover:bg-slate-700/60 hover:border-indigo-500/50 hover:text-white transition-all duration-300 font-medium"
-                    type="button"
-                    onClick={() => handleOAuthSignIn(provider.provider)}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {provider.provider === "google" ? "🔵" : "⚫"}
-                      {provider.label}
-                    </span>
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4 my-6">
-              <Separator className="flex-1 bg-slate-700/50" />
-              <span className="text-sm text-white/70 font-medium">or continue with email</span>
-              <Separator className="flex-1 bg-slate-700/50" />
-            </div>
-
-            <motion.form
-              className="space-y-5"
-              onSubmit={handleSubmit}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-            >
-              <AnimatePresence>
-                {mode === "signup" && (
+              <CardHeader className="relative z-10">
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                  <motion.div whileHover={{ x: -5 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(-1)}
+                      className="text-white/80 hover:text-white hover:bg-white/10"
+                    >
+                      ← Back
+                    </Button>
+                  </motion.div>
                   <motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    key={mode}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0 text-xs uppercase px-3 py-1">
+                      {mode === "login" ? "✨ Returning learner" : "🎉 New learner"}
+                    </Badge>
+                  </motion.div>
+                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={mode}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Label htmlFor="name" className="text-white font-medium">Full name</Label>
+                    <CardTitle className="text-3xl font-bold text-white mb-2">
+                      {mode === "login" ? "Welcome back! 👋" : "Join us today! 🚀"}
+                    </CardTitle>
+                    <CardDescription className="text-white/70 text-base">
+                      {mode === "login"
+                        ? "Continue your learning journey with personalized courses and AI mentorship."
+                        : "Start your coding journey with free courses, projects, and certifications."}
+                    </CardDescription>
+                  </motion.div>
+                </AnimatePresence>
+              </CardHeader>
+              <CardContent className="space-y-6 relative z-10">
+                <div className="grid gap-3">
+                  {socialProviders.map((provider, index) => (
                     <motion.div
-                      whileFocus={{ scale: 1.01 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      key={provider.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
                       style={{ willChange: "transform" }}
                     >
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 bg-slate-800/60 border-2 border-slate-700/50 text-white hover:bg-slate-700/60 hover:border-indigo-500/50 hover:text-white transition-all duration-300 font-medium"
+                        type="button"
+                        onClick={() => handleOAuthSignIn(provider.provider)}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          {provider.provider === "google" ? "🔵" : "⚫"}
+                          {provider.label}
+                        </span>
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-4 my-6">
+                  <Separator className="flex-1 bg-slate-700/50" />
+                  <span className="text-sm text-white/70 font-medium">or continue with email</span>
+                  <Separator className="flex-1 bg-slate-700/50" />
+                </div>
+
+                <motion.form
+                  className="space-y-5"
+                  onSubmit={handleSubmit}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.4 }}
+                >
+                  <AnimatePresence>
+                    {mode === "signup" && (
+                      <motion.div
+                        className="space-y-2"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Label htmlFor="name" className="text-white font-medium">Full name</Label>
+                        <motion.div
+                          whileFocus={{ scale: 1.01 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          style={{ willChange: "transform" }}
+                        >
+                          <Input
+                            id="name"
+                            placeholder="Ada Lovelace"
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            required={mode === "signup"}
+                            className="bg-slate-800/80 border-2 border-slate-700/50 text-white placeholder:text-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 h-12"
+                          />
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <motion.div
+                    className="space-y-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.4 }}
+                  >
+                    <Label htmlFor="email" className="text-white font-medium">Email address</Label>
+                    <motion.div
+                      whileFocus={{ scale: 1.02, x: 2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
                       <Input
-                        id="name"
-                        placeholder="Ada Lovelace"
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        required={mode === "signup"}
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        required
                         className="bg-slate-800/80 border-2 border-slate-700/50 text-white placeholder:text-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 h-12"
                       />
                     </motion.div>
+                    <p className="text-xs text-white/60">
+                      Use a valid email like <span className="font-medium text-white/80">you@example.com</span>.
+                    </p>
                   </motion.div>
-                )}
-              </AnimatePresence>
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.4 }}
-              >
-                <Label htmlFor="email" className="text-white font-medium">Email address</Label>
-                <motion.div
-                  whileFocus={{ scale: 1.02, x: 2 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                    className="bg-slate-800/80 border-2 border-slate-700/50 text-white placeholder:text-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 h-12"
-                  />
-                </motion.div>
-                <p className="text-xs text-white/60">
-                  Use a valid email like <span className="font-medium text-white/80">you@example.com</span>.
-                </p>
-              </motion.div>
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.4 }}
-              >
-                <Label htmlFor="password" className="text-white font-medium">Password</Label>
-                <motion.div
-                  whileFocus={{ scale: 1.02, x: 2 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                    className="bg-slate-800/80 border-2 border-slate-700/50 text-white placeholder:text-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 h-12"
-                  />
-                </motion.div>
-                <p className="text-xs text-white/60">
-                  Must be 8+ characters and include uppercase, lowercase, a number, and a special character (@$!%*?&).
-                </p>
-              </motion.div>
-              {mode === "login" && (
-                <motion.div
-                  className="flex items-center justify-between"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.85 }}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                      className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
-                    />
-                    <Label htmlFor="remember" className="text-sm text-white/80 cursor-pointer">
-                      Remember me
-                    </Label>
-                  </div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="link"
-                      className="px-0 text-sm text-indigo-400 hover:text-indigo-300"
-                      type="button"
-                      onClick={() => navigate("/forgot-password")}
+                  <motion.div
+                    className="space-y-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.4 }}
+                  >
+                    <Label htmlFor="password" className="text-white font-medium">Password</Label>
+                    <motion.div
+                      whileFocus={{ scale: 1.02, x: 2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
                     >
-                      Forgot password?
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        required
+                        className="bg-slate-800/80 border-2 border-slate-700/50 text-white placeholder:text-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 h-12"
+                      />
+                    </motion.div>
+                    <p className="text-xs text-white/60">
+                      Must be 8+ characters and include uppercase, lowercase, a number, and a special character (@$!%*?&).
+                    </p>
+                  </motion.div>
+                  {mode === "login" && (
+                    <motion.div
+                      className="flex items-center justify-between"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.85 }}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="remember"
+                          checked={rememberMe}
+                          onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                          className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                        />
+                        <Label htmlFor="remember" className="text-sm text-white/80 cursor-pointer">
+                          Remember me
+                        </Label>
+                      </div>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Button
+                          variant="link"
+                          className="px-0 text-sm text-indigo-400 hover:text-indigo-300"
+                          type="button"
+                          onClick={() => navigate("/forgot-password")}
+                        >
+                          Forgot password?
+                        </Button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                  <motion.div
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{ willChange: "transform" }}
+                    className="pt-2"
+                  >
+                    <Button
+                      type="submit"
+                      className="w-full h-12 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/50 border-0 transition-all duration-300"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        "⏳ Please wait..."
+                      ) : (
+                        <>
+                          {mode === "login" ? "🚀 Sign In" : "✨ Create account"}
+                          <ArrowRight className="h-5 w-5 ml-2" />
+                        </>
+                      )}
                     </Button>
                   </motion.div>
-                </motion.div>
-              )}
-              <motion.div
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                style={{ willChange: "transform" }}
-                className="pt-2"
-              >
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/50 border-0 transition-all duration-300" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    "⏳ Please wait..."
-                  ) : (
-                    <>
-                      {mode === "login" ? "🚀 Sign In" : "✨ Create account"}
-                      <ArrowRight className="h-5 w-5 ml-2" />
-                    </>
+                </motion.form>
+
+                <AnimatePresence>
+                  {formError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+                    >
+                      <AlertTriangle className="h-4 w-4 mt-0.5" />
+                      <p>{formError}</p>
+                    </motion.div>
                   )}
-                </Button>
-              </motion.div>
-            </motion.form>
+                </AnimatePresence>
 
-            <AnimatePresence>
-              {formError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+                <motion.p
+                  className="text-sm text-center text-white/80 pt-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
                 >
-                  <AlertTriangle className="h-4 w-4 mt-0.5" />
-                  <p>{formError}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.p
-              className="text-sm text-center text-white/80 pt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-            >
-              {mode === "login" ? "New here? " : "Already have an account? "}
-              <motion.span whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Button
-                  variant="link"
-                  className="px-1 text-indigo-400 hover:text-indigo-300 font-semibold underline-offset-4"
-                  type="button"
-                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                >
-                  {mode === "login" ? "✨ Create an account" : "🔐 Sign in"}
-                </Button>
-              </motion.span>
-            </motion.p>
-          </CardContent>
+                  {mode === "login" ? "New here? " : "Already have an account? "}
+                  <motion.span whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      variant="link"
+                      className="px-1 text-indigo-400 hover:text-indigo-300 font-semibold underline-offset-4"
+                      type="button"
+                      onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    >
+                      {mode === "login" ? "✨ Create an account" : "🔐 Sign in"}
+                    </Button>
+                  </motion.span>
+                </motion.p>
+              </CardContent>
             </div>
           </Card>
         </motion.div>
@@ -591,9 +612,9 @@ const SignIn = () => {
                   whileTap={{ scale: 0.97 }}
                   style={{ willChange: "transform" }}
                 >
-                  <Button 
-                    variant="outline" 
-                    className="self-start bg-slate-800/60 border-2 border-slate-700/50 text-white hover:bg-slate-700/60 hover:border-purple-500/50 font-semibold" 
+                  <Button
+                    variant="outline"
+                    className="self-start bg-slate-800/60 border-2 border-slate-700/50 text-white hover:bg-slate-700/60 hover:border-purple-500/50 font-semibold"
                     onClick={() => navigate("/contact")}
                   >
                     💼 Talk to sales

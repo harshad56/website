@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiService } from "@/services/ApiService";
 import SEO from "@/components/SEO";
-import { 
-  Clock, Users, Sparkles, Play, CheckCircle, X, 
+import {
+  Clock, Users, Sparkles, Play, CheckCircle, X,
   TrendingUp, BookOpen, MessageSquare, Video, Calendar as CalendarIcon,
-  Star, AlertCircle, Lightbulb, Target, Zap
+  Star, AlertCircle, Lightbulb, Target, Zap, Code, Shield, Settings
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -45,7 +47,8 @@ interface Package {
 
 const InterviewPractice = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("practice");
   const [questionCategory, setQuestionCategory] = useState("behavioral");
@@ -61,12 +64,15 @@ const InterviewPractice = () => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [mySessions, setMySessions] = useState<any[]>([]);
+  const [qaLanguages, setQaLanguages] = useState<any[]>([]);
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   // Load packages on mount
   useEffect(() => {
     loadPackages();
+    loadQaLanguages();
     if (user) {
       loadMySessions();
     }
@@ -88,6 +94,20 @@ const InterviewPractice = () => {
       }
     } catch (error) {
       console.error('Error loading packages:', error);
+    }
+  };
+
+  const loadQaLanguages = async () => {
+    try {
+      setIsLoadingLanguages(true);
+      const data = await apiService.getLanguages() as any;
+      if (data.success) {
+        setQaLanguages(data.languages);
+      }
+    } catch (error) {
+      console.error('Error loading QA languages:', error);
+    } finally {
+      setIsLoadingLanguages(false);
     }
   };
 
@@ -301,7 +321,7 @@ const InterviewPractice = () => {
 
       {/* Header */}
       <div className="container mx-auto px-6 pt-6">
-        <BackButton label="Back to Home" className="text-white" />
+        <BackButton label="Back to Home" className="text-white" to="/" />
       </div>
 
       {/* Hero Section */}
@@ -321,29 +341,65 @@ const InterviewPractice = () => {
           <p className="text-lg text-white/70 max-w-3xl mx-auto">
             Practice with AI-generated questions, get instant feedback, and book sessions with real interviewers from top tech companies.
           </p>
+
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8"
+            >
+              <Button
+                onClick={() => navigate('/admin/languages')}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-lg shadow-indigo-500/20"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Mode (Manage Languages)
+              </Button>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 
       <div className="container mx-auto px-6 py-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 bg-slate-800/50 border border-white/10 p-1 mb-8">
-            <TabsTrigger value="practice" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-              <Play className="w-4 h-4 mr-2" />
-              Practice
-            </TabsTrigger>
-            <TabsTrigger value="book" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              Book Session
-            </TabsTrigger>
-            <TabsTrigger value="packages" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Packages
-            </TabsTrigger>
-            <TabsTrigger value="sessions" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-              <Video className="w-4 h-4 mr-2" />
-              My Sessions
-            </TabsTrigger>
-          </TabsList>
+          <div className="relative overflow-x-auto -mx-2 sm:mx-0 mb-8">
+            <style>{`
+              .interview-tabs-scroll {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
+              .interview-tabs-scroll::-webkit-scrollbar {
+                display: none;
+              }
+              .interview-tabs-scroll {
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+              }
+            `}</style>
+            <TabsList className="flex overflow-x-auto sm:grid sm:grid-cols-5 bg-slate-800/50 border border-white/10 p-1 interview-tabs-scroll min-w-full w-max sm:w-full">
+              <TabsTrigger value="practice" className="flex-shrink-0 min-w-[90px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">Practice</span>
+              </TabsTrigger>
+              <TabsTrigger value="languages" className="flex-shrink-0 min-w-[100px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">Language Q&A</span>
+              </TabsTrigger>
+              <TabsTrigger value="book" className="flex-shrink-0 min-w-[110px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">Book Session</span>
+              </TabsTrigger>
+              <TabsTrigger value="packages" className="flex-shrink-0 min-w-[90px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">Packages</span>
+              </TabsTrigger>
+              <TabsTrigger value="sessions" className="flex-shrink-0 min-w-[100px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="whitespace-nowrap">My Sessions</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Practice Tab */}
           <TabsContent value="practice" className="space-y-6">
@@ -475,11 +531,10 @@ const InterviewPractice = () => {
                       <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-white font-semibold">Your Score</span>
-                          <Badge className={`${
-                            feedback.score >= 80 ? 'bg-green-500/20 text-green-300' :
+                          <Badge className={`${feedback.score >= 80 ? 'bg-green-500/20 text-green-300' :
                             feedback.score >= 60 ? 'bg-yellow-500/20 text-yellow-300' :
-                            'bg-red-500/20 text-red-300'
-                          }`}>
+                              'bg-red-500/20 text-red-300'
+                            }`}>
                             {feedback.score}/100
                           </Badge>
                         </div>
@@ -534,6 +589,54 @@ const InterviewPractice = () => {
             )}
           </TabsContent>
 
+          {/* Language Q&A Tab */}
+          <TabsContent value="languages" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Code className="w-5 h-5 text-violet-400" />
+                  Programming Language Interview Q&A
+                </CardTitle>
+                <CardDescription className="text-white/60">
+                  Click on any language to view interview questions and answers specific to that programming language
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {isLoadingLanguages ? (
+                    <div className="col-span-full py-12 flex flex-col items-center justify-center gap-4">
+                      <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-white/40">Loading languages...</p>
+                    </div>
+                  ) : qaLanguages.length > 0 ? (
+                    qaLanguages.map((lang) => (
+                      <motion.div
+                        key={lang.id}
+                        whileHover={{ scale: 1.05, y: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="cursor-pointer"
+                        onClick={() => navigate(`/interview-practice/languages/${lang.slug}`)}
+                      >
+                        <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-white/20 hover:border-violet-500/50 transition-all duration-300 overflow-hidden group h-full">
+                          <div className={`absolute inset-0 bg-gradient-to-br ${lang.color_from} ${lang.color_to} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                          <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center text-center relative z-10 min-h-[120px] sm:min-h-[140px]">
+                            <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{lang.icon_emoji}</div>
+                            <h3 className="text-white font-bold text-sm sm:text-base mb-1">{lang.name}</h3>
+                            <p className="text-white/60 text-xs">Interview Q&A</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-12 text-center">
+                      <p className="text-white/40">No languages available yet.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Book Session Tab */}
           <TabsContent value="book" className="space-y-6">
             <Card className="bg-slate-900/70 border-white/10">
@@ -578,11 +681,10 @@ const InterviewPractice = () => {
                         {availableSlots.map((slot) => (
                           <Card
                             key={slot.id}
-                            className={`p-3 cursor-pointer transition-all ${
-                              selectedSlot === slot.id
-                                ? 'bg-violet-500/20 border-violet-500'
-                                : 'bg-slate-800/50 border-white/10 hover:bg-slate-700/50'
-                            }`}
+                            className={`p-3 cursor-pointer transition-all ${selectedSlot === slot.id
+                              ? 'bg-violet-500/20 border-violet-500'
+                              : 'bg-slate-800/50 border-white/10 hover:bg-slate-700/50'
+                              }`}
                             onClick={() => setSelectedSlot(slot.id)}
                           >
                             <div className="flex items-center justify-between">
@@ -631,11 +733,10 @@ const InterviewPractice = () => {
                 {packages.map((pkg) => (
                   <Card
                     key={pkg.id}
-                    className={`border-2 transition-all cursor-pointer ${
-                      selectedPackage === pkg.id
-                        ? 'border-violet-500 bg-violet-500/10'
-                        : 'border-white/10 bg-slate-800/50 hover:border-violet-500/50'
-                    }`}
+                    className={`border-2 transition-all cursor-pointer ${selectedPackage === pkg.id
+                      ? 'border-violet-500 bg-violet-500/10'
+                      : 'border-white/10 bg-slate-800/50 hover:border-violet-500/50'
+                      }`}
                     onClick={() => setSelectedPackage(pkg.id)}
                   >
                     <CardHeader>
@@ -698,8 +799,8 @@ const InterviewPractice = () => {
                               <div className="flex items-center gap-2 mb-2">
                                 <Badge className={
                                   session.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                                  session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
-                                  'bg-gray-500/20 text-gray-300'
+                                    session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
+                                      'bg-gray-500/20 text-gray-300'
                                 }>
                                   {session.status}
                                 </Badge>

@@ -29,6 +29,7 @@ const interviewPracticeRoutes = require('./routes/interviewPractice');
 const analyticsRoutes = require('./routes/analytics');
 const fileRoutes = require('./routes/files');
 const wishlistRoutes = require('./routes/wishlist');
+const languagesRoutes = require('./routes/languages');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -88,7 +89,7 @@ const logger = winston.createLogger({
 // Rate limiting - More lenient in development
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'production' 
+    max: process.env.NODE_ENV === 'production'
         ? (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100)
         : (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000), // Much higher limit in development
     message: 'Too many requests from this IP, please try again later.',
@@ -147,32 +148,32 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Handle OPTIONS requests for uploads (CORS preflight)
 app.options('/uploads/*', (req, res) => {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  res.setHeader('Access-Control-Allow-Origin', frontendUrl);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.sendStatus(200);
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    res.setHeader('Access-Control-Allow-Origin', frontendUrl);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.sendStatus(200);
 });
 
 // Static file serving for uploads (documents, etc.)
 // Set proper headers for file downloads and CORS
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  setHeaders: (res, filePath) => {
-    // Add CORS headers for all static files
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.setHeader('Access-Control-Allow-Origin', frontendUrl);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-    
-    // Force download for certain file types
-    if (filePath.endsWith('.zip') || filePath.endsWith('.pdf') || filePath.endsWith('.rar')) {
-      const filename = path.basename(filePath);
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    setHeaders: (res, filePath) => {
+        // Add CORS headers for all static files
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        res.setHeader('Access-Control-Allow-Origin', frontendUrl);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+
+        // Force download for certain file types
+        if (filePath.endsWith('.zip') || filePath.endsWith('.pdf') || filePath.endsWith('.rar')) {
+            const filename = path.basename(filePath);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        }
     }
-  }
 }));
 
 // Session configuration
@@ -197,15 +198,17 @@ app.use('/api/', limiter);
 // Request logging
 app.use(requestLogger);
 
-// Add caching headers for static assets and API responses
 app.use((req, res, next) => {
     // Cache static assets for 1 year
     if (req.path.startsWith('/assets/') || req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
-    // Cache API responses for 5 minutes (for GET requests)
-    else if (req.method === 'GET' && req.path.startsWith('/api/')) {
-        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+    // No-cache for API responses to prevent account/data crossover
+    else if (req.path.startsWith('/api/')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
     }
     // No cache for HTML
     else if (req.path.endsWith('.html') || req.path === '/') {
@@ -215,6 +218,15 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+// Explicit no-cache middleware for sensitive routes
+const noCache = (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+};
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -227,8 +239,8 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/auth', noCache, authRoutes);
+app.use('/api/users', noCache, authenticateToken, userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api', courseContentRoutes);
 app.use('/api/projects', projectRoutes);
@@ -243,6 +255,7 @@ app.use('/api/interview-practice', interviewPracticeRoutes);
 app.use('/api/analytics', authenticateToken, analyticsRoutes);
 app.use('/api/files', authenticateToken, fileRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/languages', languagesRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -264,7 +277,7 @@ app.use('*', (req, res) => {
 // Connect to database and start server
 const PORT = process.env.PORT || 5000;
 
-const startServer = async() => {
+const startServer = async () => {
     try {
         // Test Supabase connection
         const isConnected = await testConnection();

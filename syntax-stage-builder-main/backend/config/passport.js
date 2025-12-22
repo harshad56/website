@@ -13,7 +13,7 @@ const getCallbackURL = (providerPath) => {
     return `${backendUrl}${providerPath}`;
 };
 
-const createPlaceholderPassword = async() => {
+const createPlaceholderPassword = async () => {
     const salt = await bcrypt.genSalt(12);
     return bcrypt.hash(uuidv4(), salt);
 };
@@ -27,13 +27,15 @@ const configureGoogleStrategy = () => {
     }
 
     passport.use(new GoogleStrategy({
-            clientID: GOOGLE_CLIENT_ID,
-            clientSecret: GOOGLE_CLIENT_SECRET,
-            callbackURL: getCallbackURL('/api/auth/google/callback')
-        },
-        async(accessToken, refreshToken, profile, done) => {
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        callbackURL: getCallbackURL('/api/auth/google/callback')
+    },
+        async (accessToken, refreshToken, profile, done) => {
             try {
                 const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+                winston.info(`🔐 Processing Google OAuth for email: ${email}`);
+
                 if (!email) {
                     return done(new Error('Google profile does not include an email address'));
                 }
@@ -81,7 +83,7 @@ module.exports = () => {
         done(null, user.id);
     });
 
-    passport.deserializeUser(async(id, done) => {
+    passport.deserializeUser(async (id, done) => {
         try {
             const user = await db.getUserById(id);
             done(null, user);
@@ -99,12 +101,12 @@ module.exports = () => {
         }
 
         passport.use(new GitHubStrategy({
-                clientID: GITHUB_CLIENT_ID,
-                clientSecret: GITHUB_CLIENT_SECRET,
-                callbackURL: getCallbackURL('/api/auth/github/callback'),
-                scope: ['user:email']
-            },
-            async(accessToken, refreshToken, profile, done) => {
+            clientID: GITHUB_CLIENT_ID,
+            clientSecret: GITHUB_CLIENT_SECRET,
+            callbackURL: getCallbackURL('/api/auth/github/callback'),
+            scope: ['user:email']
+        },
+            async (accessToken, refreshToken, profile, done) => {
                 try {
                     const email =
                         (profile.emails && profile.emails.find((entry) => entry.value)?.value) ||

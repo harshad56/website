@@ -8,8 +8,8 @@ interface BackButtonProps {
   to?: string; // Optional: specify where to navigate to instead of using browser history
 }
 
-export const BackButton = memo(({ 
-  label = "Back", 
+export const BackButton = memo(({
+  label = "Back",
   className = "",
   to
 }: BackButtonProps) => {
@@ -17,52 +17,23 @@ export const BackButton = memo(({
   const location = useLocation();
 
   const handleBack = () => {
-    // If 'to' prop is provided, navigate there directly
+    // 1. If 'to' prop is provided, navigate there directly
     if (to) {
       navigate(to);
       return;
     }
 
-    // Check if we have location state with 'from' property
-    if (location.state?.from) {
-      navigate(location.state.from);
-      return;
-    }
-
-    // Check referrer to determine where to go
-    const referrer = document.referrer;
-    if (referrer) {
-      try {
-        const referrerUrl = new URL(referrer);
-        const currentUrl = new URL(window.location.href);
-        
-        // If referrer is from same origin, check the path
-        if (referrerUrl.origin === currentUrl.origin) {
-          const referrerPath = referrerUrl.pathname;
-          
-          // If we're on /courses and came from a course detail page, go to home
-          if (location.pathname === '/courses' && referrerPath.includes('/course/')) {
-            navigate("/");
-            return;
-          }
-          
-          // Otherwise, go to referrer path
-          if (referrerPath !== location.pathname) {
-            navigate(referrerPath);
-            return;
-          }
-        }
-      } catch (e) {
-        // Invalid URL, fall through to default
-      }
-    }
-
-    // Fallback: check if there's history to go back to
-    if (window.history.length > 1) {
+    // 2. Fallback: check if there's history to go back to
+    // Priority: Browser history for single-page app feel
+    if (window.history.length > 2) {
       navigate(-1);
     } else {
-      // If no history, go to homepage
-      navigate("/");
+      // 3. Last resort: check location state or go home
+      if (location.state?.from) {
+        navigate(location.state.from);
+      } else {
+        navigate("/");
+      }
     }
   };
 

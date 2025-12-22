@@ -1500,24 +1500,24 @@ const ResumeBuilder = () => {
                     }
                   `}</style>
                   <TabsList className="flex overflow-x-auto sm:grid sm:grid-cols-5 bg-slate-800/50 border border-white/10 p-1 mobile-tab-scroll w-full">
-                    <TabsTrigger value="personal" className="flex-shrink-0 min-w-[75px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[11px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 lg:px-4 py-2 sm:py-2">
-                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1" />
+                    <TabsTrigger value="personal" className="flex-shrink-0 min-w-[68px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                       <span className="whitespace-nowrap">Personal</span>
                     </TabsTrigger>
-                    <TabsTrigger value="experience" className="flex-shrink-0 min-w-[85px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[11px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 lg:px-4 py-2 sm:py-2">
-                      <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1" />
+                    <TabsTrigger value="experience" className="flex-shrink-0 min-w-[78px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">
+                      <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                       <span className="whitespace-nowrap">Experience</span>
                     </TabsTrigger>
-                    <TabsTrigger value="education" className="flex-shrink-0 min-w-[80px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[11px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 lg:px-4 py-2 sm:py-2">
-                      <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1" />
+                    <TabsTrigger value="education" className="flex-shrink-0 min-w-[73px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">
+                      <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                       <span className="whitespace-nowrap">Education</span>
                     </TabsTrigger>
-                    <TabsTrigger value="skills" className="flex-shrink-0 min-w-[60px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[11px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 lg:px-4 py-2 sm:py-2">
-                      <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1" />
+                    <TabsTrigger value="skills" className="flex-shrink-0 min-w-[54px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">
+                      <Code className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                       <span className="whitespace-nowrap">Skills</span>
                     </TabsTrigger>
-                    <TabsTrigger value="projects" className="flex-shrink-0 min-w-[70px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[11px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 lg:px-4 py-2 sm:py-2">
-                      <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1" />
+                    <TabsTrigger value="projects" className="flex-shrink-0 min-w-[64px] sm:min-w-0 data-[state=active]:bg-indigo-500 text-white/70 data-[state=active]:text-white text-[10px] sm:text-xs md:text-sm px-0.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">
+                      <Award className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                       <span className="whitespace-nowrap">Projects</span>
                     </TabsTrigger>
                   </TabsList>
@@ -1526,14 +1526,14 @@ const ResumeBuilder = () => {
                 {/* Personal Info Tab */}
                 <TabsContent value="personal" className="mt-2 sm:mt-3 md:mt-4 lg:mt-6">
                   <Card className="bg-slate-900/70 border-white/10 overflow-hidden">
-                    <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6">
+                    <CardHeader className="p-1.5 sm:p-3 md:p-4 lg:p-6">
                       <CardTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
                         <User className="w-5 h-5 text-indigo-400" />
                         Personal Information
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 sm:space-y-2.5 md:space-y-3 lg:space-y-4 p-2 sm:p-2.5 md:p-3 lg:p-4 xl:p-6 pt-0">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-4">
+                    <CardContent className="space-y-1.5 sm:space-y-2.5 md:space-y-3 lg:space-y-4 p-1.5 sm:p-2.5 md:p-3 lg:p-4 xl:p-6 pt-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-4">
                         <div className="space-y-2">
                           <Label className="text-white/80">Full Name *</Label>
                           <Input
