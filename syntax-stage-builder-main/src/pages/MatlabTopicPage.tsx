@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BackButton } from "@/components/BackButton";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,7 @@ const MatlabTopicPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b"><div className="container mx-auto px-6 py-4 flex justify-between"><div className="flex items-center gap-4"><Link to={`/matlab-learning?module=${currentModule.id}`} replace><Button variant="outline" size="sm">← Back to Module</Button></Link><h1 className="text-xl font-bold">{currentModule.title}</h1></div><Badge>{currentTopic.difficulty}</Badge></div></header>
+      <header className="bg-card border-b"><div className="container mx-auto px-6 py-4 flex justify-between"><div className="flex items-center gap-4"><BackButton label="Back to Module" fallback="/matlab-learning" className="mb-0" /><h1 className="text-xl font-bold">{currentModule.title}</h1></div><Badge>{currentTopic.difficulty}</Badge></div></header>
       <div className="container mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card><CardHeader><CardTitle>{currentTopic.title}</CardTitle><CardDescription>{currentTopic.duration}</CardDescription></CardHeader><CardContent><div className="whitespace-pre-line">{currentTopic.content}</div></CardContent></Card>

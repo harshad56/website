@@ -64,7 +64,14 @@ const redisUrl = process.env.REDIS_URL;
 if (redisUrl) {
     winston.info('Initializing Redis client...');
     redisClient = Redis.createClient({
-        url: redisUrl
+        url: redisUrl,
+        socket: {
+            connectTimeout: 5000,
+            reconnectStrategy: (retries) => {
+                if (retries > 5) return new Error('Max retries reached');
+                return Math.min(retries * 100, 3000);
+            }
+        }
     });
 
     redisClient.on('error', (err) => winston.warn('Redis Client Error', err));
@@ -294,34 +301,50 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
     try {
-        // Test Supabase connection
-        const isConnected = await testConnection();
-        if (!isConnected && process.env.NODE_ENV === 'production') {
-            logger.error('Failed to connect to Supabase');
-            process.exit(1);
-        } else if (!isConnected) {
-            logger.warn('Supabase connection failed, but continuing in development mode');
-        }
-
-        // Connect to Redis
-        if (redisClient) {
-            try {
-                await redisClient.connect();
-                logger.info('Connected to Redis');
-            } catch (err) {
-                logger.warn('Failed to connect to Redis, continuing without caching:', err.message);
-                // Don't kill the server if Redis fails, just disable it
-                redisClient = null;
-            }
-        } else {
-            logger.warn('Redis connection skipped (REDIS_URL not set)');
-        }
-
-        // Start server
+        // Start server immediately - don't block on DB connections
         server.listen(PORT, '0.0.0.0', () => {
             logger.info(`Server running on port ${PORT}`);
             console.log(`🚀 CodeAcademy Pro Backend running on port ${PORT}`);
         });
+
+        // Connect to services in background
+        Promise.all([
+            // Supabase connection check (non-blocking)
+            testConnection().then(isConnected => {
+                if (!isConnected) {
+                    logger.warn('Supabase connection failed');
+                } else {
+                    logger.info('Supabase connection successful');
+                }
+            }),
+
+            // Redis connection (non-blocking)
+            (async () => {
+                if (redisClient) {
+                    try {
+                        // Configure redis to not hang indefinitely
+                        redisClient.on('error', (err) => {
+                            // Suppress excessive logs for known connection issues
+                            if (err.code === 'ECONNREFUSED') {
+                                // Only log once or periodically if needed
+                            } else {
+                                logger.warn('Redis Client Error', err);
+                            }
+                        });
+                        await redisClient.connect();
+                        logger.info('Connected to Redis');
+                    } catch (err) {
+                        logger.warn('Failed to connect to Redis, continuing without caching:', err.message);
+                        redisClient = null;
+                    }
+                } else {
+                    logger.warn('Redis connection skipped (REDIS_URL not set)');
+                }
+            })()
+        ]).catch(err => {
+            logger.warn('Background service connection error:', err);
+        });
+
     } catch (error) {
         logger.error('Failed to start server:', error);
         process.exit(1);

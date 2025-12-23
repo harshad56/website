@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BackButton } from "@/components/BackButton";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,11 +93,7 @@ const PHPTopicPage = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <Link to={`/php-learning?module=${currentModule.id}`} replace>
-                <Button variant="outline" size="sm">
-                  ← Back to Module
-                </Button>
-              </Link>
+              <BackButton label="Back to Module" fallback="/php-learning" className="mb-0" />
               <div className="h-6 w-px bg-border" />
               <div>
                 <p className="text-sm text-muted-foreground uppercase tracking-wide">
@@ -206,8 +203,8 @@ const PHPTopicPage = () => {
                     key={topic.id}
                     onClick={() => navigate(`/php-learning/topic/${currentModule.id}/${topic.id}`)}
                     className={`w-full rounded-lg border px-4 py-3 text-left transition ${topic.id === currentTopic.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
                       }`}
                   >
                     <div className="flex items-center justify-between">

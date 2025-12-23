@@ -6,12 +6,14 @@ interface BackButtonProps {
   label?: string;
   className?: string;
   to?: string; // Optional: specify where to navigate to instead of using browser history
+  fallback?: string; // Optional: where to go if history is empty/short
 }
 
 export const BackButton = memo(({
   label = "Back",
   className = "",
-  to
+  to,
+  fallback
 }: BackButtonProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,13 +25,16 @@ export const BackButton = memo(({
       return;
     }
 
-    // 2. Fallback: check if there's history to go back to
-    // Priority: Browser history for single-page app feel
+    // 2. Priority: Browser history navigation (navigate(-1))
+    // We strictly use history back if we have history to pop, to avoid stack buildup
+    // window.history.length > 2 is a heuristic; most internal navigation chains > 2
     if (window.history.length > 2) {
       navigate(-1);
     } else {
-      // 3. Last resort: check location state or go home
-      if (location.state?.from) {
+      // 3. Fallback: explicit fallback route, state from, or home
+      if (fallback) {
+        navigate(fallback);
+      } else if (location.state?.from) {
         navigate(location.state.from);
       } else {
         navigate("/");
