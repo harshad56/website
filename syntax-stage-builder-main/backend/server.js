@@ -57,12 +57,19 @@ const io = new Server(server, {
     }
 });
 
-// Initialize Redis (optional for development)
+// Initialize Redis (optional for development and production)
 let redisClient = null;
-if (process.env.NODE_ENV === 'production') {
+const redisUrl = process.env.REDIS_URL;
+
+if (redisUrl) {
+    winston.info('Initializing Redis client...');
     redisClient = Redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379'
+        url: redisUrl
     });
+
+    redisClient.on('error', (err) => winston.warn('Redis Client Error', err));
+} else {
+    winston.warn('REDIS_URL not found, Redis disabled');
 }
 
 // Configure Winston logger
@@ -80,11 +87,19 @@ const logger = winston.createLogger({
                 winston.format.colorize(),
                 winston.format.simple()
             )
-        }),
-        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'logs/combined.log' })
+        })
     ]
 });
+
+// Add file transports only if we have write access (usually dev)
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
+        logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
+    } catch (e) {
+        console.warn('Could not initialize file logging:', e.message);
+    }
+}
 
 // Rate limiting - More lenient in development
 const limiter = rateLimit({
@@ -290,10 +305,16 @@ const startServer = async () => {
 
         // Connect to Redis
         if (redisClient) {
-            await redisClient.connect();
-            logger.info('Connected to Redis');
+            try {
+                await redisClient.connect();
+                logger.info('Connected to Redis');
+            } catch (err) {
+                logger.warn('Failed to connect to Redis, continuing without caching:', err.message);
+                // Don't kill the server if Redis fails, just disable it
+                redisClient = null;
+            }
         } else {
-            logger.warn('Redis connection skipped (development or REDIS_URL not set)');
+            logger.warn('Redis connection skipped (REDIS_URL not set)');
         }
 
         // Start server
