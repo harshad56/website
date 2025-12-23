@@ -236,17 +236,14 @@ npm start
 
 This section guides you through deploying the **Backend to Render** and **Frontend to Vercel OR Netlify** for free.
 
-### Part 1: Database Setup (MongoDB Atlas)
+### Part 1: Database Setup (Supabase)
 
-1. **Create Account**: Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up.
-2. **Create Cluster**: Create a new "Shared" cluster (Select "M0 Sandbox" for free tier).
-3. **Network Access**: Go to "Network Access" in the sidebar -> "Add IP Address" -> "Allow Access from Anywhere" (`0.0.0.0/0`).
-4. **Database User**: Go to "Database Access" -> "Add New Database User". Create a user (e.g., `admin`) and password. **Remember this password**.
-5. **Get Connection String**:
-   - Click "Connect" on your cluster.
-   - Select "Drivers".
-   - Copy the string: `mongodb+srv://admin:<password>@cluster0.example.mongodb.net/?retryWrites=true&w=majority`
-   - Replace `<password>` with your actual password.
+1. **Create Account**: Go to [Supabase](https://supabase.com/) and sign up.
+2. **Create Project**: Create a new project. Give it a name and secure password.
+3. **Get API Keys**: 
+   - Go to Project Settings -> API.
+   - You will need `Project URL` (SUPABASE_URL).
+   - You will need `service_role` secret (SUPABASE_SERVICE_ROLE_KEY). **Do not use the anon key on the backend**.
 
 ### Part 2: Backend Deployment (Render)
 
@@ -264,7 +261,8 @@ This section guides you through deploying the **Backend to Render** and **Fronte
 4. **Environment Variables**:
    - Scroll down to "Environment Variables" and add these:
      - `NODE_ENV`: `production`
-     - `MONGODB_URI`: (Paste your MongoDB connection string from Part 1)
+     - `SUPABASE_URL`: (Paste your Project URL from Part 1)
+     - `SUPABASE_SERVICE_ROLE_KEY`: (Paste your service_role secret from Part 1)
      - `JWT_SECRET`: (Generate a random string)
      - `FRONTEND_URL`: `https://your-frontend-project.vercel.app` (You will update this later after deploying frontend)
 5. **Deploy**: Click "Create Web Service".
@@ -375,7 +373,8 @@ docker build -t codeacademy-pro:latest .
 
 ```bash
 docker run -p 3000:3000 -p 5000:5000 \
-  -e MONGODB_URI=mongodb://mongo:27017/codeacademy \
+  -e SUPABASE_URL=your_supabase_url \
+  -e SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_key \
   -e NODE_ENV=production \
   codeacademy-pro:latest
 ```
@@ -429,9 +428,9 @@ taskkill /PID <PID> /F
 
 ### Issue: Database Connection Failed
 
-1. Verify MongoDB is running
-2. Check `MONGODB_URI` format
-3. Verify database credentials
+1. Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are correct
+2. Check if your IP is allowed in Supabase settings (if restriction is enabled)
+3. Verify database tables exist (Supabase project is set up correctly)
 4. Check network connectivity
 
 ### Issue: Build Fails
