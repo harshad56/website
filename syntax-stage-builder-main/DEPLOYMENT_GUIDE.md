@@ -319,45 +319,41 @@ This section guides you through deploying the **Backend to Render** and **Fronte
 
 ## Production Deployment
 
-### Deployment Checklist
+### 1. Backend Deployment (Render)
 
-- [ ] Environment variables configured for production
-- [ ] Database backups enabled
-- [ ] SSL certificates obtained
-- [ ] Monitoring and logging setup
-- [ ] CDN configuration (if applicable)
-- [ ] Email service verified
-- [ ] Payment gateway keys secured
-- [ ] API rate limiting configured
+1. Create a new **Web Service** on Render.
+2. Connect your GitHub repository.
+3. **Build Command**: `cd backend && npm install`
+4. **Start Command**: `cd backend && node server.js`
+5. **Environment Variables**:
+   Add the following variables in the Render dashboard:
+   - `NODE_ENV`: `production`
+   - `PORT`: `5000`
+   - `SUPABASE_URL`: `your_supabase_project_url`
+   - `SUPABASE_SERVICE_ROLE_KEY`: `your_supabase_service_role_key`
+   - `JWT_SECRET`: `your_jwt_secret_key`
+   - `GOOGLE_CLIENT_ID`: `your_google_client_id`
+   - `GOOGLE_CLIENT_SECRET`: `your_google_client_secret`
+   - `GITHUB_CLIENT_ID`: `your_github_client_id`
+   - `GITHUB_CLIENT_SECRET`: `your_github_client_secret`
+   - `FRONTEND_URL`: `https://your-vercel-app.vercel.app` (Your Vercel Frontend URL)
+   - `BACKEND_URL`: `https://your-render-app.onrender.com` (Your Render Backend URL - **CRITICAL**)
+   - `REDIS_URL`: `your_redis_url` (Optional)
+   - `STRIPE_SECRET_KEY`: `your_stripe_key` (Optional)
 
-### Deploy on Vercel (Frontend Only)
+   > **Note**: `BACKEND_URL` must not have a trailing slash.
 
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables
-4. Deploy
+### 2. Frontend Deployment (Vercel)
 
-```bash
-npm run build  # Vercel automatically runs this
-```
+1. Import your GitHub repository in Vercel.
+2. **Build Command**: `npm run build`
+3. **Output Directory**: `dist`
+4. **Environment Variables**:
+   Add the following variables in the Vercel dashboard settings:
+   - `VITE_API_URL`: `https://your-render-app.onrender.com/api` (**CRITICAL**: Must point to your Render backend + /api)
+   - `VITE_SOCKET_URL`: `https://your-render-app.onrender.com` (Must point to your Render backend root)
 
-### Deploy on AWS/GCP/Azure (Full Stack)
-
-1. Set up cloud VM/Container instance
-2. Configure environment variables
-3. Install dependencies: `npm install`
-4. Build application: `npm run build`
-5. Start server: `npm start`
-6. Set up CI/CD pipeline (GitHub Actions, GitLab CI, etc.)
-
-### Deploy on Heroku
-
-```bash
-heroku create your-app-name
-heroku config:set NODE_ENV=production
-heroku config:set MONGODB_URI=<your-mongodb-uri>
-git push heroku main
-```
+   > **Important**: After adding these variables, you must **Redeploy** for them to take effect.
 
 ---
 

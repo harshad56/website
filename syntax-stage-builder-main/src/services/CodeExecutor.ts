@@ -27,6 +27,8 @@ interface WorkerMessage {
   data: any;
 }
 
+import CodeWorker from '../workers/code-worker.js?worker';
+
 class CodeExecutor {
   private worker: Worker | null = null;
   private messageHandlers: Map<string, (data: any) => void> = new Map();
@@ -48,8 +50,8 @@ class CodeExecutor {
     });
 
     try {
-      this.worker = new Worker('/code-worker.js');
-      
+      this.worker = new CodeWorker();
+
       this.worker.onmessage = (event) => {
         const message: WorkerMessage = event.data;
         this.handleWorkerMessage(message);
@@ -85,7 +87,7 @@ class CodeExecutor {
       }
 
       const messageId = `msg_${Date.now()}_${Math.random()}`;
-      
+
       this.messageHandlers.set(messageId, (responseData) => {
         resolve(responseData);
       });
@@ -216,7 +218,7 @@ class CodeExecutor {
           return content.replace(/['"]/g, '');
         })
         .join('\n');
-      
+
       return { output };
     }
 
@@ -238,7 +240,7 @@ class CodeExecutor {
           return content.replace(/['"]/g, '');
         })
         .join('\n');
-      
+
       return { output };
     }
 
@@ -259,7 +261,7 @@ class CodeExecutor {
           return content.replace(/['"]/g, '');
         })
         .join('\n');
-      
+
       return { output };
     }
 
@@ -280,7 +282,7 @@ class CodeExecutor {
           return content.replace(/['"]/g, '').replace(/endl/g, '\n');
         })
         .join('\n');
-      
+
       return { output };
     }
 
@@ -298,7 +300,7 @@ class CodeExecutor {
         const passed =
           actualOutput.includes(expectedOutput) ||
           actualOutput === expectedOutput;
-        
+
         results.push({
           ...testCase,
           passed

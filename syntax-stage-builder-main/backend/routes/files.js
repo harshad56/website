@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
-    limits: { 
+    limits: {
         fileSize: 100 * 1024 * 1024, // 100MB
         fieldSize: 10 * 1024 * 1024, // 10MB for other fields
         files: 1 // Only one file at a time
@@ -63,7 +63,7 @@ const handleMulterError = (err, req, res, next) => {
 // @route   POST /api/files/upload
 // @desc    Upload a file (PDF, DOCX, etc.) and return a URL
 // @access  Private
-router.post('/upload', authenticateToken, upload.single('file'), handleMulterError, async(req, res) => {
+router.post('/upload', authenticateToken, upload.single('file'), handleMulterError, async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -72,7 +72,7 @@ router.post('/upload', authenticateToken, upload.single('file'), handleMulterErr
             });
         }
 
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const relativePath = `/uploads/documents/${req.file.filename}`;
 
         const fileUrl = `${baseUrl}${relativePath}`;
@@ -106,10 +106,10 @@ router.post('/upload', authenticateToken, upload.single('file'), handleMulterErr
 // @route   GET /api/files/:id
 // @desc    Get file by ID
 // @access  Private
-router.get('/:id', authenticateToken, async(req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         // For now, just echo back a constructed URL based on file ID
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
         const relativePath = `/uploads/documents/${req.params.id}`;
 
         res.json({

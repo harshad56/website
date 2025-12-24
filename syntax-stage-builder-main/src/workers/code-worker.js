@@ -75,7 +75,7 @@ class CodeSandbox {
                 executionTime: Math.round(executionTime),
                 memoryUsage: 0,
                 language: language,
-                version: SUPPORTED_LANGUAGES[language] ? .version || 'unknown'
+                version: SUPPORTED_LANGUAGES[language]?.version || 'unknown'
             };
         }
     }
@@ -150,8 +150,8 @@ class CodeSandbox {
                     error: (...args) => this.errorBuffer += args.join(' ') + '\n',
                     warn: (...args) => this.outputBuffer += args.join(' ') + '\n'
                 },
-                setTimeout: () => {},
-                setInterval: () => {},
+                setTimeout: () => { },
+                setInterval: () => { },
                 fetch: () => Promise.reject(new Error('Network requests not allowed')),
                 XMLHttpRequest: () => { throw new Error('Network requests not allowed'); }
             };
@@ -347,7 +347,7 @@ class CodeSandbox {
 const sandbox = new CodeSandbox();
 
 // Handle messages from main thread
-self.addEventListener('message', async(event) => {
+self.addEventListener('message', async (event) => {
     const { id, type, data } = event.data;
 
     try {
