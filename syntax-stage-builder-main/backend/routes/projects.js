@@ -94,9 +94,9 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
   try {
     const projectId = req.params.id;
     const userId = req.user.id;
-    
+
     winston.info(`Creating checkout for project ${projectId}, user ${userId}`);
-    
+
     let project;
     try {
       project = await db.getProjectById(projectId);
@@ -106,7 +106,7 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
         stack: dbError.stack,
         projectId
       });
-      
+
       // If Supabase is not configured, return error
       if (dbError.message?.includes('Supabase not configured')) {
         winston.error('Supabase not configured');
@@ -115,7 +115,7 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
           message: 'Database not configured. Please configure Supabase.',
         });
       }
-      
+
       throw dbError;
     }
 
@@ -132,22 +132,22 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
     // Free project, no order needed - but still return proper format
     if (!price || price === 0 || isNaN(price)) {
       winston.info(`Free project checkout for ${projectId}`);
-      return res.json({ 
-        success: true, 
-        data: { 
-          amount: 0, 
-          currency: 'INR', 
+      return res.json({
+        success: true,
+        data: {
+          amount: 0,
+          currency: 'INR',
           order_id: `free-${Date.now()}`,
           razorpayOrderId: `free-${Date.now()}`,
           key: process.env.RAZORPAY_KEY_ID,
           keyId: process.env.RAZORPAY_KEY_ID,
-        } 
+        }
       });
     }
 
     const razorpay = getRazorpay();
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-    
+
     if (!razorpay) {
       winston.error(`Razorpay not configured for project ${projectId}`);
       return res.status(500).json({
@@ -168,9 +168,9 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
       const shortProjectId = projectId.substring(0, 8);
       const timestamp = Date.now().toString().slice(-8); // Last 8 digits
       const receipt = `proj_${shortProjectId}_${timestamp}`;
-      
+
       winston.info(`Creating order with receipt: ${receipt} (length: ${receipt.length})`);
-      
+
       const order = await razorpay.orders.create({
         amount: Math.round(price * 100),
         currency: 'INR',
@@ -213,8 +213,8 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
       projectId: req.params.id,
       userId: req.user?.id
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to create checkout',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -286,15 +286,15 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
         // Ensure amount is correctly set in rupees (project.price is already in rupees)
         const purchaseAmount = Number(project.price || 0);
         winston.info(`Creating purchase record with amount: ₹${purchaseAmount} for project ${projectId}`);
-        
+
         purchase = await db.createProjectPurchase({
-        user_id: userId,
-        project_id: projectId,
-        amount: purchaseAmount, // Amount in rupees
-        payment_status: 'completed',
-        razorpay_order_id: razorpay_order_id,
-        razorpay_payment_id: razorpay_payment_id,
-        razorpay_signature: razorpay_signature,
+          user_id: userId,
+          project_id: projectId,
+          amount: purchaseAmount, // Amount in rupees
+          payment_status: 'completed',
+          razorpay_order_id: razorpay_order_id,
+          razorpay_payment_id: razorpay_payment_id,
+          razorpay_signature: razorpay_signature,
         });
         winston.info(`Created purchase for project ${projectId}, user ${userId}, amount: ₹${purchaseAmount}`);
       } catch (createError) {
@@ -319,7 +319,7 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
           razorpay_payment_id: razorpay_payment_id,
           razorpay_signature: razorpay_signature,
         };
-        
+
         // Ensure amount is set correctly (in case it was missing or 0)
         const currentAmount = Number(purchase.amount || 0);
         const projectAmount = Number(project.price || 0);
@@ -327,7 +327,7 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
           updateData.amount = projectAmount;
           winston.info(`Updating project purchase amount from ₹${currentAmount} to ₹${projectAmount}`);
         }
-        
+
         purchase = await db.updateProjectPurchase(purchase.id, updateData);
         const finalAmount = updateData.amount || purchase.amount;
         winston.info(`Updated existing purchase for project ${projectId}, user ${userId}, amount: ₹${finalAmount || 'unchanged'}`);
@@ -351,8 +351,8 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
       projectId: req.params.id,
       userId: req.user?.id
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to verify payment',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -386,35 +386,45 @@ router.post('/:id/download', authenticateToken, async (req, res) => {
 
       if (!purchase || (purchase.payment_status !== 'completed' && purchase.payment_status !== 'free')) {
         winston.warn(`Download denied for project ${projectId}, user ${userId}. Purchase status:`, purchase?.payment_status || 'not found');
-        return res.status(403).json({ 
-          success: false, 
-          message: 'You must purchase this project before downloading. Please wait a moment and try again.' 
+        return res.status(403).json({
+          success: false,
+          message: 'You must purchase this project before downloading. Please wait a moment and try again.'
         });
       }
       winston.info(`Download allowed for project ${projectId}, user ${userId}, purchase status: ${purchase.payment_status}`);
     }
 
     await db.trackProjectDownload(userId, projectId);
-    
+
     winston.info(`Download request for project ${projectId}, user ${userId}`, {
       has_download_url: !!project.download_url,
       has_setup_pdf_url: !!project.setup_pdf_url
     });
-    
+
     if (!project.download_url && !project.setup_pdf_url) {
       winston.warn(`No download URLs configured for project ${projectId}`);
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Download URLs are not configured for this project. Please contact support.' 
+      return res.status(404).json({
+        success: false,
+        message: 'Download URLs are not configured for this project. Please contact support.'
       });
     }
-    
-    res.json({ 
-      success: true, 
-      data: { 
-        download_url: project.download_url || null, 
-        setup_pdf_url: project.setup_pdf_url || null 
-      } 
+
+    // Sanitize URLs to use correct backend URL in production
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    res.json({
+      success: true,
+      data: {
+        download_url: sanitizeUrl(project.download_url),
+        setup_pdf_url: sanitizeUrl(project.setup_pdf_url)
+      }
     });
   } catch (error) {
     winston.error('Download project error:', {
@@ -423,8 +433,8 @@ router.post('/:id/download', authenticateToken, async (req, res) => {
       projectId: req.params.id,
       userId: req.user?.id
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to process download',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });

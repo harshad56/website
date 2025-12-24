@@ -20,7 +20,7 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     // Admin can see all materials, public users only see active ones
     const includeInactive = req.user && req.user.role === 'admin';
-    
+
     winston.info(`Fetching study materials (includeInactive: ${includeInactive}, user: ${req.user ? req.user.email : 'anonymous'})`);
     const materials = await db.getStudyMaterials(includeInactive);
     winston.info(`Fetched ${materials.length} study materials`);
@@ -30,8 +30,8 @@ router.get('/', optionalAuth, async (req, res) => {
       error: error.message,
       stack: error.stack
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to fetch study materials',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -76,8 +76,8 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
       stack: error.stack,
       body: req.body
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to create study material',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -98,8 +98,8 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
       materialId: req.params.id,
       body: req.body
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to update study material',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -151,15 +151,15 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
     const shortUserId = userId.substring(0, 8);
     const timestamp = Date.now().toString().slice(-10);
     const receipt = `mat_${shortMaterialId}_${shortUserId}_${timestamp}`.substring(0, 40);
-    
+
     winston.info(`Creating Razorpay order for study material ${materialId}, receipt: ${receipt}`);
-    
+
     const order = await razorpay.orders.create({
       amount: Math.round(material.price * 100),
       currency: 'INR',
       receipt: receipt,
     });
-    
+
     winston.info(`Razorpay order created: ${order.id}`);
 
     res.json({
@@ -178,8 +178,8 @@ router.post('/:id/checkout', authenticateToken, async (req, res) => {
       materialId: req.params.id,
       userId: req.user?.id
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to create checkout',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -231,7 +231,7 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
         // Ensure amount is correctly set in rupees (material.price is already in rupees)
         const purchaseAmount = Number(material.price || 0);
         winston.info(`Creating purchase record with amount: ₹${purchaseAmount} for material ${materialId}`);
-        
+
         const purchaseData = {
           user_id: userId,
           material_id: materialId, // Database column is material_id (not study_material_id)
@@ -240,10 +240,10 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
           order_id: razorpay_order_id || `order_${Date.now()}`, // Required field, use Razorpay order ID or generate one
           payment_id: razorpay_payment_id || null
         };
-        
+
         // Note: razorpay_order_id, razorpay_payment_id, razorpay_signature columns don't exist
         // The table only has order_id and payment_id columns
-        
+
         purchase = await db.createStudyMaterialPurchase(purchaseData);
         winston.info(`Purchase record created: ${purchase.id}`);
       } catch (createError) {
@@ -263,7 +263,7 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
         const updateData = {
           payment_status: 'completed'
         };
-        
+
         // Ensure amount is set correctly (in case it was missing or 0)
         const currentAmount = Number(purchase.amount || 0);
         const materialAmount = Number(material.price || 0);
@@ -271,24 +271,24 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
           updateData.amount = materialAmount;
           winston.info(`Updating purchase amount from ₹${currentAmount} to ₹${materialAmount}`);
         }
-        
+
         // Update order_id if provided (required field)
         if (razorpay_order_id) {
           updateData.order_id = razorpay_order_id;
         } else if (purchase.order_id) {
           updateData.order_id = purchase.order_id; // Keep existing if not provided
         }
-        
+
         // Update payment_id if provided
         if (razorpay_payment_id) {
           updateData.payment_id = razorpay_payment_id;
         } else if (purchase.payment_id) {
           updateData.payment_id = purchase.payment_id; // Keep existing if not provided
         }
-        
+
         // Note: razorpay_order_id, razorpay_payment_id, razorpay_signature columns don't exist
         // The table only has order_id and payment_id columns
-        
+
         purchase = await db.updateStudyMaterialPurchase(purchase.id, updateData);
         const finalAmount = updateData.amount || purchase.amount;
         winston.info(`Purchase record updated: ${purchase.id}, amount: ₹${finalAmount || 'unchanged'}`);
@@ -312,8 +312,8 @@ router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
       userId: req.user?.id,
       body: req.body
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to verify payment',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -339,15 +339,15 @@ router.post('/:id/download', authenticateToken, async (req, res) => {
       let purchase = null;
       let attempts = 0;
       const maxAttempts = 5;
-      
+
       while (attempts < maxAttempts) {
         purchase = await db.getStudyMaterialPurchase(userId, materialId);
-        
+
         if (purchase && (purchase.payment_status === 'completed' || purchase.payment_status === 'free')) {
           winston.info(`Purchase found for study material ${materialId}, attempt ${attempts + 1}`);
           break;
         }
-        
+
         attempts++;
         if (attempts < maxAttempts) {
           winston.info(`Purchase not found, retrying... (attempt ${attempts}/${maxAttempts})`);
@@ -362,17 +362,27 @@ router.post('/:id/download', authenticateToken, async (req, res) => {
     }
 
     await db.trackStudyMaterialDownload(userId, materialId);
-    
-    const downloadData = {
-      download_url: material.file_url,
-      setup_pdf_url: material.setup_pdf_url
+
+    // Sanitize URLs to use correct backend URL in production
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
     };
-    
+
+    const downloadData = {
+      download_url: sanitizeUrl(material.file_url),
+      setup_pdf_url: sanitizeUrl(material.setup_pdf_url)
+    };
+
     if (!downloadData.download_url && !downloadData.setup_pdf_url) {
       winston.warn(`No download URLs configured for study material ${materialId}`);
       return res.status(404).json({ success: false, message: 'Download URLs are not configured for this material' });
     }
-    
+
     winston.info(`Download URLs returned for study material ${materialId}`);
     res.json({ success: true, data: downloadData });
   } catch (error) {
@@ -382,8 +392,8 @@ router.post('/:id/download', authenticateToken, async (req, res) => {
       materialId: req.params.id,
       userId: req.user?.id
     });
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: error.message || 'Failed to process download',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
