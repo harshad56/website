@@ -22,7 +22,10 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
     );
   }
 
-  if (isAuthenticated && isAdmin) {
+  // Explicitly check for the admin email as requested for strict security
+  const isAuthorizedAdmin = isAuthenticated && isAdmin && user?.email === 'harshadbagal77@gmail.com';
+
+  if (isAuthorizedAdmin) {
     return <>{children}</>;
   }
 
