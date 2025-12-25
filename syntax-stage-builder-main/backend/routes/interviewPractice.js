@@ -19,7 +19,7 @@ if (useOpenRouter) {
 
 const openai = new OpenAI(openaiConfig);
 const DEFAULT_MODEL = useOpenRouter
-    ? (process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free')
+    ? (process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free')
     : 'gpt-3.5-turbo';
 
 // Interview question categories
