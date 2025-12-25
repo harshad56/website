@@ -20,10 +20,10 @@ if (useOpenRouter) {
 const openai = new OpenAI(openaiConfig);
 
 const FALLBACK_MODELS = [
+    'google/gemini-2.0-flash-exp:free',
     process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
-    'microsoft/phi-3-mini-128k-instruct:free',
-    'google/gemini-2.0-flash-exp:free'
+    'microsoft/phi-3-mini-128k-instruct:free'
 ];
 
 const DEFAULT_MODEL = FALLBACK_MODELS[0];
