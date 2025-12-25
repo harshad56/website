@@ -67,7 +67,7 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-cover scale-110" />
               </div>
               <span className="text-xl font-bold gradient-text">CodeAcademy Pro</span>
             </div>

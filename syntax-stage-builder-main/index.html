@@ -1,90 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>CodeAcademy Pro - Learn Programming Online | Interactive Coding Courses</title>
-    <meta name="description" content="Master programming with interactive courses, real-world projects, and AI-powered tutoring. Learn Python, JavaScript, Java, C++, and 20+ programming languages. Start coding today!" />
-    <meta name="author" content="CodeAcademy Pro" />
-    <meta name="keywords" content="programming, coding, learn to code, programming courses, Python, JavaScript, Java, C++, web development, software engineering, coding bootcamp, online coding courses, programming tutorials" />
-    <meta name="robots" content="index, follow" />
-    <meta name="language" content="English" />
-    <meta name="revisit-after" content="7 days" />
 
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="CodeAcademy Pro - Learn Programming Online" />
-    <meta property="og:description" content="Master programming with interactive courses, real-world projects, and AI-powered tutoring. Learn Python, JavaScript, Java, C++, and 20+ languages." />
-    <meta property="og:image" content="/favicon.png" />
-    <meta property="og:url" content="http://localhost:3000" />
-    <meta property="og:site_name" content="CodeAcademy Pro" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>CodeAcademy Pro - Learn Programming Online | Interactive Coding Courses</title>
+  <meta name="description"
+    content="Master programming with interactive courses, real-world projects, and AI-powered tutoring. Learn Python, JavaScript, Java, C++, and 20+ programming languages. Start coding today!" />
+  <meta name="author" content="CodeAcademy Pro" />
+  <meta name="keywords"
+    content="programming, coding, learn to code, programming courses, Python, JavaScript, Java, C++, web development, software engineering, coding bootcamp, online coding courses, programming tutorials" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="English" />
+  <meta name="revisit-after" content="7 days" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="CodeAcademy Pro - Learn Programming Online" />
-    <meta name="twitter:description" content="Master programming with interactive courses, real-world projects, and AI-powered tutoring." />
-    <meta name="twitter:image" content="/favicon.png" />
+  <link rel="icon" type="image/png" href="/brand-icon.png" />
+  <link rel="apple-touch-icon" href="/brand-icon.png" />
 
-    <!-- Performance: Resource Hints -->
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://api.dicebear.com" crossorigin />
-    <link rel="dns-prefetch" href="https://api.dicebear.com" />
-    <link rel="preconnect" href="http://localhost:5000" crossorigin />
-    <link rel="dns-prefetch" href="http://localhost:5000" />
-    
-    <!-- Preload critical resources -->
-    <link rel="modulepreload" href="/src/main.tsx" />
-    
-    <!-- Prefetch likely next pages -->
-    <link rel="prefetch" href="/python-learning" />
-    <link rel="prefetch" href="/javascript-learning" />
-    
-    <!-- Performance: Reduce render-blocking -->
-    <link rel="preload" as="style" href="/src/index.css" />
-    
-    <!-- Sitemap -->
-    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-  </head>
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="CodeAcademy Pro - Learn Programming Online" />
+  <meta property="og:description"
+    content="Master programming with interactive courses, real-world projects, and AI-powered tutoring. Learn Python, JavaScript, Java, C++, and 20+ languages." />
+  <meta property="og:image" content="/brand-icon.png" />
+  <meta property="og:url" content="http://localhost:3000" />
+  <meta property="og:site_name" content="CodeAcademy Pro" />
 
-  <body>
-    <div id="root"></div>
-    <!-- Razorpay Checkout JS (for payments in India: UPI, cards, netbanking, wallets) -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
-    <script type="module" src="/src/main.tsx"></script>
-    <!-- Service Worker: Disabled in development to prevent interference -->
-    <script>
-      // Immediately unregister service worker in development
-      if ('serviceWorker' in navigator) {
-        const isDevelopment = window.location.hostname === 'localhost' || 
-                              window.location.hostname === '127.0.0.1' ||
-                              window.location.hostname.includes('.local');
-        
-        if (isDevelopment) {
-          // Development: Immediately unregister all service workers
-          navigator.serviceWorker.getRegistrations().then((registrations) => {
-            registrations.forEach((registration) => {
-              registration.unregister().then(() => {
-                console.log('Service worker unregistered for development');
-              });
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CodeAcademy Pro - Learn Programming Online" />
+  <meta name="twitter:description"
+    content="Master programming with interactive courses, real-world projects, and AI-powered tutoring." />
+  <meta name="twitter:image" content="/brand-icon.png" />
+
+  <!-- Performance: Resource Hints -->
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+  <link rel="dns-prefetch" href="https://images.unsplash.com" />
+  <link rel="preconnect" href="https://api.dicebear.com" crossorigin />
+  <link rel="dns-prefetch" href="https://api.dicebear.com" />
+  <link rel="preconnect" href="http://localhost:5000" crossorigin />
+  <link rel="dns-prefetch" href="http://localhost:5000" />
+
+  <!-- Preload critical resources -->
+  <link rel="modulepreload" href="/src/main.tsx" />
+
+  <!-- Prefetch likely next pages -->
+  <link rel="prefetch" href="/python-learning" />
+  <link rel="prefetch" href="/javascript-learning" />
+
+  <!-- Performance: Reduce render-blocking -->
+  <link rel="preload" as="style" href="/src/index.css" />
+
+  <!-- Sitemap -->
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- Razorpay Checkout JS (for payments in India: UPI, cards, netbanking, wallets) -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+  <script type="module" src="/src/main.tsx"></script>
+  <!-- Service Worker: Disabled in development to prevent interference -->
+  <script>
+    // Immediately unregister service worker in development
+    if ('serviceWorker' in navigator) {
+      const isDevelopment = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('.local');
+
+      if (isDevelopment) {
+        // Development: Immediately unregister all service workers
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            registration.unregister().then(() => {
+              console.log('Service worker unregistered for development');
             });
           });
-        } else {
-          // Production: Register service worker after page load
-          window.addEventListener('load', () => {
-            setTimeout(() => {
-              navigator.serviceWorker.register('/sw.js')
-                .catch(() => {}); // Silent fail
-            }, 1000);
-          });
-        }
+        });
+      } else {
+        // Production: Register service worker after page load
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            navigator.serviceWorker.register('/sw.js')
+              .catch(() => { }); // Silent fail
+          }, 1000);
+        });
       }
-    </script>
-  </body>
+    }
+  </script>
+</body>
+
 </html>
