@@ -18,9 +18,55 @@ if (useOpenRouter) {
 }
 
 const openai = new OpenAI(openaiConfig);
-const DEFAULT_MODEL = useOpenRouter
-    ? (process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free')
-    : 'gpt-3.5-turbo';
+
+const FALLBACK_MODELS = [
+    process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
+    'mistralai/mistral-7b-instruct:free',
+    'microsoft/phi-3-mini-128k-instruct:free',
+    'google/gemini-2.0-flash-exp:free'
+];
+
+const DEFAULT_MODEL = FALLBACK_MODELS[0];
+
+/**
+ * Helper to call OpenAI/OpenRouter with retries and model fallbacks
+ */
+async function createChatCompletionWithRetry(params, maxRetries = 2) {
+    let lastError;
+
+    // Try each model in the fallback chain
+    for (const model of FALLBACK_MODELS) {
+        let retries = 0;
+        while (retries <= maxRetries) {
+            try {
+                winston.info(`🤖 Attempting completion with model: ${model} (Attempt ${retries + 1})`);
+                const completion = await openai.chat.completions.create({
+                    ...params,
+                    model: model
+                });
+                winston.info(`✅ Completion successful with ${model}`);
+                return completion;
+            } catch (error) {
+                lastError = error;
+                const isRateLimit = error.status === 429;
+                const isRetryable = isRateLimit || error.status >= 500;
+
+                if (!isRetryable || retries === maxRetries) {
+                    winston.warn(`⚠️ Model ${model} failed: ${error.message}. ${retries === maxRetries ? 'Max retries reached.' : 'Not retryable.'}`);
+                    break; // Move to next model
+                }
+
+                // Exponential backoff for retries
+                const delay = Math.pow(2, retries) * 1000;
+                winston.info(`⏳ Rate limited or server error. Retrying ${model} in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                retries++;
+            }
+        }
+    }
+
+    throw lastError;
+}
 
 // Interview question categories
 const QUESTION_CATEGORIES = {
@@ -82,8 +128,7 @@ Format as JSON array of objects with:
 
 Return only the JSON array, no additional text.`;
 
-        const completion = await openai.chat.completions.create({
-            model: DEFAULT_MODEL,
+        const completion = await createChatCompletionWithRetry({
             messages: [{
                 role: "system",
                 content: "You are an expert interview coach specializing in tech industry interviews. Generate realistic, helpful interview questions."
@@ -165,8 +210,7 @@ router.post('/chat', async (req, res) => {
             }
         ];
 
-        const completion = await openai.chat.completions.create({
-            model: DEFAULT_MODEL,
+        const completion = await createChatCompletionWithRetry({
             messages: messages,
             max_tokens: 1000,
             temperature: 0.7,
@@ -178,6 +222,7 @@ router.post('/chat', async (req, res) => {
         res.json({
             success: true,
             reply: reply,
+            model: completion.model,
             usage: completion.usage
         });
 
@@ -233,8 +278,7 @@ Be constructive and specific. Focus on:
 
 Return only the JSON object, no additional text.`;
 
-        const completion = await openai.chat.completions.create({
-            model: DEFAULT_MODEL,
+        const completion = await createChatCompletionWithRetry({
             messages: [{
                 role: "system",
                 content: "You are an expert interview coach providing constructive feedback to help candidates improve."
@@ -306,8 +350,7 @@ Format as JSON:
 
 Return only the JSON object.`;
 
-        const completion = await openai.chat.completions.create({
-            model: DEFAULT_MODEL,
+        const completion = await createChatCompletionWithRetry({
             messages: [{
                 role: "system",
                 content: "You are an expert career coach specializing in tech industry interview preparation."
