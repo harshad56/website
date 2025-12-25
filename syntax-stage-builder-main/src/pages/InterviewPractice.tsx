@@ -58,7 +58,7 @@ const InterviewPractice = () => {
 
   const [activeTab, setActiveTab] = useState("chat");
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hi! I'm your AI Interview Coach. Ask me anything about coding, algorithms, or interview prep!" }
+    { role: 'assistant', content: "Hi! I'm your AI Interview Coach. I can help you practice technical questions, refine your behavioral answers, or explain complex programming concepts. What's on your mind today?" }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -110,21 +110,13 @@ const InterviewPractice = () => {
       setIsLoading(false);
     }
   };
-  const [isEvaluating, setIsEvaluating] = useState(false);
 
   const [qaLanguages, setQaLanguages] = useState<any[]>([]);
   const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
 
-
-
-  // Load packages on mount
   useEffect(() => {
     loadQaLanguages();
   }, [user]);
-
-
-
-
 
   const loadQaLanguages = async () => {
     try {
@@ -140,105 +132,6 @@ const InterviewPractice = () => {
     }
   };
 
-
-
-  const generateQuestions = async () => {
-    setIsGenerating(true);
-    try {
-      const response = await fetch(`${apiUrl}/interview-practice/generate-questions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          category: questionCategory,
-          difficulty: difficulty,
-          count: 5,
-          role: 'Software Engineer'
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success && data.questions) {
-        setQuestions(data.questions);
-        setCurrentQuestionIndex(0);
-        setUserAnswer("");
-        setFeedback(null);
-        toast({
-          title: "Questions generated!",
-          description: `Generated ${data.questions.length} ${questionCategory} questions.`,
-        });
-      } else {
-        throw new Error(data.message || 'Failed to generate questions');
-      }
-    } catch (error) {
-      console.error('Error generating questions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate questions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const evaluateAnswer = async () => {
-    if (!userAnswer.trim()) {
-      toast({
-        title: "Answer required",
-        description: "Please provide an answer before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsEvaluating(true);
-    try {
-      const response = await fetch(`${apiUrl}/interview-practice/evaluate-answer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: questions[currentQuestionIndex].question,
-          answer: userAnswer,
-          category: questionCategory
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success && data.feedback) {
-        setFeedback(data.feedback);
-        toast({
-          title: "Answer evaluated!",
-          description: `Your score: ${data.feedback.score}/100`,
-        });
-      } else {
-        throw new Error(data.message || 'Failed to evaluate answer');
-      }
-    } catch (error) {
-      console.error('Error evaluating answer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to evaluate answer. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsEvaluating(false);
-    }
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setUserAnswer("");
-      setFeedback(null);
-    }
-  };
-
-
-
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -251,230 +144,238 @@ const InterviewPractice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-violet-500/30 overflow-hidden relative">
       <SEO
         title="Interview Practice Studio - AI-Powered Interview Prep"
-        description="Practice interviews with AI-powered questions, get real-time feedback, and book sessions with industry mentors. Prepare for your dream tech job."
-        keywords="interview practice, interview prep, mock interview, AI interview, technical interview, behavioral interview, interview coaching"
+        description="Practice interviews with AI-powered questions, get real-time feedback, and prepare for your dream tech job."
+        keywords="interview practice, interview prep, mock interview, AI interview, technical interview"
         structuredData={structuredData}
       />
 
-      {/* Header */}
-      <div className="container mx-auto px-6 pt-6">
-        <BackButton label="Back to Home" className="text-white" to="/" />
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-indigo-600/10 blur-[80px] rounded-full" />
       </div>
 
-      {/* Hero Section */}
-      <motion.div
-        className="bg-gradient-to-r from-violet-900/40 via-blue-900/40 to-violet-900/40 border-b border-white/10"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="container mx-auto px-6 py-20 text-center">
-          <Badge className="mb-4 bg-violet-500/20 text-violet-300 border-violet-500/30">
-            <Sparkles className="w-3 h-3 mr-2" />
-            AI-Powered Interview Practice
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Interview Practice Studio
-          </h1>
-          <p className="text-lg text-white/70 max-w-3xl mx-auto">
-            Practice with AI-generated questions, get instant feedback, and book sessions with real interviewers from top tech companies.
-          </p>
-
-          {isAdmin && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-8"
-            >
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="container mx-auto px-6 pt-8 pb-4">
+          <div className="flex items-center justify-between">
+            <BackButton label="Back to Home" className="text-white/80 hover:text-white transition-colors" to="/" />
+            {isAdmin && (
               <Button
                 onClick={() => navigate('/admin/interview-practice')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-lg shadow-indigo-500/20"
+                variant="outline"
+                className="bg-white/5 border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all gap-2"
               >
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Mode (Manage Languages)
+                <Shield className="w-4 h-4 text-violet-400" />
+                <span className="hidden sm:inline">Admin Panel</span>
               </Button>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
-
-      <div className="container mx-auto px-6 py-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="relative overflow-x-auto -mx-2 sm:mx-0 mb-8">
-            <style>{`
-              .interview-tabs-scroll {
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-              }
-              .interview-tabs-scroll::-webkit-scrollbar {
-                display: none;
-              }
-              .interview-tabs-scroll {
-                scroll-behavior: smooth;
-                -webkit-overflow-scrolling: touch;
-              }
-            `}</style>
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-white/10 p-1">
-              <TabsTrigger value="chat" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                AI Assistant
-              </TabsTrigger>
-              <TabsTrigger value="languages" className="flex-shrink-0 min-w-[100px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="whitespace-nowrap">Language Q&A</span>
-              </TabsTrigger>
-
-            </TabsList>
+            )}
           </div>
+        </div>
 
-          {/* Chat Tab */}
-          <TabsContent value="chat" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10 h-[600px] flex flex-col">
-              <CardHeader className="border-b border-white/10">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-violet-400" />
-                  AI Interview Coach
-                </CardTitle>
-                <CardDescription className="text-white/60">
-                  Ask questions, get explanations, or practice interview scenarios
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] rounded-lg p-3 ${msg.role === 'user'
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-800/80 text-white/90 border border-white/10'
-                        }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1 opacity-70 text-xs">
-                        {msg.role === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
-                        <span>{msg.role === 'user' ? 'You' : 'AI Coach'}</span>
-                      </div>
-                      <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-slate-800/80 rounded-lg p-3 border border-white/10 flex items-center gap-2">
-                      <Bot className="w-3 h-3 text-violet-400" />
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </CardContent>
-              <div className="p-4 border-t border-white/10 bg-slate-950/30">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
-                  className="flex gap-2"
+        {/* Hero Section */}
+        <section className="container mx-auto px-6 py-12 text-center relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge className="mb-6 bg-violet-500/10 text-violet-400 border-violet-500/20 hover:bg-violet-500/20 py-1.5 px-4 backdrop-blur-sm">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Next-Gen Mock Interviews
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/70">
+              Interview Practice <span className="text-violet-500">Studio</span>
+            </h1>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+              Master your tech interviews with our AI coach. Practice role-specific scenarios, get instant feedback, and dive into language-specific Q&A.
+            </p>
+          </motion.div>
+        </section>
+
+        <main className="container mx-auto px-6 pb-24">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="flex justify-center mb-12">
+              <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 p-1.5 h-auto gap-2 rounded-2xl shadow-2xl">
+                <TabsTrigger
+                  value="chat"
+                  className="px-8 py-3 rounded-xl gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white transition-all duration-300"
                 >
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Type your question..."
-                    className="bg-slate-900 border-white/10 text-white"
-                  />
-                  <Button type="submit" disabled={isLoading || !inputMessage.trim()} className="bg-violet-600 hover:bg-violet-700">
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </form>
-              </div>
-            </Card>
-          </TabsContent>
+                  <MessageSquare className="w-4 h-4" />
+                  AI Coach
+                </TabsTrigger>
+                <TabsTrigger
+                  value="languages"
+                  className="px-8 py-3 rounded-xl gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white transition-all duration-300"
+                >
+                  <Code className="w-4 h-4" />
+                  Language Q&A
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          {/* Language Q&A Tab */}
-          <TabsContent value="languages" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Code className="w-5 h-5 text-violet-400" />
-                  Programming Language Interview Q&A
-                </CardTitle>
-                <CardDescription className="text-white/60">
-                  Click on any language to view interview questions and answers specific to that programming language
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {isLoadingLanguages ? (
-                    <div className="col-span-full py-12 flex flex-col items-center justify-center gap-4">
-                      <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-white/40">Loading languages...</p>
+            <TabsContent value="chat" className="focus-visible:outline-none">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl mx-auto"
+              >
+                <Card className="bg-white/5 backdrop-blur-2xl border-white/10 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] min-h-[650px] flex flex-col">
+                  {/* Chat Header */}
+                  <div className="px-6 py-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                        <Bot className="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-lg">AI Interview Coach</h3>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="text-xs text-slate-400">Online and ready</span>
+                        </div>
+                      </div>
                     </div>
-                  ) : qaLanguages.length > 0 ? (
-                    qaLanguages.map((lang) => (
-                      <motion.div
-                        key={lang.id}
-                        whileHover={{ scale: 1.05, y: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/interview-practice/languages/${lang.slug}`)}
-                      >
-                        <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-white/20 hover:border-violet-500/50 transition-all duration-300 overflow-hidden group h-full">
-                          <div className={`absolute inset-0 bg-gradient-to-br ${lang.color_from} ${lang.color_to} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                          <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center text-center relative z-10 min-h-[120px] sm:min-h-[140px]">
-                            <div className="text-4xl sm:text-5xl mb-2 sm:mb-3">{lang.icon_emoji}</div>
-                            <h3 className="text-white font-bold text-sm sm:text-base mb-1">{lang.name}</h3>
-                            <p className="text-white/60 text-xs">Interview Q&A</p>
-                          </CardContent>
-                        </Card>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-slate-900/50 border-white/5 text-slate-400">GPT-4 Turbo</Badge>
+                    </div>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <CardContent className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+                    <AnimatePresence mode="popLayout">
+                      {messages.map((msg, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          className={`flex items-start gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-indigo-500' : 'bg-violet-500'
+                            }`}>
+                            {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+                          </div>
+                          <div className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-lg ${msg.role === 'user'
+                              ? 'bg-indigo-600 text-white rounded-tr-none'
+                              : 'bg-white/5 border border-white/10 text-slate-200 rounded-tl-none'
+                            }`}>
+                            <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {isLoading && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-4">
+                        <div className="w-8 h-8 rounded-xl bg-violet-500 flex items-center justify-center flex-shrink-0">
+                          <Bot className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5">
+                          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </motion.div>
-                    ))
-                  ) : (
-                    <div className="col-span-full py-12 text-center">
-                      <p className="text-white/40">No languages available yet.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </CardContent>
 
-        {/* Mentor Bench */}
-        < Card className="bg-slate-900/70 border-white/10 mt-8" >
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Users className="h-5 w-5 text-violet-400" />
-              Mentor Bench
-            </CardTitle>
-            <CardDescription className="text-white/60">
-              Real interviewers from top tech companies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {["Google", "Meta", "Stripe", "Atlassian", "Twilio", "Amazon", "Microsoft", "Apple"].map((company) => (
-                <Badge key={company} variant="outline" className="border-white/20 text-white/60 px-4 py-2">
-                  {company}
-                </Badge>
+                  {/* Chat Input */}
+                  <div className="p-6 bg-white/5 border-t border-white/5 backdrop-blur-xl">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }}
+                      className="relative flex items-center gap-3"
+                    >
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        placeholder="Type your question or simulate an interview response..."
+                        className="bg-slate-900/50 border-white/10 text-white h-14 pl-5 pr-14 rounded-2xl focus-visible:ring-violet-500/50 transition-all placeholder:text-slate-500"
+                      />
+                      <Button
+                        type="submit"
+                        disabled={isLoading || !inputMessage.trim()}
+                        className="absolute right-2 w-10 h-10 rounded-xl bg-violet-600 hover:bg-violet-700 hover:scale-105 active:scale-95 transition-all p-0"
+                      >
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </form>
+                    <p className="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-widest font-medium">
+                      AI can provide detailed feedback and interview questions.
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="languages" className="focus-visible:outline-none">
+              <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                  {isLoadingLanguages ? (
+                    Array.from({ length: 10 }).map((_, i) => (
+                      <div key={i} className="h-40 rounded-3xl bg-white/5 animate-pulse border border-white/5" />
+                    ))
+                  ) : qaLanguages.map((lang) => (
+                    <motion.div
+                      key={lang.id}
+                      whileHover={{ scale: 1.05, y: -8 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/interview-practice/languages/${lang.slug}`)}
+                      className="group cursor-pointer"
+                    >
+                      <div className="relative h-44 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 flex flex-col items-center justify-center transition-all group-hover:bg-white/10 group-hover:border-violet-500/50 shadow-lg">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${lang.color_from} ${lang.color_to} opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300`} />
+                        <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                          {lang.icon_emoji}
+                        </div>
+                        <h3 className="text-white font-bold text-lg mb-1">{lang.name}</h3>
+                        <Badge variant="outline" className="bg-slate-900/40 text-[10px] border-white/5 group-hover:border-violet-500/30">PREP KIT</Badge>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Trusted Companies Section */}
+          <section className="mt-32 relative text-center">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-transparent via-violet-500/50 to-transparent mb-12" />
+            <h4 className="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 mb-12">
+              Industry Standard Practice For
+            </h4>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale group hover:grayscale-0 transition-all duration-700">
+              {["Google", "Meta", "Stripe", "Atlassian", "Amazon", "Microsoft", "Netflix", "Apple"].map((company) => (
+                <span key={company} className="text-2xl font-black tracking-tighter text-white/50">{company}</span>
               ))}
-              <div className="ml-auto flex items-center gap-2 text-white/60 text-sm">
-                <Clock className="h-4 w-4 text-violet-400" />
-                Slots updated hourly
+            </div>
+
+            <div className="mt-16 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between shadow-2xl">
+              <div className="flex items-center gap-6 mb-8 md:mb-0">
+                <div className="w-16 h-16 rounded-3xl bg-violet-600/20 flex items-center justify-center">
+                  <Target className="w-8 h-8 text-violet-400" />
+                </div>
+                <div className="text-left">
+                  <h5 className="text-xl font-bold text-white mb-1">Expert Mentor Network</h5>
+                  <p className="text-sm text-slate-400">Regularly updated question banks from FAANG mentors.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 bg-slate-900/50 px-6 py-4 rounded-2xl border border-white/5">
+                <Clock className="w-5 h-5 text-violet-400" />
+                <span className="text-sm font-medium text-slate-300">Slots refresh hourly</span>
               </div>
             </div>
-          </CardContent>
-        </Card >
-      </div >
-    </div >
+          </section>
+        </main>
+      </div>
+    </div>
   );
 };
+
 
 export default InterviewPractice;
