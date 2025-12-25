@@ -514,48 +514,10 @@ const InterviewPractice = () => {
               </CardContent>
             </Card>
           </TabsContent>
+        </Tabs>
 
-
-          session.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-          session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
-          'bg-gray-500/20 text-gray-300'
-                                }>
-          {session.status}
-        </Badge>
-        <span className="text-white font-medium">{session.type}</span>
-      </div>
-      <p className="text-white/60 text-sm">
-        {new Date(session.date).toLocaleDateString()} • {session.mentor.name} ({session.mentor.company})
-      </p>
-      {session.feedback && (
-        <div className="mt-2">
-          <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-yellow-400" />
-            <span className="text-white/80 text-sm">Score: {session.feedback.score}/100</span>
-          </div>
-        </div>
-      )}
-    </div>
-                            {
-    session.status === 'scheduled' && (
-      <Button variant="outline" size="sm" className="border-white/20 text-white">
-        Join Session
-      </Button>
-    )
-  }
-                          </div >
-                        </CardContent >
-                      </Card >
-                    ))}
-                  </div >
-                )}
-              </CardContent >
-            </Card >
-          </TabsContent >
-        </Tabs >
-
-  {/* Mentor Bench */ }
-  < Card className = "bg-slate-900/70 border-white/10 mt-8" >
+        {/* Mentor Bench */}
+        < Card className="bg-slate-900/70 border-white/10 mt-8" >
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Users className="h-5 w-5 text-violet-400" />
