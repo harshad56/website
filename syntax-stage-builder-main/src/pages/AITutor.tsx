@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { apiService } from "@/services/ApiService";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
   Code,
@@ -31,7 +32,13 @@ import {
   Star,
   RefreshCw,
   Search,
-  Bug
+  Bug,
+  Sparkles,
+  ArrowRight,
+  ChevronRight,
+  Terminal,
+  ShieldCheck,
+  Cpu
 } from "lucide-react";
 
 interface Message {
@@ -214,393 +221,470 @@ const AITutor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="container mx-auto px-6 pt-6">
-        <BackButton />
-      </div>
-
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-indigo-500/30 pb-20 overflow-x-hidden">
       <SEO
-        title="AI Tutor - Get Programming Help from AI | CodeAcademy Pro"
-        description="Get instant help with programming questions from our AI tutor. Learn coding concepts, debug code, and improve your skills with personalized guidance."
-        keywords="AI tutor, programming tutor, coding help, AI coding assistant"
+        title="AI Tutor - Specialized Programming Help | CodeAcademy Pro"
+        description="Master programming with our specialized AI Tutor. Get code explanations, debugging help, and personalized learning paths."
+        keywords="AI tutor, coding tutor, programming help, AI code mentor"
         structuredData={structuredData}
       />
 
-      <header className="py-12 border-b border-border mb-8">
-        <div className="container mx-auto px-6 text-center">
-          <Badge variant="outline" className="mb-4 py-1 px-3 border-primary/30 text-primary animate-pulse">
-            <Zap className="w-3 h-3 mr-1 fill-primary" /> Specialized AI Tutor
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-indigo-500 to-secondary bg-clip-text text-transparent mb-4">
-            CodeAcademy Pro AI Tutor
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Your 24/7 personalized guide to mastering code. From debugging to deep conceptual dives.
-          </p>
+      {/* Modern Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-500/10 blur-[120px] rounded-full animate-pulse-slow delay-700"></div>
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-500/5 blur-[100px] rounded-full"></div>
+      </div>
+
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Navbar-style Breadcrumb */}
+        <div className="py-6 flex items-center justify-between border-b border-white/5 mb-8">
+          <BackButton />
+          <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> AI Protected</span>
+            <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+            <span className="flex items-center gap-1.5"><Cpu className="w-3.5 h-3.5 text-indigo-400" /> GPT-4o Specialized</span>
+          </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-6">
+        {/* Hero Section */}
+        <header className="mb-12 text-center relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-md"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400 fill-indigo-400/20" />
+            <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-300">Intelligent Studio</span>
+          </motion.div>
+
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+            Elevate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-400 to-violet-400 antialiased">Craft</span> With AI.
+          </h1>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            Not just another chatbot. A specialized pair programmer trained to explain deep concepts, audit your code, and architect your learning journey.
+          </p>
+        </header>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Main Content Area */}
           <div className="lg:col-span-3">
-            <Card className="h-[700px] flex flex-col border-border/50 shadow-xl bg-white/50 backdrop-blur-sm">
-              <CardHeader className="border-b border-border/50 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
-                      <Brain className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Tutor Studio</CardTitle>
-                      <CardDescription className="flex items-center">
-                        <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                        {isTyping ? "Tutor is thinking..." : "Ready to help"}
-                      </CardDescription>
-                    </div>
-                  </div>
+            <motion.div
+              layout
+              className="bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[750px]"
+            >
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                {/* Tabs Navigation */}
+                <div className="px-8 pt-6 border-b border-white/5 bg-white/[0.02]">
+                  <TabsList className="bg-transparent h-14 p-0 space-x-8 justify-start">
+                    <TabsTrigger
+                      value="chat"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" /> Chat Console
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="code"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                    >
+                      <Terminal className="w-4 h-4 mr-2" /> Analysis Engine
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="learning"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                    >
+                      <Target className="w-4 h-4 mr-2" /> Curriculum
+                    </TabsTrigger>
+                  </TabsList>
                 </div>
-              </CardHeader>
 
-              <CardContent className="flex-1 flex flex-col p-0">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                  <div className="px-6 border-b border-border/50">
-                    <TabsList className="bg-transparent h-12 w-full justify-start space-x-6 p-0">
-                      <TabsTrigger
-                        value="chat"
-                        className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-2"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" /> Chat
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="code"
-                        className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-2"
-                      >
-                        <Search className="w-4 h-4 mr-2" /> Code Analysis
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="learning"
-                        className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-2"
-                      >
-                        <TrendingUp className="w-4 h-4 mr-2" /> Learning Path
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  <TabsContent value="chat" className="flex-1 flex flex-col m-0 p-6">
-                    <div className="flex-1 overflow-y-auto space-y-6 mb-6 pr-2">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                {/* Chat Content */}
+                <TabsContent value="chat" className="flex-1 flex flex-col m-0 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
+                    <AnimatePresence initial={false}>
+                      {messages.map((msg) => (
+                        <motion.div
+                          key={msg.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <div className={`max-w-[85%] flex items-start space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${message.type === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted border border-border/50'
+                          <div className={`flex gap-4 max-w-[85%] ${msg.type === 'user' ? 'flex-row-reverse' : ''}`}>
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10 ${msg.type === 'user' ? 'bg-indigo-600' : 'bg-slate-800'
                               }`}>
-                              {message.type === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5 text-primary" />}
+                              {msg.type === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-indigo-400" />}
                             </div>
-                            <div className={`rounded-2xl p-4 shadow-sm ${message.type === 'user'
-                                ? 'bg-primary text-primary-foreground rounded-tr-none'
-                                : 'bg-muted border border-border/50 rounded-tl-none'
-                              }`}>
-                              <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                              {message.code && (
-                                <div className="mt-4 bg-[#0d1117] rounded-xl overflow-hidden border border-white/10">
-                                  <div className="px-4 py-2 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                                    <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">
-                                      {message.language || 'Code'}
-                                    </span>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-white" onClick={() => navigator.clipboard.writeText(message.code || "")}>
-                                      <FileText className="h-3 w-3" />
-                                    </Button>
+
+                            <div className={`space-y-3 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+                              <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border ${msg.type === 'user'
+                                  ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
+                                  : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md'
+                                }`}>
+                                {msg.content}
+                              </div>
+
+                              {msg.code && (
+                                <div className="bg-slate-950 rounded-2xl border border-white/10 overflow-hidden shadow-2xl w-full max-w-xl">
+                                  <div className="px-4 py-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-tighter">{msg.language || 'Code Snippet'}</span>
+                                    <button onClick={() => navigator.clipboard.writeText(msg.code || "")} className="text-slate-500 hover:text-white transition-colors">
+                                      <FileText className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
-                                  <pre className="p-4 overflow-x-auto">
-                                    <code className="text-sm font-mono text-blue-300">
-                                      {message.code}
+                                  <pre className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed selection:bg-indigo-500/30">
+                                    <code className="text-blue-300">
+                                      {msg.code}
                                     </code>
                                   </pre>
                                 </div>
                               )}
-                              {message.suggestions && (
-                                <div className="mt-4 grid grid-cols-1 gap-2">
-                                  {message.suggestions.map((suggestion, index) => (
+
+                              {msg.suggestions && (
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                  {msg.suggestions.map((s, i) => (
                                     <button
-                                      key={index}
-                                      onClick={() => setInputMessage(suggestion)}
-                                      className="text-left text-xs bg-white/10 hover:bg-white/20 p-2 rounded-lg transition-colors border border-white/5"
+                                      key={i}
+                                      onClick={() => setInputMessage(s)}
+                                      className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-slate-800 border border-white/5 hover:border-indigo-500/50 hover:bg-slate-700 transition-all text-slate-400 hover:text-white"
                                     >
-                                      💡 {suggestion}
+                                      💡 {s}
                                     </button>
                                   ))}
                                 </div>
                               )}
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
-                      {isTyping && (
-                        <div className="flex justify-start items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-muted border border-border/50 flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="bg-muted p-3 rounded-2xl rounded-tl-none flex space-x-1">
-                            <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce delay-75"></div>
-                            <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce delay-150"></div>
-                          </div>
+                    </AnimatePresence>
+                    {isTyping && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center">
+                          <Bot className="w-5 h-5 text-indigo-400 animate-pulse" />
                         </div>
-                      )}
-                      <div ref={messagesEndRef} />
+                        <div className="bg-slate-800/50 px-4 py-3 rounded-2xl flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-75"></div>
+                          <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce delay-150"></div>
+                        </div>
+                      </motion.div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Input Controls */}
+                  <div className="p-8 pt-0 mt-auto bg-slate-900/40">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {quickQuestions.map((q, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setInputMessage(q)}
+                          className="text-[11px] font-medium px-4 py-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-slate-400 hover:text-white whitespace-nowrap"
+                        >
+                          {q}
+                        </button>
+                      ))}
                     </div>
 
-                    <div className="mt-auto space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {quickQuestions.map((question, index) => (
-                          <Button
-                            key={index}
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setInputMessage(question)}
-                            className="text-xs rounded-full border border-border/50"
-                          >
-                            {question}
-                          </Button>
-                        ))}
-                      </div>
-
-                      <div className="relative group">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-[24px] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                      <div className="relative flex items-center bg-slate-800/80 border border-white/10 rounded-[24px] p-2 focus-within:border-indigo-500/50 transition-all">
                         <Input
                           value={inputMessage}
                           onChange={(e) => setInputMessage(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder="Type your programming question..."
-                          className="pr-12 py-6 rounded-2xl border-border/50 focus-visible:ring-primary shadow-sm"
+                          placeholder="Ask anything about programming..."
+                          className="bg-transparent border-0 focus-visible:ring-0 text-white h-12 px-4 placeholder:text-slate-500"
                           disabled={isTyping}
                         />
                         <Button
                           onClick={handleSendMessage}
                           disabled={!inputMessage.trim() || isTyping}
-                          className="absolute right-2 top-2 h-8 w-8 rounded-xl p-0"
+                          className="h-10 w-10 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white shrink-0 shadow-lg shadow-indigo-600/20"
                         >
                           <Send className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
-                  </TabsContent>
+                  </div>
+                </TabsContent>
 
-                  <TabsContent value="code" className="flex-1 overflow-y-auto m-0 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                      <div className="flex flex-col space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold flex items-center text-primary">
-                            <Code className="w-4 h-4 mr-2" /> Code Input
-                          </h3>
-                          <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
-                            <SelectTrigger className="w-32 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="javascript">JavaScript</SelectItem>
-                              <SelectItem value="python">Python</SelectItem>
-                              <SelectItem value="java">Java</SelectItem>
-                              <SelectItem value="cpp">C++</SelectItem>
-                              <SelectItem value="typescript">TypeScript</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Textarea
-                          placeholder="Paste your code snippet here..."
-                          className="flex-1 font-mono text-sm min-h-[400px] border-border/50 rounded-xl resize-none"
-                          value={analysisCode}
-                          onChange={(e) => setAnalysisCode(e.target.value)}
-                        />
-                        <Button className="w-full py-6 rounded-xl shadow-lg" onClick={handleAnalyzeCode} disabled={isAnalyzing || !analysisCode.trim()}>
-                          {isAnalyzing ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-                          Analyze My Code
-                        </Button>
+                {/* Code Analysis Content */}
+                <TabsContent value="code" className="flex-1 m-0 overflow-hidden overflow-y-auto px-8 py-8 scrollbar-thin">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                    <div className="flex flex-col space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                          <Terminal className="w-5 h-5 text-indigo-400" /> Source Input
+                        </h3>
+                        <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
+                          <SelectTrigger className="w-[140px] bg-slate-800/50 border-white/10 h-10 rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-900 border-white/10 text-white">
+                            <SelectItem value="javascript">JavaScript</SelectItem>
+                            <SelectItem value="python">Python</SelectItem>
+                            <SelectItem value="java">Java</SelectItem>
+                            <SelectItem value="cpp">C++</SelectItem>
+                            <SelectItem value="typescript">TypeScript</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <div className="bg-muted/30 border border-border/50 rounded-2xl p-6 overflow-y-auto">
-                        {!analysisResult && !isAnalyzing && (
-                          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-                            <Bot className="w-12 h-12 mb-4 opacity-20" />
-                            <h4 className="font-medium mb-1">No Analysis Yet</h4>
-                            <p className="text-sm">Submit your code for AI-powered review, security checks, and optimization tips.</p>
-                          </div>
+                      <Textarea
+                        placeholder="// Paste snippets for quality and security analysis..."
+                        className="flex-1 min-h-[400px] bg-slate-950/50 border-white/10 rounded-2xl font-mono text-[13px] leading-relaxed focus-visible:ring-indigo-500/30 transition-all scrollbar-thin"
+                        value={analysisCode}
+                        onChange={(e) => setAnalysisCode(e.target.value)}
+                      />
+
+                      <Button
+                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold text-lg shadow-xl shadow-indigo-500/20"
+                        onClick={handleAnalyzeCode}
+                        disabled={isAnalyzing || !analysisCode.trim()}
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                            Auditing Intelligence...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="mr-2 h-5 w-5 fill-current" />
+                            Start Deep Audit
+                          </>
                         )}
-                        {isAnalyzing && (
-                          <div className="h-full flex flex-col items-center justify-center text-center">
-                            <RefreshCw className="w-12 h-12 mb-4 animate-spin text-primary" />
-                            <h4 className="font-medium mb-1">Deep Analysis Running...</h4>
-                            <p className="text-sm text-muted-foreground">Running security, quality, and performance audits.</p>
-                          </div>
-                        )}
-                        {analysisResult && (
-                          <div className="space-y-6">
-                            <div className="flex items-center justify-between border-b border-border pb-4">
-                              <h3 className="font-bold text-lg">Analysis Result</h3>
-                              <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Complete</Badge>
+                      </Button>
+                    </div>
+
+                    <div className="rounded-[32px] bg-white/[0.02] border border-white/5 p-8 overflow-y-auto scrollbar-thin">
+                      <AnimatePresence mode="wait">
+                        {!analysisResult && !isAnalyzing ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="h-full flex flex-col items-center justify-center text-center space-y-4"
+                          >
+                            <div className="w-20 h-20 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mb-2">
+                              <Bot className="w-10 h-10 text-slate-500 opacity-20" />
+                            </div>
+                            <h4 className="text-xl font-bold text-slate-400">Analysis Idle</h4>
+                            <p className="text-sm text-slate-500 max-w-xs">Run a deep audit to uncover security flaws, performance bottlenecks, and best practice violations.</p>
+                          </motion.div>
+                        ) : isAnalyzing ? (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="h-full flex flex-col items-center justify-center text-center space-y-6"
+                          >
+                            <div className="relative">
+                              <div className="w-24 h-24 rounded-full border-4 border-indigo-500/20 animate-spin border-t-indigo-500"></div>
+                              <Sparkles className="w-8 h-8 text-indigo-400 absolute inset-0 m-auto animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="text-xl font-bold">Scanning Codebase</h4>
+                              <p className="text-sm text-slate-500">Running quality heuristics and security patterns...</p>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="result"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="space-y-8"
+                          >
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-2xl font-black tracking-tight">Audit Report</h3>
+                              <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1">Verified Correct</Badge>
                             </div>
 
                             <div className="space-y-4">
-                              <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-                                <h4 className="flex items-center font-semibold text-blue-700 mb-2">
-                                  <Star className="w-4 h-4 mr-2" /> Code Quality
-                                </h4>
-                                <div className="text-sm leading-relaxed whitespace-pre-wrap">{analysisResult.quality}</div>
+                              <div className="group p-5 rounded-[24px] bg-blue-500/[0.03] border border-blue-500/10 hover:border-blue-500/30 transition-all">
+                                <h5 className="flex items-center text-blue-400 font-bold mb-3">
+                                  <ShieldCheck className="w-5 h-5 mr-3" /> Code Integrity
+                                </h5>
+                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.quality}</p>
                               </div>
 
-                              <div className="p-4 bg-orange-500/5 border border-orange-500/10 rounded-xl">
-                                <h4 className="flex items-center font-semibold text-orange-700 mb-2">
-                                  <Zap className="w-4 h-4 mr-2" /> Improvements
-                                </h4>
-                                <div className="text-sm leading-relaxed whitespace-pre-wrap">{analysisResult.improvements}</div>
+                              <div className="group p-5 rounded-[24px] bg-amber-500/[0.03] border border-amber-500/10 hover:border-amber-500/30 transition-all">
+                                <h5 className="flex items-center text-amber-400 font-bold mb-3">
+                                  <Zap className="w-5 h-5 mr-3" /> Improvement Vector
+                                </h5>
+                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.improvements}</p>
                               </div>
 
-                              <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-xl">
-                                <h4 className="flex items-center font-semibold text-green-700 mb-2">
-                                  <CheckCircle className="w-4 h-4 mr-2" /> Best Practices
-                                </h4>
-                                <div className="text-sm leading-relaxed whitespace-pre-wrap">{analysisResult.bestPractices}</div>
+                              <div className="group p-5 rounded-[24px] bg-emerald-500/[0.03] border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
+                                <h5 className="flex items-center text-emerald-400 font-bold mb-3">
+                                  <CheckCircle className="w-5 h-5 mr-3" /> Professional Standards
+                                </h5>
+                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.bestPractices}</p>
                               </div>
                             </div>
-                          </div>
+                          </motion.div>
                         )}
-                      </div>
+                      </AnimatePresence>
                     </div>
-                  </TabsContent>
+                  </div>
+                </TabsContent>
 
-                  <TabsContent value="learning" className="flex-1 overflow-y-auto m-0 p-6">
-                    <div className="max-w-4xl mx-auto space-y-8">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-2xl font-bold">Your AI Learning Path</h3>
-                          <p className="text-muted-foreground">Dynamic curriculum tailored to your skills and progress.</p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={fetchRecommendations} disabled={isLoadingRecs}>
-                          <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingRecs ? 'animate-spin' : ''}`} /> Update Path
-                        </Button>
+                {/* Learning Path Content */}
+                <TabsContent value="learning" className="flex-1 m-0 overflow-y-auto px-8 py-8 scrollbar-thin">
+                  <div className="max-w-4xl mx-auto space-y-10">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
+                      <div className="space-y-2">
+                        <h2 className="text-3xl font-black">AI Learning Path</h2>
+                        <p className="text-slate-400">A dynamic curriculum built uniquely for your skill level.</p>
                       </div>
+                      <Button
+                        variant="outline"
+                        className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 h-12 px-6 font-bold"
+                        onClick={fetchRecommendations}
+                        disabled={isLoadingRecs}
+                      >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingRecs ? 'animate-spin' : ''}`} /> Sync Path
+                      </Button>
+                    </div>
 
-                      {isLoadingRecs ? (
-                        <div className="grid gap-4">
-                          {[1, 2, 3].map(i => (
-                            <div key={i} className="h-32 bg-muted animate-pulse rounded-2xl"></div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="grid gap-4">
-                          {recommendations.length > 0 ? recommendations.map((rec, i) => (
-                            <Card key={i} className="group hover:border-primary/50 transition-all shadow-md hover:shadow-xl border-border/50">
-                              <CardContent className="p-6">
-                                <div className="flex items-start justify-between">
-                                  <div className="space-y-3">
-                                    <div className="flex items-center space-x-2">
-                                      <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10">
-                                        {rec.category}
-                                      </Badge>
-                                      <Badge variant="outline">{rec.difficulty}</Badge>
+                    {isLoadingRecs ? (
+                      <div className="space-y-6">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-[140px] rounded-[32px] bg-white/[0.02] border border-white/5 animate-pulse"></div>
+                        ))}
+                      </div>
+                    ) : recommendations.length > 0 ? (
+                      <div className="grid gap-6">
+                        {recommendations.map((rec, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                          >
+                            <Card className="group bg-slate-900/40 border-white/10 hover:border-indigo-500/50 shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 rounded-[32px] overflow-hidden backdrop-blur-md">
+                              <CardContent className="p-8">
+                                <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+                                  <div className="space-y-4 flex-1">
+                                    <div className="flex items-center gap-3">
+                                      <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-3 py-1 font-bold">{rec.category}</Badge>
+                                      <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{rec.difficulty}</span>
                                     </div>
-                                    <h4 className="text-lg font-bold group-hover:text-primary transition-colors">{rec.title}</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{rec.description}</p>
-                                    <div className="flex items-center text-xs text-muted-foreground pt-4">
-                                      <Clock className="w-3 h-3 mr-1" /> {rec.estimatedTime}
+                                    <h4 className="text-xl font-black tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{rec.title}</h4>
+                                    <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">{rec.description}</p>
+                                    <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+                                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {rec.estimatedTime}</span>
+                                      <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+                                      <span className="flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Interactive exercises</span>
                                     </div>
                                   </div>
-                                  <Button className="rounded-xl shadow-lg hover:scale-105 transition-transform">
-                                    <Play className="w-4 h-4 mr-2" /> Learn Now
+                                  <Button className="rounded-2xl h-14 px-8 bg-indigo-600 hover:bg-white hover:text-indigo-600 font-black tracking-tight shadow-xl shadow-indigo-600/10 group-hover:scale-105 transition-all shrink-0">
+                                    CONTINUE MODULE <ChevronRight className="w-5 h-5 ml-2" />
                                   </Button>
                                 </div>
                               </CardContent>
                             </Card>
-                          )) : (
-                            <Card className="p-12 text-center border-dashed border-border/50">
-                              <Bot className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                              <h4 className="text-lg font-semibold mb-2">No recommendations yet</h4>
-                              <p className="text-muted-foreground max-w-sm mx-auto mb-6">Start chatting or analyze some code so I can understand your level better!</p>
-                              <Button onClick={fetchRecommendations}>Generate Initial Path</Button>
-                            </Card>
-                          )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center space-y-6">
+                        <div className="w-24 h-24 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mx-auto mb-4">
+                          <TrendingUp className="w-10 h-10 text-slate-600 opacity-30" />
                         </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                        <h4 className="text-2xl font-black">Ready To Map Your Growth?</h4>
+                        <p className="text-slate-500 max-w-sm mx-auto">Click sync so I can analyze your recent activity and build a custom module roadmap for you.</p>
+                        <Button size="lg" onClick={fetchRecommendations} className="rounded-2xl h-14 px-10 bg-indigo-600 hover:bg-indigo-500 font-bold">Initialize Roadmap</Button>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </motion.div>
           </div>
 
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="border-border/50 shadow-lg bg-gradient-to-br from-primary/5 to-transparent">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center tracking-wide uppercase text-muted-foreground font-semibold">
-                  <TrendingUp className="w-4 h-4 mr-2" /> Skill Progression
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span>Active Learning</span>
-                    <span className="text-primary">82%</span>
+          {/* Sidebar Area */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Stats Overview */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+                <CardHeader className="p-6 border-b border-white/5">
+                  <CardTitle className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 flex items-center">
+                    <TrendingUp className="w-4 h-4 mr-2 text-emerald-400" /> Proficiency Radar
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-8">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Velocity</span>
+                      <span className="text-sm font-black text-white">82%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: '82%' }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="h-full bg-gradient-to-r from-indigo-500 to-sky-400 shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+                      ></motion.div>
+                    </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary animate-in slide-in-from-left duration-1000" style={{ width: '82%' }}></div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-white rounded-xl border border-border/50 text-center">
-                    <div className="text-2xl font-bold">14</div>
-                    <div className="text-[10px] text-muted-foreground uppercase">Topics</div>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-border/50 text-center">
-                    <div className="text-2xl font-bold">5</div>
-                    <div className="text-[10px] text-muted-foreground uppercase">Badges</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-border/50 shadow-lg">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center tracking-wide uppercase text-muted-foreground font-semibold">
-                  <Bot className="w-4 h-4 mr-2" /> Tutor Tools
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border/50">
-                  <div className="p-4 flex items-center hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center mr-3 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                      <Code className="w-4 h-4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center group hover:bg-white/10 transition-colors">
+                      <div className="text-2xl font-black mb-1">14</div>
+                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Mastered</div>
                     </div>
-                    <div className="text-xs font-medium">Explain Method</div>
-                  </div>
-                  <div className="p-4 flex items-center hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center mr-3 group-hover:bg-pink-500 group-hover:text-white transition-colors">
-                      <Bug className="w-4 h-4" />
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center group hover:bg-white/10 transition-colors">
+                      <div className="text-2xl font-black mb-1">5</div>
+                      <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Achievements</div>
                     </div>
-                    <div className="text-xs font-medium">Debug Helper</div>
                   </div>
-                  <div className="p-4 flex items-center hover:bg-muted/50 transition-colors cursor-pointer group">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center mr-3 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                      <Lightbulb className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs font-medium">Optimization Ideas</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="bg-primary text-primary-foreground shadow-2xl overflow-hidden relative">
-              <div className="absolute top-0 right-0 -m-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Star className="w-5 h-5 mr-2 fill-current" /> Weekly Challenge
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm opacity-90 leading-relaxed">Implement a linked list from scratch using generics.</p>
-                <Button variant="secondary" className="w-full font-bold">Accept Challenge</Button>
-              </CardContent>
-            </Card>
+            {/* Quick Actions */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+                <CardHeader className="p-6 border-b border-white/5">
+                  <CardTitle className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 flex items-center">
+                    <Sparkles className="w-4 h-4 mr-2 text-blue-400" /> Utility Tools
+                  </CardTitle>
+                </CardHeader>
+                <div className="divide-y divide-white/5">
+                  {[
+                    { icon: Code, label: "Structural Explanation", color: "indigo" },
+                    { icon: Bug, label: "Fault Simulation", color: "pink" },
+                    { icon: Lightbulb, label: "Atomic Optimization", color: "amber" },
+                  ].map((tool, i) => (
+                    <button key={i} className="w-full flex items-center p-5 hover:bg-white/[0.03] transition-colors group">
+                      <div className={`w-10 h-10 rounded-xl bg-${tool.color}-500/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform`}>
+                        <tool.icon className={`w-5 h-5 text-${tool.color}-400`} />
+                      </div>
+                      <span className="text-[13px] font-bold text-slate-300 group-hover:text-white transition-colors">{tool.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Active Challenge */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+              <div className="group relative rounded-[32px] overflow-hidden bg-indigo-600 shadow-2xl shadow-indigo-600/20">
+                <div className="absolute top-0 right-0 -m-10 w-40 h-40 bg-white/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700"></div>
+                <div className="relative p-8 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <h4 className="text-lg font-black text-white uppercase tracking-tight">Active Pulse</h4>
+                  </div>
+                  <p className="text-indigo-100 font-medium leading-relaxed">Implement a linked list from scratch using generics.</p>
+                  <Button variant="secondary" className="w-full h-14 rounded-2xl bg-white text-indigo-600 hover:bg-indigo-50 font-black shadow-xl">
+                    ACCEPT CHALLENGE <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>

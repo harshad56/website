@@ -134,21 +134,71 @@ const InterviewPractice = () => {
 
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "Interview Practice Studio - CodeAcademy Pro",
-    "description": "AI-powered interview practice with real-time feedback, session booking, and mentor matching.",
-    "provider": {
-      "@type": "Organization",
-      "name": "CodeAcademy Pro"
-    }
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "AI Interview Practice Studio - CodeAcademy Pro",
+        "description": "Master technical and behavioral interviews with our real-time AI coach. Practice role-specific scenarios, FAANG-level coding questions, and get instant feedback.",
+        "provider": {
+          "@type": "Organization",
+          "name": "CodeAcademy Pro"
+        },
+        "offers": {
+          "@type": "Offer",
+          "category": "Educational Service",
+          "availability": "https://schema.org/InStock"
+        },
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Interview Preparation Services",
+          "itemListElement": [
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "AI Mock Interviews"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Technical Q&A Practice"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How does AI interview practice work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our AI coach simulates real-world interview scenarios, asks role-specific questions, and provides instant feedback on your performance, tone, and technical accuracy."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can it help me prepare for FAANG interviews?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! The AI is trained on a vast database of technical questions commonly asked at FAANG and other top-tier tech companies across various roles like Software Engineering, Data Science, and Frontend Development."
+            }
+          }
+        ]
+      }
+    ]
   };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-violet-500/30 overflow-hidden relative">
       <SEO
-        title="Interview Practice Studio - AI-Powered Interview Prep"
-        description="Practice interviews with AI-powered questions, get real-time feedback, and prepare for your dream tech job."
-        keywords="interview practice, interview prep, mock interview, AI interview, technical interview"
+        title="AI Interview Practice Studio | FAANG Coding Interview Prep"
+        description="Master your tech interviews with real-time AI coaching. Practice Software Engineering, Data Science, and Frontend questions with instant feedback. Prepare for FAANG today."
+        keywords="interview practice, coding interview prep, mock interview, AI interview, technical interview questions, FAANG prep, software engineer interview, behavioral interview help"
         structuredData={structuredData}
       />
 
@@ -232,7 +282,7 @@ const InterviewPractice = () => {
                         <Bot className="w-7 h-7 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-white text-lg">AI Interview Coach</h3>
+                        <h2 className="font-bold text-white text-lg">AI Interview Coach</h2>
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                           <span className="text-xs text-slate-400">Online and ready</span>
