@@ -53,7 +53,6 @@ interface Package {
 const InterviewPractice = () => {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
-  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -116,7 +115,7 @@ const InterviewPractice = () => {
   const [qaLanguages, setQaLanguages] = useState<any[]>([]);
   const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
   // Load packages on mount
   useEffect(() => {
