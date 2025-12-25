@@ -39,9 +39,73 @@ const AdminCourses = () => {
     category: "general",
   });
   const [submitting, setSubmitting] = useState(false);
-  // ... (rest of state)
+  const [deleting, setDeleting] = useState(false);
+  const [stats, setStats] = useState<{ totalCourses: number; publishedCourses: number; totalEnrollments: number; paidEnrollments: number; revenue: number } | null>(null);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+  const [languages, setLanguages] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+  const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [showAddLanguageDialog, setShowAddLanguageDialog] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newLanguageName, setNewLanguageName] = useState("");
+  const [loadingMetadata, setLoadingMetadata] = useState(true);
 
-  // ... (useEffect for metadata)
+  const totalCourses = courses?.length || 0;
+  const publishedCourses = useMemo(
+    () => (courses || []).filter((c: any) => c.is_published).length,
+    [courses]
+  );
+
+  // Fetch categories and languages on mount
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        setLoadingMetadata(true);
+        const [categoriesRes, languagesRes] = await Promise.all([
+          apiService.getCourseCategories(),
+          apiService.getCourseLanguages()
+        ]);
+        if (categoriesRes.success && categoriesRes.data) {
+          setCategories(categoriesRes.data);
+        }
+        if (languagesRes.success && languagesRes.data) {
+          setLanguages(languagesRes.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch metadata:', error);
+        // Fallback to default lists if API fails
+        setCategories([
+          { id: '1', name: 'General', slug: 'general' },
+          { id: '2', name: 'Frontend', slug: 'frontend' },
+          { id: '3', name: 'Backend', slug: 'backend' },
+          { id: '4', name: 'Full Stack', slug: 'fullstack' },
+          { id: '5', name: 'Data & AI', slug: 'data' },
+          { id: '6', name: 'DevOps/Cloud', slug: 'devops' },
+          { id: '7', name: 'Mobile', slug: 'mobile' },
+          { id: '8', name: 'Web Development', slug: 'web-development' },
+          { id: '9', name: 'Cloud Computing', slug: 'cloud-computing' },
+          { id: '10', name: 'Theme', slug: 'theme' }
+        ]);
+        setLanguages([
+          { id: '1', name: 'Python', slug: 'python' },
+          { id: '2', name: 'JavaScript', slug: 'javascript' },
+          { id: '3', name: 'Java', slug: 'java' },
+          { id: '4', name: 'C#', slug: 'csharp' },
+          { id: '5', name: 'Go', slug: 'go' },
+          { id: '6', name: 'Rust', slug: 'rust' },
+          { id: '7', name: 'TypeScript', slug: 'typescript' },
+          { id: '8', name: 'C++', slug: 'cpp' },
+          { id: '9', name: 'C', slug: 'c' },
+          { id: '10', name: 'PHP', slug: 'php' },
+          { id: '11', name: 'Ruby', slug: 'ruby' },
+          { id: '12', name: 'Swift', slug: 'swift' },
+          { id: '13', name: 'Kotlin', slug: 'kotlin' }
+        ]);
+      } finally {
+        setLoadingMetadata(false);
+      }
+    };
+    fetchMetadata();
+  }, []);
 
   const handleFileUpload = async (file: File | null) => {
     if (!file) return;
