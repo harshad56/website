@@ -18,14 +18,17 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRef } from "react";
+import { Send, User, Bot } from "lucide-react";
 
-interface Question {
-  question: string;
-  type: string;
-  difficulty: string;
-  tips?: string;
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+question: string;
+type: string;
+difficulty: string;
+tips ?: string;
 }
 
 interface Feedback {
@@ -50,14 +53,60 @@ const InterviewPractice = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("practice");
-  const [questionCategory, setQuestionCategory] = useState("behavioral");
-  const [difficulty, setDifficulty] = useState("medium");
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState("chat");
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: "Hi! I'm your AI Interview Coach. Ask me anything about coding, algorithms, or interview prep!" }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMsg: Message = { role: 'user', content: inputMessage };
+    setMessages(prev => [...prev, userMsg]);
+    setInputMessage("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/interview-practice/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          message: userMsg.content,
+          history: messages.map(m => ({ role: m.role, content: m.content }))
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      } else {
+        throw new Error(data.message || 'Failed to get response');
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   const [qaLanguages, setQaLanguages] = useState<any[]>([]);
@@ -265,10 +314,10 @@ const InterviewPractice = () => {
                 -webkit-overflow-scrolling: touch;
               }
             `}</style>
-            <TabsList className="flex overflow-x-auto sm:grid sm:grid-cols-5 bg-slate-800/50 border border-white/10 p-1 interview-tabs-scroll min-w-full w-max sm:w-full">
-              <TabsTrigger value="practice" className="flex-shrink-0 min-w-[90px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="whitespace-nowrap">Practice</span>
+            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-white/10 p-1">
+              <TabsTrigger value="chat" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                AI Assistant
               </TabsTrigger>
               <TabsTrigger value="languages" className="flex-shrink-0 min-w-[100px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
                 <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -278,192 +327,72 @@ const InterviewPractice = () => {
             </TabsList>
           </div>
 
-          {/* Practice Tab */}
-          <TabsContent value="practice" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10">
-              <CardHeader>
+          {/* Chat Tab */}
+          <TabsContent value="chat" className="space-y-6">
+            <Card className="bg-slate-900/70 border-white/10 h-[600px] flex flex-col">
+              <CardHeader className="border-b border-white/10">
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-violet-400" />
-                  AI Interview Practice
+                  <Bot className="w-5 h-5 text-violet-400" />
+                  AI Interview Coach
                 </CardTitle>
                 <CardDescription className="text-white/60">
-                  Generate questions and practice your answers with AI-powered feedback
+                  Ask questions, get explanations, or practice interview scenarios
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Question Category</Label>
-                    <Select value={questionCategory} onValueChange={setQuestionCategory}>
-                      <SelectTrigger className="bg-slate-800/50 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="behavioral">Behavioral</SelectItem>
-                        <SelectItem value="technical">Technical</SelectItem>
-                        <SelectItem value="systemDesign">System Design</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${msg.role === 'user'
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-800/80 text-white/90 border border-white/10'
+                        }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1 opacity-70 text-xs">
+                        {msg.role === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
+                        <span>{msg.role === 'user' ? 'You' : 'AI Coach'}</span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Difficulty</Label>
-                    <Select value={difficulty} onValueChange={setDifficulty}>
-                      <SelectTrigger className="bg-slate-800/50 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800/80 rounded-lg p-3 border border-white/10 flex items-center gap-2">
+                      <Bot className="w-3 h-3 text-violet-400" />
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  onClick={generateQuestions}
-                  disabled={isGenerating}
-                  className="w-full bg-violet-500 hover:bg-violet-600"
-                >
-                  {isGenerating ? (
-                    "Generating Questions..."
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Questions
-                    </>
-                  )}
-                </Button>
+                )}
+                <div ref={messagesEndRef} />
               </CardContent>
+              <div className="p-4 border-t border-white/10 bg-slate-950/30">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type your question..."
+                    className="bg-slate-900 border-white/10 text-white"
+                  />
+                  <Button type="submit" disabled={isLoading || !inputMessage.trim()} className="bg-violet-600 hover:bg-violet-700">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </div>
             </Card>
-
-            {/* Questions Display */}
-            {questions.length > 0 && (
-              <Card className="bg-slate-900/70 border-white/10">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-white">
-                      Question {currentQuestionIndex + 1} of {questions.length}
-                    </CardTitle>
-                    <Badge className="bg-violet-500/20 text-violet-300">
-                      {questions[currentQuestionIndex].difficulty}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
-                    <p className="text-white text-lg font-medium">
-                      {questions[currentQuestionIndex].question}
-                    </p>
-                    {questions[currentQuestionIndex].tips && (
-                      <div className="mt-3 p-3 bg-violet-500/10 rounded border border-violet-500/20">
-                        <div className="flex items-start gap-2">
-                          <Lightbulb className="w-4 h-4 text-violet-400 mt-0.5" />
-                          <p className="text-violet-300 text-sm">{questions[currentQuestionIndex].tips}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-white/80">Your Answer</Label>
-                    <Textarea
-                      value={userAnswer}
-                      onChange={(e) => setUserAnswer(e.target.value)}
-                      placeholder="Type your answer here..."
-                      className="bg-slate-800/50 border-white/20 text-white min-h-[150px]"
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={evaluateAnswer}
-                      disabled={isEvaluating || !userAnswer.trim()}
-                      className="flex-1 bg-violet-500 hover:bg-violet-600"
-                    >
-                      {isEvaluating ? "Evaluating..." : (
-                        <>
-                          <Target className="w-4 h-4 mr-2" />
-                          Get Feedback
-                        </>
-                      )}
-                    </Button>
-                    {currentQuestionIndex < questions.length - 1 && (
-                      <Button
-                        onClick={nextQuestion}
-                        variant="outline"
-                        className="border-white/30 text-white bg-slate-700/50 hover:bg-slate-600/50"
-                      >
-                        Next Question
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Feedback Display */}
-                  {feedback && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 space-y-4"
-                    >
-                      <div className="p-4 bg-slate-800/50 rounded-lg border border-white/10">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-white font-semibold">Your Score</span>
-                          <Badge className={`${feedback.score >= 80 ? 'bg-green-500/20 text-green-300' :
-                            feedback.score >= 60 ? 'bg-yellow-500/20 text-yellow-300' :
-                              'bg-red-500/20 text-red-300'
-                            }`}>
-                            {feedback.score}/100
-                          </Badge>
-                        </div>
-                        <p className="text-white/80 text-sm mb-4">{feedback.overall}</p>
-
-                        {feedback.strengths.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <CheckCircle className="w-4 h-4 text-green-400" />
-                              <span className="text-green-400 text-sm font-semibold">Strengths</span>
-                            </div>
-                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
-                              {feedback.strengths.map((strength, i) => (
-                                <li key={i}>{strength}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {feedback.weaknesses.length > 0 && (
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <AlertCircle className="w-4 h-4 text-yellow-400" />
-                              <span className="text-yellow-400 text-sm font-semibold">Areas to Improve</span>
-                            </div>
-                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
-                              {feedback.weaknesses.map((weakness, i) => (
-                                <li key={i}>{weakness}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {feedback.suggestions.length > 0 && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <TrendingUp className="w-4 h-4 text-violet-400" />
-                              <span className="text-violet-400 text-sm font-semibold">Suggestions</span>
-                            </div>
-                            <ul className="list-disc list-inside text-white/70 text-sm space-y-1">
-                              {feedback.suggestions.map((suggestion, i) => (
-                                <li key={i}>{suggestion}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           {/* Language Q&A Tab */}

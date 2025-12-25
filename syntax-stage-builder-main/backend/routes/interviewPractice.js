@@ -22,7 +22,7 @@ if (useOpenRouter) {
 }
 
 const openai = new OpenAI(openaiConfig);
-const DEFAULT_MODEL = useOpenRouter 
+const DEFAULT_MODEL = useOpenRouter
     ? (process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo')
     : 'gpt-3.5-turbo';
 
@@ -101,7 +101,7 @@ Return only the JSON array, no additional text.`;
         });
 
         let questions = completion.choices[0].message.content.trim();
-        
+
         try {
             questions = JSON.parse(questions);
         } catch {
@@ -123,7 +123,7 @@ Return only the JSON array, no additional text.`;
 
     } catch (error) {
         winston.error('Generate questions error:', error);
-        
+
         // Fallback questions
         const category = req.body.category || 'behavioral';
         const categoryQuestions = QUESTION_CATEGORIES[category] || QUESTION_CATEGORIES.behavioral;
@@ -138,6 +138,58 @@ Return only the JSON array, no additional text.`;
             success: true,
             questions: questions,
             note: 'Using fallback questions'
+        });
+    }
+});
+
+// General AI Chat endpoint
+router.post('/chat', async (req, res) => {
+    try {
+        const { message, history = [] } = req.body;
+
+        if (!message) {
+            return res.status(400).json({
+                success: false,
+                message: 'Message is required'
+            });
+        }
+
+        winston.info('💬 AI Chat request received');
+
+        // Construct messages array with system prompt
+        const messages = [
+            {
+                role: "system",
+                content: "You are a helpful and knowledgeable AI assistant for a coding platform. You help users with programming concepts, interview preparation, and general coding questions. Be concise, encouraging, and provide code examples where helpful."
+            },
+            ...history,
+            {
+                role: "user",
+                content: message
+            }
+        ];
+
+        const completion = await openai.chat.completions.create({
+            model: DEFAULT_MODEL,
+            messages: messages,
+            max_tokens: 1000,
+            temperature: 0.7,
+            stream: false
+        });
+
+        const reply = completion.choices[0].message.content;
+
+        res.json({
+            success: true,
+            reply: reply,
+            usage: completion.usage
+        });
+
+    } catch (error) {
+        winston.error('AI Chat error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get AI response'
         });
     }
 });
@@ -195,7 +247,7 @@ Return only the JSON object, no additional text.`;
         });
 
         let feedback = completion.choices[0].message.content.trim();
-        
+
         try {
             feedback = JSON.parse(feedback);
         } catch {
@@ -268,7 +320,7 @@ Return only the JSON object.`;
         });
 
         let guide = completion.choices[0].message.content.trim();
-        
+
         try {
             guide = JSON.parse(guide);
         } catch {
@@ -304,22 +356,22 @@ Return only the JSON object.`;
 router.get('/available-slots', authenticateToken, async (req, res) => {
     try {
         const { date, type } = req.query;
-        
+
         // Generate mock available slots
         const slots = [];
         const baseDate = date ? new Date(date) : new Date();
-        
+
         // Generate slots for next 7 days
         for (let day = 0; day < 7; day++) {
             const slotDate = new Date(baseDate);
             slotDate.setDate(slotDate.getDate() + day);
-            
+
             // Generate 3-5 slots per day
             const slotsPerDay = Math.floor(Math.random() * 3) + 3;
             for (let i = 0; i < slotsPerDay; i++) {
                 const hour = 9 + Math.floor(Math.random() * 8); // 9 AM to 5 PM
                 const minute = [0, 30][Math.floor(Math.random() * 2)];
-                
+
                 slots.push({
                     id: `slot-${day}-${i}`,
                     date: slotDate.toISOString().split('T')[0],
