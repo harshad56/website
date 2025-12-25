@@ -55,8 +55,8 @@ const Header = memo(() => {
             className="flex items-center space-x-2 cursor-pointer hover:scale-105 transition-transform duration-300 flex-shrink-0"
             onClick={() => scrollToSection('hero')}
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:shadow-glow bg-white/5">
-              <img src="/logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-contain p-1" />
+            <div className="w-10 h-10 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:shadow-glow">
+              <img src="/brand-logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl lg:text-2xl font-bold gradient-text hidden lg:inline">CodeAcademy Pro</span>
           </div>

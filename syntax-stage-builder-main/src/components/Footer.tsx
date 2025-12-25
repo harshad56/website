@@ -66,8 +66,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-                <img src="/logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-cover scale-110" />
+              <div className="w-10 h-10 overflow-hidden flex items-center justify-center">
+                <img src="/brand-logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold gradient-text">CodeAcademy Pro</span>
             </div>
