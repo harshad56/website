@@ -24,8 +24,7 @@ const FALLBACK_MODELS = [
     'meta-llama/llama-3.1-8b-instruct:free',
     'meta-llama/llama-3.2-3b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
-    'google/gemini-flash-1.5:free',
-    'microsoft/phi-3-medium-128k-instruct:free'
+    'google/gemini-flash-1.5:free'
 ];
 
 const DEFAULT_MODEL = FALLBACK_MODELS[0];
@@ -54,20 +53,19 @@ async function createChatCompletionWithRetry(params, maxRetries = 2) {
                 const isNotFound = error.status === 404;
                 const isRetryable = isRateLimit || error.status >= 500;
 
-                // If model is not found (404), move to next model immediately
                 if (isNotFound) {
-                    winston.warn(`⚠️ Model ${model} returned 404: Not Found. Skipping to next model.`);
+                    winston.warn(`❌ Model ${model} is not available (404). Skipping...`);
                     break;
                 }
 
                 if (!isRetryable || retries === maxRetries) {
-                    winston.warn(`⚠️ Model ${model} failed: ${error.message}. ${retries === maxRetries ? 'Max retries reached.' : 'Not retryable.'}`);
-                    break; // Move to next model
+                    winston.warn(`❌ Model ${model} failed permanently: ${error.message}. Moving to next fallback...`);
+                    break;
                 }
 
                 // Exponential backoff for retries
                 const delay = Math.pow(2, retries) * 1000;
-                winston.info(`⏳ Rate limited or server error. Retrying ${model} in ${delay}ms...`);
+                winston.info(`🔄 Model ${model} rate limited or server error. Retrying in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 retries++;
             }
