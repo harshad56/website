@@ -429,6 +429,17 @@ taskkill /PID <PID> /F
 3. Verify database tables exist (Supabase project is set up correctly)
 4. Check network connectivity
 
+### Issue: GitHub/Google Sign-in "Redirect URI Mismatch"
+**Error**: "The redirect_uri is not associated with this application."
+
+**Solution**:
+1.  **Google**: Go to Google Cloud Console -> Credentials.
+    *   Add URI: `https://your-render-app.onrender.com/api/auth/google/callback`
+2.  **GitHub**: Go to GitHub Developer Settings -> OAuth Apps -> Select your App.
+    *   Update **Authorization callback URL** to:
+    *   `https://your-render-app.onrender.com/api/auth/github/callback`
+    *   (Make sure there are no trailing slashes or spaces).
+
 ### Issue: Build Fails
 
 ```bash
@@ -461,6 +472,30 @@ npm run build
 # Fix linting issues automatically
 npm run lint -- --fix
 ```
+
+---
+
+## 🔄 How to Update Your Website
+
+Since you have connected your GitHub repository to both Render and Vercel, updating your site is automatic!
+
+### 1. Make Changes Locally
+Edit your code, clean up bugs, or add new features on your computer.
+
+### 2. Commit and Push
+Open your terminal or VS Code Source Control and run:
+
+```bash
+git add .
+git commit -m "Description of your changes"
+git push origin main
+```
+
+### 3. Automatic Deployment
+- **Render (Backend)**: Will detect the push, pull the new code, and redeploy automatically. (Takes ~2-3 minutes)
+- **Vercel (Frontend)**: Will detect the push, build the new assets, and publish automatically. (Takes ~1 minute)
+
+> **Note**: If you add **new environment variables** (e.g., a new API key), you must manually add them to the Render or Vercel dashboard *before* or *immediately after* pushing.
 
 ---
 

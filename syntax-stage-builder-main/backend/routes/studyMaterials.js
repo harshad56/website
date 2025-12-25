@@ -22,9 +22,31 @@ router.get('/', optionalAuth, async (req, res) => {
     const includeInactive = req.user && req.user.role === 'admin';
 
     winston.info(`Fetching study materials (includeInactive: ${includeInactive}, user: ${req.user ? req.user.email : 'anonymous'})`);
+    // Sanitize URLs helper
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizeMaterial = (mat) => ({
+      ...mat,
+      imageUrl: sanitizeUrl(mat.image_url || mat.imageUrl), // Handle case nuances
+      image_url: sanitizeUrl(mat.image_url || mat.imageUrl),
+      file_url: sanitizeUrl(mat.file_url),
+      setup_pdf_url: sanitizeUrl(mat.setup_pdf_url)
+    });
+
     const materials = await db.getStudyMaterials(includeInactive);
     winston.info(`Fetched ${materials.length} study materials`);
-    res.json({ success: true, data: materials });
+
+    // Sanitize all materials
+    const sanitizedMaterials = materials.map(sanitizeMaterial);
+
+    res.json({ success: true, data: sanitizedMaterials });
   } catch (error) {
     winston.error('Get study materials error:', {
       error: error.message,
@@ -56,7 +78,26 @@ router.get('/:id', async (req, res) => {
     if (!material) {
       return res.status(404).json({ success: false, message: 'Study material not found' });
     }
-    res.json({ success: true, data: material });
+
+    // Sanitize URLs helper (duplicated for scope, could be refactored)
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedMaterial = {
+      ...material,
+      imageUrl: sanitizeUrl(material.image_url || material.imageUrl),
+      image_url: sanitizeUrl(material.image_url || material.imageUrl),
+      file_url: sanitizeUrl(material.file_url),
+      setup_pdf_url: sanitizeUrl(material.setup_pdf_url)
+    };
+
+    res.json({ success: true, data: sanitizedMaterial });
   } catch (error) {
     winston.error('Get study material error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch study material' });

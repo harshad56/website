@@ -23,8 +23,27 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     // Admin can see all projects, public users only see active ones
     const includeInactive = req.user && req.user.role === 'admin';
+    // Sanitize URLs helper
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizeProject = (proj) => ({
+      ...proj,
+      imageUrl: sanitizeUrl(proj.image_url || proj.imageUrl),
+      image_url: sanitizeUrl(proj.image_url || proj.imageUrl),
+      download_url: sanitizeUrl(proj.download_url),
+      setup_pdf_url: sanitizeUrl(proj.setup_pdf_url)
+    });
+
     const projects = await db.getProjects(includeInactive);
-    res.json({ success: true, data: projects });
+    const sanitizedProjects = projects.map(sanitizeProject);
+    res.json({ success: true, data: sanitizedProjects });
   } catch (error) {
     winston.error('Get projects error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch projects' });
@@ -49,7 +68,26 @@ router.get('/:id', async (req, res) => {
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
-    res.json({ success: true, data: project });
+
+    // Sanitize URLs helper
+    const sanitizeUrl = (url) => {
+      if (!url) return null;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/http:\/\/localhost:5000/g, process.env.BACKEND_URL)
+          .replace(/https:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedProject = {
+      ...project,
+      imageUrl: sanitizeUrl(project.image_url || project.imageUrl),
+      image_url: sanitizeUrl(project.image_url || project.imageUrl),
+      download_url: sanitizeUrl(project.download_url),
+      setup_pdf_url: sanitizeUrl(project.setup_pdf_url)
+    };
+
+    res.json({ success: true, data: sanitizedProject });
   } catch (error) {
     winston.error('Get project error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch project' });

@@ -332,11 +332,18 @@ const Header = memo(() => {
                     </div>
                   )}
 
-                  {!isAuthenticated && (
+                  {!isAuthenticated ? (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleStartTrial} className="text-primary font-medium">
                         Start Free Trial 🚀
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={logout} className="text-destructive font-medium cursor-pointer">
+                        Sign Out
                       </DropdownMenuItem>
                     </>
                   )}
