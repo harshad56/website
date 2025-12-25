@@ -49,8 +49,7 @@ const InterviewPractice = () => {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
-  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("practice");
   const [questionCategory, setQuestionCategory] = useState("behavioral");
   const [difficulty, setDifficulty] = useState("medium");
