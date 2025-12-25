@@ -187,9 +187,14 @@ router.post('/chat', async (req, res) => {
 
     } catch (error) {
         winston.error('AI Chat error:', error);
+
+        // Check if it's an API key issue
+        const isAuthError = error.status === 401;
+        const debugInfo = isAuthError ? ` (Key starts with: ${apiKey ? apiKey.substring(0, 5) + '...' : 'undefined'}, BaseURL: ${openai.baseURL})` : '';
+
         res.status(500).json({
             success: false,
-            message: `Failed to get AI response: ${error.message || 'Unknown error'}`
+            message: `AI Provider Error: ${error.message || 'Unknown error'}${debugInfo}`
         });
     }
 });
