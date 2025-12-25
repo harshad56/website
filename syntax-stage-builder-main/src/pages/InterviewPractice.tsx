@@ -239,7 +239,7 @@ const InterviewPractice = () => {
               className="mt-8"
             >
               <Button
-                onClick={() => navigate('/admin/languages')}
+                onClick={() => navigate('/admin/interview-practice')}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-lg shadow-indigo-500/20"
               >
                 <Shield className="w-4 h-4 mr-2" />

@@ -182,7 +182,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/admin/languages"
+                path="/admin/interview-practice"
                 element={
                   <AdminRoute>
                     <AdminLanguageInterview />
