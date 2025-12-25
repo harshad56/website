@@ -21,9 +21,10 @@ const openai = new OpenAI(openaiConfig);
 
 const FALLBACK_MODELS = [
     'google/gemini-2.0-flash-exp:free',
-    process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
-    'microsoft/phi-3-mini-128k-instruct:free'
+    'qwen/qwen-2-7b-instruct:free'
 ];
 
 const DEFAULT_MODEL = FALLBACK_MODELS[0];
