@@ -32,11 +32,14 @@ const DEFAULT_MODEL = FALLBACK_MODELS[0];
 /**
  * Helper to call OpenAI/OpenRouter with retries and model fallbacks
  */
-async function createChatCompletionWithRetry(params, maxRetries = 2) {
+async function createChatCompletionWithRetry(params, maxRetries = 1) {
     let lastError;
+    let quotaExceeded = false;
 
     // Try each model in the fallback chain
     for (const model of FALLBACK_MODELS) {
+        if (quotaExceeded) break;
+
         let retries = 0;
         while (retries <= maxRetries) {
             try {
@@ -51,14 +54,22 @@ async function createChatCompletionWithRetry(params, maxRetries = 2) {
                 lastError = error;
                 const isRateLimit = error.status === 429;
                 const isNotFound = error.status === 404;
-                const isRetryable = isRateLimit || error.status >= 500;
+                const errorMsg = error.message || "";
 
+                // Explicitly check for for daily quota limits
+                if (errorMsg.includes("free-models-per-day") || errorMsg.includes("quota exceeded")) {
+                    winston.error(`🚫 Daily Free Quota Exceeded for ${model}`);
+                    quotaExceeded = true;
+                    break;
+                }
+
+                // If model is not found (404), move to next model immediately
                 if (isNotFound) {
                     winston.warn(`❌ Model ${model} is not available (404). Skipping...`);
                     break;
                 }
 
-                if (!isRetryable || retries === maxRetries) {
+                if (!isRateLimit || retries === maxRetries) {
                     winston.warn(`❌ Model ${model} failed permanently: ${error.message}. Moving to next fallback...`);
                     break;
                 }
@@ -70,6 +81,13 @@ async function createChatCompletionWithRetry(params, maxRetries = 2) {
                 retries++;
             }
         }
+    }
+
+    // Custom error for quota
+    if (quotaExceeded) {
+        const quotaErr = new Error("Daily Free Model Quota Reached. OpenRouter limits free accounts to a certain number of requests per day. To continue, please add $1 of credit to your OpenRouter account or try again tomorrow.");
+        quotaErr.status = 429;
+        throw quotaErr;
     }
 
     throw lastError;
