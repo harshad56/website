@@ -24,7 +24,7 @@ const FALLBACK_MODELS = [
     'meta-llama/llama-3.1-8b-instruct:free',
     'meta-llama/llama-3.2-3b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
-    'deepseek/deepseek-chat:free'
+    'google/gemini-pro-1.5:free'
 ];
 
 const DEFAULT_MODEL = FALLBACK_MODELS[0];
@@ -230,13 +230,14 @@ router.post('/chat', async (req, res) => {
     } catch (error) {
         winston.error('AI Chat error:', error);
 
-        // Check if it's an API key issue
-        const isAuthError = error.status === 401;
-        const debugInfo = isAuthError ? ` (Key starts with: ${apiKey ? apiKey.substring(0, 5) + '...' : 'undefined'}, BaseURL: ${openai.baseURL})` : '';
+        const isRateLimit = error.status === 429;
+        const errorMessage = isRateLimit
+            ? "Multiple AI providers are currently busy. This usually happens when daily free quotas are reached. Please try again in a few minutes or add a small credit to your OpenRouter account for instant access."
+            : `AI Assistant is currently unavailable: ${error.message || 'System error'}`;
 
         res.status(500).json({
             success: false,
-            message: `AI Provider Error: ${error.message || 'Unknown error'}${debugInfo}`
+            message: errorMessage
         });
     }
 });
