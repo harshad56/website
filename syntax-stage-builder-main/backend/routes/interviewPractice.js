@@ -189,7 +189,7 @@ router.post('/chat', async (req, res) => {
         winston.error('AI Chat error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to get AI response'
+            message: `Failed to get AI response: ${error.message || 'Unknown error'}`
         });
     }
 });
