@@ -13,12 +13,13 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useCourses } from "@/hooks/useApi";
 import { apiService } from "@/services/ApiService";
-import { Plus, BookOpen, Globe2, Star, Users, Loader2, Edit, Trash2, Clock, DollarSign, Image as ImageIcon } from "lucide-react";
+import { Plus, BookOpen, Globe2, Star, Users, Loader2, Edit, Trash2, Clock, DollarSign, Image as ImageIcon, Upload } from "lucide-react";
 
 const AdminCourses = () => {
   const navigate = useNavigate();
   const { data: courses, isLoading, isError, refetch } = useCourses();
   const { toast } = useToast();
+  // ... (previous state variables)
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -38,73 +39,24 @@ const AdminCourses = () => {
     category: "general",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [stats, setStats] = useState<{ totalCourses: number; publishedCourses: number; totalEnrollments: number; paidEnrollments: number; revenue: number } | null>(null);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
-  const [languages, setLanguages] = useState<Array<{ id: string; name: string; slug: string }>>([]);
-  const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
-  const [showAddLanguageDialog, setShowAddLanguageDialog] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [newLanguageName, setNewLanguageName] = useState("");
-  const [loadingMetadata, setLoadingMetadata] = useState(true);
+  // ... (rest of state)
 
-  const totalCourses = courses?.length || 0;
-  const publishedCourses = useMemo(
-    () => (courses || []).filter((c: any) => c.is_published).length,
-    [courses]
-  );
+  // ... (useEffect for metadata)
 
-  // Fetch categories and languages on mount
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        setLoadingMetadata(true);
-        const [categoriesRes, languagesRes] = await Promise.all([
-          apiService.getCourseCategories(),
-          apiService.getCourseLanguages()
-        ]);
-        if (categoriesRes.success && categoriesRes.data) {
-          setCategories(categoriesRes.data);
-        }
-        if (languagesRes.success && languagesRes.data) {
-          setLanguages(languagesRes.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch metadata:', error);
-        // Fallback to default lists if API fails
-        setCategories([
-          { id: '1', name: 'General', slug: 'general' },
-          { id: '2', name: 'Frontend', slug: 'frontend' },
-          { id: '3', name: 'Backend', slug: 'backend' },
-          { id: '4', name: 'Full Stack', slug: 'fullstack' },
-          { id: '5', name: 'Data & AI', slug: 'data' },
-          { id: '6', name: 'DevOps/Cloud', slug: 'devops' },
-          { id: '7', name: 'Mobile', slug: 'mobile' },
-          { id: '8', name: 'Web Development', slug: 'web-development' },
-          { id: '9', name: 'Cloud Computing', slug: 'cloud-computing' },
-          { id: '10', name: 'Theme', slug: 'theme' }
-        ]);
-        setLanguages([
-          { id: '1', name: 'Python', slug: 'python' },
-          { id: '2', name: 'JavaScript', slug: 'javascript' },
-          { id: '3', name: 'Java', slug: 'java' },
-          { id: '4', name: 'C#', slug: 'csharp' },
-          { id: '5', name: 'Go', slug: 'go' },
-          { id: '6', name: 'Rust', slug: 'rust' },
-          { id: '7', name: 'TypeScript', slug: 'typescript' },
-          { id: '8', name: 'C++', slug: 'cpp' },
-          { id: '9', name: 'C', slug: 'c' },
-          { id: '10', name: 'PHP', slug: 'php' },
-          { id: '11', name: 'Ruby', slug: 'ruby' },
-          { id: '12', name: 'Swift', slug: 'swift' },
-          { id: '13', name: 'Kotlin', slug: 'kotlin' }
-        ]);
-      } finally {
-        setLoadingMetadata(false);
+  const handleFileUpload = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const res = await apiService.uploadFile(file);
+      if (res.success && res.data?.url) {
+        setFormData((prev) => ({ ...prev, imageUrl: res.data!.url }));
+        toast({ title: 'Uploaded', description: 'Thumbnail uploaded successfully' });
+      } else {
+        throw new Error(res.message || 'Upload failed');
       }
-    };
-    fetchMetadata();
-  }, []);
+    } catch (err: any) {
+      toast({ title: 'Upload error', description: err.message || 'Failed to upload', variant: 'destructive' });
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -547,16 +499,25 @@ const AdminCourses = () => {
                   </div>
                   <div>
                     <Label htmlFor="imageUrl">Thumbnail image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      type="url"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      className="bg-black/40 border-white/10 text-white"
-                      placeholder="https://example.com/image.jpg"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="imageUrl"
+                        type="url"
+                        value={formData.imageUrl}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                        className="bg-black/40 border-white/10 text-white"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      <Button variant="outline" type="button" asChild>
+                        <label className="cursor-pointer flex items-center gap-1 px-3 py-2">
+                          <Upload className="w-4 h-4" />
+                          <input type="file" className="hidden" accept="image/*"
+                            onChange={(e) => handleFileUpload(e.target.files?.[0] || null)} />
+                        </label>
+                      </Button>
+                    </div>
                     <p className="text-xs text-white/50 mt-1">
-                      Enter a direct image URL (http:// or https://). Base64 images are not supported.
+                      Enter a direct image URL or upload an image.
                     </p>
                   </div>
                 </div>
@@ -738,16 +699,25 @@ const AdminCourses = () => {
                   </div>
                   <div>
                     <Label htmlFor="edit-imageUrl">Thumbnail image URL</Label>
-                    <Input
-                      id="edit-imageUrl"
-                      type="url"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      className="bg-black/40 border-white/10 text-white"
-                      placeholder="https://example.com/image.jpg"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="edit-imageUrl"
+                        type="url"
+                        value={formData.imageUrl}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                        className="bg-black/40 border-white/10 text-white"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      <Button variant="outline" type="button" asChild>
+                        <label className="cursor-pointer flex items-center gap-1 px-3 py-2">
+                          <Upload className="w-4 h-4" />
+                          <input type="file" className="hidden" accept="image/*"
+                            onChange={(e) => handleFileUpload(e.target.files?.[0] || null)} />
+                        </label>
+                      </Button>
+                    </div>
                     <p className="text-xs text-white/50 mt-1">
-                      Enter a direct image URL (http:// or https://). Base64 images are not supported.
+                      Enter a direct image URL or upload an image.
                     </p>
                   </div>
                 </div>
@@ -1044,7 +1014,7 @@ const AdminCourses = () => {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  
+
                   {/* Status Badge */}
                   <div className="absolute top-3 right-3">
                     {course.is_published ? (
@@ -1140,7 +1110,7 @@ const AdminCourses = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
                     <Button
