@@ -1,97 +1,9 @@
 const express = require('express');
-const OpenAI = require('openai');
 const { authenticateToken } = require('../middleware/auth');
 const winston = require('winston');
+const { createChatCompletionWithRetry } = require('../utils/ai');
 
 const router = express.Router();
-
-// Initialize OpenAI/OpenRouter
-const useOpenRouter = process.env.USE_OPENROUTER === 'true' || process.env.OPENAI_API_KEY?.startsWith('sk-or-v1-');
-const apiKey = process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.trim() : undefined;
-
-const openaiConfig = {
-    apiKey: apiKey
-};
-
-if (useOpenRouter) {
-    openaiConfig.baseURL = 'https://openrouter.ai/api/v1';
-}
-
-const openai = new OpenAI(openaiConfig);
-
-const FALLBACK_MODELS = [
-    'google/gemini-2.0-flash-exp:free',
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
-    'google/gemini-flash-1.5:free'
-];
-
-const DEFAULT_MODEL = FALLBACK_MODELS[0];
-
-/**
- * Helper to call OpenAI/OpenRouter with retries and model fallbacks
- */
-async function createChatCompletionWithRetry(params, maxRetries = 1) {
-    let lastError;
-    let quotaExceeded = false;
-
-    // Try each model in the fallback chain
-    for (const model of FALLBACK_MODELS) {
-        if (quotaExceeded) break;
-
-        let retries = 0;
-        while (retries <= maxRetries) {
-            try {
-                winston.info(`🤖 Attempting completion with model: ${model} (Attempt ${retries + 1})`);
-                const completion = await openai.chat.completions.create({
-                    ...params,
-                    model: model
-                });
-                winston.info(`✅ Completion successful with ${model}`);
-                return completion;
-            } catch (error) {
-                lastError = error;
-                const isRateLimit = error.status === 429;
-                const isNotFound = error.status === 404;
-                const errorMsg = error.message || "";
-
-                // Explicitly check for for daily quota limits
-                if (errorMsg.includes("free-models-per-day") || errorMsg.includes("quota exceeded")) {
-                    winston.error(`🚫 Daily Free Quota Exceeded for ${model}`);
-                    quotaExceeded = true;
-                    break;
-                }
-
-                // If model is not found (404), move to next model immediately
-                if (isNotFound) {
-                    winston.warn(`❌ Model ${model} is not available (404). Skipping...`);
-                    break;
-                }
-
-                if (!isRateLimit || retries === maxRetries) {
-                    winston.warn(`❌ Model ${model} failed permanently: ${error.message}. Moving to next fallback...`);
-                    break;
-                }
-
-                // Exponential backoff for retries
-                const delay = Math.pow(2, retries) * 1000;
-                winston.info(`🔄 Model ${model} rate limited or server error. Retrying in ${delay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                retries++;
-            }
-        }
-    }
-
-    // Custom error for quota
-    if (quotaExceeded) {
-        const quotaErr = new Error("Daily Free Model Quota Reached. OpenRouter limits free accounts to a certain number of requests per day. To continue, please add $1 of credit to your OpenRouter account or try again tomorrow.");
-        quotaErr.status = 429;
-        throw quotaErr;
-    }
-
-    throw lastError;
-}
 
 // Interview question categories
 const QUESTION_CATEGORIES = {

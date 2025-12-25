@@ -926,6 +926,52 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // AI Tutor
+  async aiTutorChat(payload: {
+    message: string;
+    context?: string;
+    language?: string;
+    code?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/ai-tutor/chat', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async aiTutorAnalyzeCode(payload: {
+    code: string;
+    language: string;
+    task?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/ai-tutor/analyze-code', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async aiTutorGetRecommendations(payload: {
+    language?: string;
+    topic?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/ai-tutor/recommendations', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async aiTutorDebugCode(payload: {
+    code: string;
+    language: string;
+    error?: string;
+    expectedOutput?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/ai-tutor/debug-code', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
 }
 
 export const apiService = new ApiService(); 
