@@ -25,10 +25,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
-question: string;
-type: string;
-difficulty: string;
-tips ?: string;
+interface Question {
+  question: string;
+  type: string;
+  difficulty: string;
+  tips?: string;
 }
 
 interface Feedback {
