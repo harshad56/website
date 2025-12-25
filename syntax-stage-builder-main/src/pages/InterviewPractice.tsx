@@ -49,7 +49,8 @@ const InterviewPractice = () => {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("practice");
   const [questionCategory, setQuestionCategory] = useState("behavioral");
   const [difficulty, setDifficulty] = useState("medium");
@@ -59,11 +60,7 @@ const InterviewPractice = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [mySessions, setMySessions] = useState<any[]>([]);
+
   const [qaLanguages, setQaLanguages] = useState<any[]>([]);
   const [isLoadingLanguages, setIsLoadingLanguages] = useState(false);
 
@@ -71,31 +68,12 @@ const InterviewPractice = () => {
 
   // Load packages on mount
   useEffect(() => {
-    loadPackages();
     loadQaLanguages();
-    if (user) {
-      loadMySessions();
-    }
   }, [user]);
 
-  // Load available slots when date changes
-  useEffect(() => {
-    if (date && user) {
-      loadAvailableSlots();
-    }
-  }, [date, questionCategory, user]);
 
-  const loadPackages = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/interview-practice/packages`);
-      const data = await response.json();
-      if (data.success) {
-        setPackages(data.packages);
-      }
-    } catch (error) {
-      console.error('Error loading packages:', error);
-    }
-  };
+
+
 
   const loadQaLanguages = async () => {
     try {
@@ -111,42 +89,7 @@ const InterviewPractice = () => {
     }
   };
 
-  const loadAvailableSlots = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(
-        `${apiUrl}/interview-practice/available-slots?date=${date?.toISOString().split('T')[0]}&type=${questionCategory}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setAvailableSlots(data.slots);
-      }
-    } catch (error) {
-      console.error('Error loading slots:', error);
-    }
-  };
 
-  const loadMySessions = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${apiUrl}/interview-practice/my-sessions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setMySessions(data.sessions);
-      }
-    } catch (error) {
-      console.error('Error loading sessions:', error);
-    }
-  };
 
   const generateQuestions = async () => {
     setIsGenerating(true);
@@ -243,61 +186,7 @@ const InterviewPractice = () => {
     }
   };
 
-  const bookSession = async (slotId: string) => {
-    if (!user) {
-      toast({
-        title: "Login required",
-        description: "Please login to book a session.",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    if (!selectedPackage) {
-      toast({
-        title: "Package required",
-        description: "Please select a package first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${apiUrl}/interview-practice/book-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          slotId: slotId,
-          packageId: selectedPackage,
-          type: questionCategory
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        toast({
-          title: "Session booked!",
-          description: "Your interview practice session has been confirmed.",
-        });
-        setSelectedSlot(null);
-        loadMySessions();
-        loadAvailableSlots();
-      } else {
-        throw new Error(data.message || 'Failed to book session');
-      }
-    } catch (error) {
-      console.error('Error booking session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to book session. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -386,18 +275,7 @@ const InterviewPractice = () => {
                 <Code className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="whitespace-nowrap">Language Q&A</span>
               </TabsTrigger>
-              <TabsTrigger value="book" className="flex-shrink-0 min-w-[110px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="whitespace-nowrap">Book Session</span>
-              </TabsTrigger>
-              <TabsTrigger value="packages" className="flex-shrink-0 min-w-[90px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="whitespace-nowrap">Packages</span>
-              </TabsTrigger>
-              <TabsTrigger value="sessions" className="flex-shrink-0 min-w-[100px] sm:min-w-0 data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="whitespace-nowrap">My Sessions</span>
-              </TabsTrigger>
+
             </TabsList>
           </div>
 
@@ -637,205 +515,47 @@ const InterviewPractice = () => {
             </Card>
           </TabsContent>
 
-          {/* Book Session Tab */}
-          <TabsContent value="book" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">Schedule a Session</CardTitle>
-                <CardDescription className="text-white/60">
-                  Pick a date and format that works for you
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <Label className="text-white/80 mb-2 block">Select Date</Label>
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-md border border-white/10 bg-slate-800/50"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-white/80 mb-2 block">Session Type</Label>
-                    <Tabs value={questionCategory} onValueChange={setQuestionCategory}>
-                      <TabsList className="grid grid-cols-3 bg-slate-800/50 border border-white/10">
-                        <TabsTrigger value="behavioral" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-                          Behavioral
-                        </TabsTrigger>
-                        <TabsTrigger value="technical" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-                          Technical
-                        </TabsTrigger>
-                        <TabsTrigger value="panel" className="data-[state=active]:bg-violet-500 text-white/70 data-[state=active]:text-white">
-                          Panel
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
 
-                  {availableSlots.length > 0 ? (
-                    <div className="space-y-2">
-                      <Label className="text-white/80">Available Time Slots</Label>
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                        {availableSlots.map((slot) => (
-                          <Card
-                            key={slot.id}
-                            className={`p-3 cursor-pointer transition-all ${selectedSlot === slot.id
-                              ? 'bg-violet-500/20 border-violet-500'
-                              : 'bg-slate-800/50 border-white/10 hover:bg-slate-700/50'
-                              }`}
-                            onClick={() => setSelectedSlot(slot.id)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-white font-medium">{slot.time}</p>
-                                <p className="text-white/60 text-sm">
-                                  {slot.mentor.name} • {slot.mentor.company}
-                                </p>
-                              </div>
-                              <Badge variant="outline" className="border-white/20 text-white/60">
-                                {slot.duration} min
-                              </Badge>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                      {selectedSlot && (
-                        <Button
-                          onClick={() => bookSession(selectedSlot)}
-                          className="w-full bg-violet-500 hover:bg-violet-600"
-                        >
-                          Book This Slot
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-white/50">
-                      {user ? "No available slots for this date. Try another date." : "Please login to view available slots."}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Packages Tab */}
-          <TabsContent value="packages" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">Choose a Package</CardTitle>
-                <CardDescription className="text-white/60">
-                  Every session includes recordings, rubrics, and follow-up action plans
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6 md:grid-cols-3">
-                {packages.map((pkg) => (
-                  <Card
-                    key={pkg.id}
-                    className={`border-2 transition-all cursor-pointer ${selectedPackage === pkg.id
-                      ? 'border-violet-500 bg-violet-500/10'
-                      : 'border-white/10 bg-slate-800/50 hover:border-violet-500/50'
-                      }`}
-                    onClick={() => setSelectedPackage(pkg.id)}
-                  >
-                    <CardHeader>
-                      <Badge variant="outline" className="mb-2 border-white/20 text-white/60">
-                        {pkg.sessions} sessions
-                      </Badge>
-                      <CardTitle className="text-white">{pkg.title}</CardTitle>
-                      <CardDescription className="text-white/60">{pkg.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <ul className="space-y-2 text-sm text-white/70">
-                        {pkg.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-violet-400" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                        <span className="text-2xl font-bold text-white">${pkg.price}</span>
-                        <Button
-                          variant={selectedPackage === pkg.id ? "default" : "outline"}
-                          className={selectedPackage === pkg.id ? "bg-violet-500 hover:bg-violet-600" : ""}
-                        >
-                          Select
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* My Sessions Tab */}
-          <TabsContent value="sessions" className="space-y-6">
-            <Card className="bg-slate-900/70 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">My Interview Sessions</CardTitle>
-                <CardDescription className="text-white/60">
-                  View your scheduled and completed practice sessions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!user ? (
-                  <div className="text-center py-8 text-white/50">
-                    Please login to view your sessions
-                  </div>
-                ) : mySessions.length === 0 ? (
-                  <div className="text-center py-8 text-white/50">
-                    No sessions yet. Book your first session to get started!
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {mySessions.map((session) => (
-                      <Card key={session.id} className="bg-slate-800/50 border-white/10">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className={
-                                  session.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                                    session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
-                                      'bg-gray-500/20 text-gray-300'
+          session.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+          session.status === 'scheduled' ? 'bg-blue-500/20 text-blue-300' :
+          'bg-gray-500/20 text-gray-300'
                                 }>
-                                  {session.status}
-                                </Badge>
-                                <span className="text-white font-medium">{session.type}</span>
-                              </div>
-                              <p className="text-white/60 text-sm">
-                                {new Date(session.date).toLocaleDateString()} • {session.mentor.name} ({session.mentor.company})
-                              </p>
-                              {session.feedback && (
-                                <div className="mt-2">
-                                  <div className="flex items-center gap-2">
-                                    <Star className="w-4 h-4 text-yellow-400" />
-                                    <span className="text-white/80 text-sm">Score: {session.feedback.score}/100</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            {session.status === 'scheduled' && (
-                              <Button variant="outline" size="sm" className="border-white/20 text-white">
-                                Join Session
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+          {session.status}
+        </Badge>
+        <span className="text-white font-medium">{session.type}</span>
+      </div>
+      <p className="text-white/60 text-sm">
+        {new Date(session.date).toLocaleDateString()} • {session.mentor.name} ({session.mentor.company})
+      </p>
+      {session.feedback && (
+        <div className="mt-2">
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-400" />
+            <span className="text-white/80 text-sm">Score: {session.feedback.score}/100</span>
+          </div>
+        </div>
+      )}
+    </div>
+                            {
+    session.status === 'scheduled' && (
+      <Button variant="outline" size="sm" className="border-white/20 text-white">
+        Join Session
+      </Button>
+    )
+  }
+                          </div >
+                        </CardContent >
+                      </Card >
                     ))}
-                  </div>
+                  </div >
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </CardContent >
+            </Card >
+          </TabsContent >
+        </Tabs >
 
-        {/* Mentor Bench */}
-        <Card className="bg-slate-900/70 border-white/10 mt-8">
+  {/* Mentor Bench */ }
+  < Card className = "bg-slate-900/70 border-white/10 mt-8" >
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Users className="h-5 w-5 text-violet-400" />
@@ -858,9 +578,9 @@ const InterviewPractice = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
-      </div>
-    </div>
+        </Card >
+      </div >
+    </div >
   );
 };
 
