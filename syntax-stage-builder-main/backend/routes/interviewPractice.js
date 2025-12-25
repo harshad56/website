@@ -15,10 +15,6 @@ const openaiConfig = {
 
 if (useOpenRouter) {
     openaiConfig.baseURL = 'https://openrouter.ai/api/v1';
-    openaiConfig.defaultHeaders = {
-        'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000',
-        'X-Title': 'CodeAcademy Pro Interview Practice'
-    };
 }
 
 const openai = new OpenAI(openaiConfig);
