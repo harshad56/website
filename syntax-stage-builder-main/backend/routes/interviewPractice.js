@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Initialize OpenAI/OpenRouter
 const useOpenRouter = process.env.USE_OPENROUTER === 'true' || process.env.OPENAI_API_KEY?.startsWith('sk-or-v1-');
-const apiKey = process.env.OPENAI_API_KEY;
+const apiKey = process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.trim() : undefined;
 
 const openaiConfig = {
     apiKey: apiKey
