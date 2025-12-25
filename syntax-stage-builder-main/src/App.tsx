@@ -142,6 +142,14 @@ const App = () => {
                 }
               />
               <Route
+                path="/admin/real-projects"
+                element={
+                  <AdminRoute>
+                    <AdminProjects />
+                  </AdminRoute>
+                }
+              />
+              <Route
                 path="/admin/study-materials"
                 element={
                   <AdminRoute>
