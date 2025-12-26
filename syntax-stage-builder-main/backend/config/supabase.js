@@ -26,7 +26,7 @@ const supabase = (supabaseUrl && supabaseServiceKey) ?
     null;
 
 // Test database connection
-const testConnection = async() => {
+const testConnection = async () => {
     if (!supabase) {
         winston.warn('Supabase not configured. Skipping connection test.');
         return true; // Allow server to start without Supabase in development
@@ -233,8 +233,8 @@ const db = {
         // Add students_count, rating, reviews_count, lesson_count, and lessons to each course
         return courses.map(course => {
             const ratingInfo = ratingData[course.id];
-            const avgRating = ratingInfo && ratingInfo.count > 0 
-                ? Math.round((ratingInfo.total / ratingInfo.count) * 10) / 10 
+            const avgRating = ratingInfo && ratingInfo.count > 0
+                ? Math.round((ratingInfo.total / ratingInfo.count) * 10) / 10
                 : 4.8; // Default rating if no reviews
             const reviewCount = ratingInfo ? ratingInfo.count : 0;
 
@@ -316,11 +316,11 @@ const db = {
             // Remove any fields that might not exist in the schema
             // Only keep fields that match the current courses table schema
             const allowedFields = [
-                'title', 'description', 'language', 'difficulty', 
+                'title', 'description', 'language', 'difficulty',
                 'estimated_duration', 'total_lessons', 'is_published', 'created_by',
                 'image_url', 'price', 'tags', 'category' // Optional fields (add via migration if needed)
             ];
-            
+
             const cleanCourseData = {};
             for (const key of allowedFields) {
                 if (courseData.hasOwnProperty(key)) {
@@ -346,7 +346,7 @@ const db = {
                 });
                 throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
             }
-            
+
             winston.info('Course created successfully:', data.id);
             return data;
         } catch (error) {
@@ -362,11 +362,11 @@ const db = {
 
         try {
             const allowedFields = [
-                'title', 'description', 'language', 'difficulty', 
+                'title', 'description', 'language', 'difficulty',
                 'estimated_duration', 'total_lessons', 'is_published',
                 'image_url', 'price', 'tags', 'category'
             ];
-            
+
             const cleanCourseData = {};
             for (const key of allowedFields) {
                 if (courseData.hasOwnProperty(key)) {
@@ -395,7 +395,7 @@ const db = {
                 });
                 throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
             }
-            
+
             winston.info('Course updated successfully:', id);
             return data;
         } catch (error) {
@@ -426,7 +426,7 @@ const db = {
                 });
                 throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
             }
-            
+
             winston.info('Course deleted successfully:', id);
             return true;
         } catch (error) {
@@ -1016,34 +1016,34 @@ const db = {
         let query = supabase
             .from('projects')
             .select('*');
-        
+
         // If not including inactive, filter to only active projects
         if (!includeInactive) {
             query = query.eq('is_active', true);
         }
-        
+
         query = query.order('created_at', { ascending: false });
-        
+
         const { data, error } = await query;
         if (error) throw error;
-        
+
         // Get download counts for each project
         if (data && data.length > 0) {
             const projectIds = data.map(p => p.id);
-            
+
             // Get download counts grouped by project_id
             const { data: downloadsData, error: downloadsError } = await supabase
                 .from('project_downloads')
                 .select('project_id')
                 .in('project_id', projectIds);
-            
+
             if (!downloadsError && downloadsData) {
                 // Count downloads per project
                 const downloadCounts = downloadsData.reduce((acc, download) => {
                     acc[download.project_id] = (acc[download.project_id] || 0) + 1;
                     return acc;
                 }, {});
-                
+
                 // Add download count to each project
                 return data.map(project => ({
                     ...project,
@@ -1051,7 +1051,7 @@ const db = {
                 }));
             }
         }
-        
+
         // If no downloads or error, return projects with 0 downloads
         return (data || []).map(project => ({
             ...project,
@@ -1083,34 +1083,34 @@ const db = {
         const activeProjects = projects.filter(p => p.is_active !== false).length;
         const featuredProjects = projects.filter(p => p.is_featured === true).length;
         const totalDownloads = downloadsRes.count || 0;
-        
+
         // Calculate revenue from all purchases
         const purchases = purchasesRes.data || [];
         winston.info(`Total project purchases found: ${purchases.length}`);
-        
+
         // Filter completed purchases and calculate revenue
         // If payment_status column exists, filter by it. Otherwise, include all purchases with amount > 0
         const completedPurchases = purchases.filter(p => {
             const amount = Number(p.amount || 0);
-            
+
             // If payment_status exists, use it to filter
             if (p.payment_status !== undefined && p.payment_status !== null) {
                 const status = String(p.payment_status).toLowerCase();
                 return status === 'completed' || status === 'free' || status === 'paid';
             }
-            
+
             // If payment_status doesn't exist or is null, include if amount > 0 (assume completed)
             // This handles legacy records or tables without payment_status column
             return amount > 0;
         });
-        
+
         winston.info(`Completed project purchases: ${completedPurchases.length} out of ${purchases.length} total`);
-        
+
         // Log all purchases for debugging
         purchases.forEach((p, idx) => {
             winston.debug(`Project Purchase ${idx + 1}: amount=₹${p.amount}, status=${p.payment_status || 'null/undefined'}`);
         });
-        
+
         const revenue = completedPurchases.reduce((sum, p) => {
             // Ensure amount is a number and in rupees (not paise)
             const amount = Number(p.amount || 0);
@@ -1162,9 +1162,9 @@ const db = {
                 .eq('project_id', projectId)
                 .order('created_at', { ascending: false })
                 .limit(1);
-            
+
             if (error) throw error;
-            
+
             // Return the first (most recent) purchase, or null if none exist
             return data && data.length > 0 ? data[0] : null;
         } catch (error) {
@@ -1268,27 +1268,27 @@ const db = {
         let query = supabase
             .from('study_materials')
             .select('*');
-        
+
         // If not including inactive, filter to only active materials
         if (!includeInactive) {
             query = query.eq('is_active', true);
         }
-        
+
         query = query.order('created_at', { ascending: false });
-        
+
         const { data, error } = await query;
         if (error) throw error;
-        
+
         // Get download counts for each material
         if (data && data.length > 0) {
             const materialIds = data.map(m => m.id);
-            
+
             // Get download counts - database column is study_material_id (per schema)
             const { data: downloadsData, error: downloadsError } = await supabase
                 .from('study_material_downloads')
                 .select('study_material_id')
                 .in('study_material_id', materialIds);
-            
+
             if (!downloadsError && downloadsData) {
                 // Count downloads per material
                 const downloadCounts = downloadsData.reduce((acc, download) => {
@@ -1297,7 +1297,7 @@ const db = {
                     }
                     return acc;
                 }, {});
-                
+
                 // Add download count to each material
                 return data.map(material => ({
                     ...material,
@@ -1305,7 +1305,7 @@ const db = {
                 }));
             }
         }
-        
+
         // If no downloads or error, return materials with 0 downloads
         return (data || []).map(material => ({
             ...material,
@@ -1337,34 +1337,34 @@ const db = {
         const activeMaterials = materials.filter(m => m.is_active !== false).length;
         const featuredMaterials = materials.filter(m => m.is_featured === true).length;
         const totalDownloads = downloadsRes.count || 0;
-        
+
         // Calculate revenue from all purchases
         const purchases = purchasesRes.data || [];
         winston.info(`Total purchases found: ${purchases.length}`);
-        
+
         // Filter completed purchases and calculate revenue
         // If payment_status column exists, filter by it. Otherwise, include all purchases with amount > 0
         const completedPurchases = purchases.filter(p => {
             const amount = Number(p.amount || 0);
-            
+
             // If payment_status exists, use it to filter
             if (p.payment_status !== undefined && p.payment_status !== null) {
                 const status = String(p.payment_status).toLowerCase();
                 return status === 'completed' || status === 'free' || status === 'paid';
             }
-            
+
             // If payment_status doesn't exist or is null, include if amount > 0 (assume completed)
             // This handles legacy records or tables without payment_status column
             return amount > 0;
         });
-        
+
         winston.info(`Completed purchases: ${completedPurchases.length} out of ${purchases.length} total`);
-        
+
         // Log all purchases for debugging
         purchases.forEach((p, idx) => {
             winston.debug(`Purchase ${idx + 1}: amount=₹${p.amount}, status=${p.payment_status || 'null/undefined'}`);
         });
-        
+
         const revenue = completedPurchases.reduce((sum, p) => {
             // Ensure amount is a number and in rupees (not paise)
             const amount = Number(p.amount || 0);
@@ -1396,11 +1396,11 @@ const db = {
         if (!supabase) {
             throw new Error('Supabase not configured.');
         }
-        
+
         // Database uses material_id (not study_material_id) - confirmed by error messages
         // Support both material_id and study_material_id for compatibility
         const materialIdValue = purchaseData.material_id || purchaseData.study_material_id;
-        
+
         winston.info('Creating study material purchase with data:', {
             user_id: purchaseData.user_id,
             material_id: materialIdValue,
@@ -1408,7 +1408,7 @@ const db = {
             payment_status: purchaseData.payment_status,
             order_id: purchaseData.order_id
         });
-        
+
         // Use material_id (actual database column name - confirmed by error messages)
         // order_id is required (NOT NULL constraint)
         const insertData = {
@@ -1418,25 +1418,25 @@ const db = {
             payment_status: purchaseData.payment_status,
             order_id: purchaseData.order_id || `order_${Date.now()}` // Required field
         };
-        
+
         // Add payment_id if provided
         if (purchaseData.payment_id !== undefined) {
             insertData.payment_id = purchaseData.payment_id;
         }
-        
+
         // Note: razorpay_order_id, razorpay_payment_id, razorpay_signature columns don't exist
         // The table only has order_id and payment_id columns
-        
+
         let { data, error } = await supabase
             .from('study_material_purchases')
             .insert([insertData])
             .select()
             .single();
-        
+
         // If error is due to missing columns, log it (shouldn't happen now since we only use order_id and payment_id)
         if (error && error.message && (
-            error.message.includes('razorpay_order_id') || 
-            error.message.includes('razorpay_payment_id') || 
+            error.message.includes('razorpay_order_id') ||
+            error.message.includes('razorpay_payment_id') ||
             error.message.includes('razorpay_signature')
         )) {
             winston.warn('Razorpay columns not found, retrying without them:', error.message);
@@ -1478,7 +1478,7 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         winston.info('Study material purchase created successfully:', data.id);
         return data;
     },
@@ -1492,7 +1492,7 @@ const db = {
             .eq('user_id', userId)
             .eq('material_id', materialId)
             .maybeSingle();
-        
+
         if (error) throw error;
         return data;
     },
@@ -1501,16 +1501,16 @@ const db = {
         if (!supabase) {
             throw new Error('Supabase not configured.');
         }
-        
+
         winston.info(`Updating study material purchase ${id} with data:`, updateData);
-        
+
         const { data, error } = await supabase
             .from('study_material_purchases')
             .update(updateData)
             .eq('id', id)
             .select()
             .single();
-        
+
         if (error) {
             winston.error('Supabase updateStudyMaterialPurchase error:', {
                 error: error.message,
@@ -1520,12 +1520,12 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         if (!data) {
             winston.warn(`Study material purchase not found after update: ${id}`);
             throw new Error('Purchase record not found');
         }
-        
+
         winston.info('Study material purchase updated successfully:', data.id);
         return data;
     },
@@ -1538,7 +1538,7 @@ const db = {
         const { error } = await supabase
             .from('study_material_downloads')
             .insert([{ user_id: userId, study_material_id: materialId }]);
-        
+
         if (error) throw error;
         return true;
     },
@@ -1567,29 +1567,29 @@ const db = {
                 // Convert empty strings to null for optional text fields
                 // Note: 'type' is now required, so don't convert it to null
                 if ((key === 'description' || key === 'language' || key === 'category' ||
-                     key === 'file_url' || key === 'setup_pdf_url' || 
-                     key === 'thumbnail_url') && materialData[key] === '') {
+                    key === 'file_url' || key === 'setup_pdf_url' ||
+                    key === 'thumbnail_url') && materialData[key] === '') {
                     clean[key] = null;
                 } else {
                     clean[key] = materialData[key];
                 }
             }
         }
-        
+
         // Ensure title is not empty (required field)
         if (!clean.title || clean.title.trim() === '') {
             throw new Error('Title is required and cannot be empty');
         }
-        
+
         // Ensure type is provided and not empty (required field)
         if (!clean.type || clean.type.trim() === '') {
             throw new Error('Type is required and cannot be empty. Must be one of: PDF, Notes, Ebook, Video, Document, Tutorial');
         }
-        
+
         winston.info('Inserting study material with fields:', Object.keys(clean));
-        
+
         const { data, error } = await supabase.from('study_materials').insert([clean]).select().single();
-        
+
         if (error) {
             winston.error('Supabase createStudyMaterial error:', {
                 error: error.message,
@@ -1600,7 +1600,7 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         winston.info('Study material created successfully:', data.id);
         return data;
     },
@@ -1629,15 +1629,15 @@ const db = {
                 // Convert empty strings to null for optional text fields
                 // Note: 'type' is now required, so don't convert it to null
                 if ((key === 'description' || key === 'language' || key === 'category' ||
-                     key === 'file_url' || key === 'setup_pdf_url' || 
-                     key === 'thumbnail_url') && materialData[key] === '') {
+                    key === 'file_url' || key === 'setup_pdf_url' ||
+                    key === 'thumbnail_url') && materialData[key] === '') {
                     clean[key] = null;
                 } else {
                     clean[key] = materialData[key];
                 }
             }
         }
-        
+
         // Ensure title is not empty if it's being updated (required field)
         if (clean.title !== undefined) {
             if (typeof clean.title === 'string') {
@@ -1649,7 +1649,7 @@ const db = {
                 throw new Error('Title is required and cannot be empty');
             }
         }
-        
+
         // Ensure type is not empty if it's being updated (required field)
         if (clean.type !== undefined) {
             if (typeof clean.type === 'string') {
@@ -1661,7 +1661,7 @@ const db = {
                 throw new Error('Type is required and cannot be empty. Must be one of: PDF, Notes, Ebook, Video, Document, Tutorial');
             }
         }
-        
+
         // Don't update if no fields to update
         if (Object.keys(clean).length === 0) {
             winston.warn('No fields to update for study material:', id);
@@ -1670,16 +1670,16 @@ const db = {
             if (existingError) throw existingError;
             return existing;
         }
-        
+
         winston.info('Updating study material:', id, 'with fields:', Object.keys(clean));
-        
+
         const { data, error } = await supabase
             .from('study_materials')
             .update(clean)
             .eq('id', id)
             .select()
             .single();
-        
+
         if (error) {
             winston.error('Supabase updateStudyMaterial error:', {
                 error: error.message,
@@ -1691,12 +1691,12 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         if (!data) {
             winston.error('Study material not found after update:', id);
             throw new Error('Study material not found');
         }
-        
+
         winston.info('Study material updated successfully:', data.id);
         return data;
     },
@@ -1813,14 +1813,14 @@ const db = {
             .from('jobs')
             .select('*')
             .order('posted_date', { ascending: false });
-        
+
         if (!includeInactive) {
             query = query.eq('is_active', true);
         }
-        
+
         const { data, error } = await query;
         if (error) throw error;
-        
+
         // Transform data to match frontend interface
         return (data || []).map(job => ({
             id: job.id,
@@ -1863,10 +1863,10 @@ const db = {
             .select('*')
             .eq('id', id)
             .maybeSingle();
-        
+
         if (error) throw error;
         if (!data) return null;
-        
+
         return {
             id: data.id,
             title: data.title,
@@ -1907,10 +1907,10 @@ const db = {
         // Simple keyword-based skill extraction from rawText
         const text = (rawText || '').toLowerCase();
         const knownSkills = [
-            'python','java','javascript','typescript','react','node','spring','django',
-            'c++','c#','go','rust','kotlin','swift','php','ruby','sql','mongodb','postgres',
-            'aws','azure','gcp','docker','kubernetes','devops','marketing','seo','sem',
-            'data science','machine learning','deep learning','nlp'
+            'python', 'java', 'javascript', 'typescript', 'react', 'node', 'spring', 'django',
+            'c++', 'c#', 'go', 'rust', 'kotlin', 'swift', 'php', 'ruby', 'sql', 'mongodb', 'postgres',
+            'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'devops', 'marketing', 'seo', 'sem',
+            'data science', 'machine learning', 'deep learning', 'nlp'
         ];
 
         const extracted_skills = Array.from(new Set(
@@ -2048,20 +2048,20 @@ const db = {
             'contact_website',
             'company_pdf_url'
         ];
-        
+
         const clean = {};
         for (const key of allowed) {
             if (jobData[key] !== undefined) {
                 // Convert empty strings to null for optional fields
-                if ((key === 'description' || key === 'contact_phone' || key === 'contact_website' || 
-                     key === 'experience' || key === 'category' || key === 'company_pdf_url') && jobData[key] === '') {
+                if ((key === 'description' || key === 'contact_phone' || key === 'contact_website' ||
+                    key === 'experience' || key === 'category' || key === 'company_pdf_url') && jobData[key] === '') {
                     clean[key] = null;
                 } else {
                     clean[key] = jobData[key];
                 }
             }
         }
-        
+
         // Ensure required fields
         if (!clean.title || clean.title.trim() === '') {
             throw new Error('Title is required and cannot be empty');
@@ -2078,11 +2078,11 @@ const db = {
         if (!clean.contact_email || clean.contact_email.trim() === '') {
             throw new Error('Contact email is required and cannot be empty');
         }
-        
+
         winston.info('Inserting job with fields:', Object.keys(clean));
-        
+
         const { data, error } = await supabase.from('jobs').insert([clean]).select().single();
-        
+
         if (error) {
             winston.error('Supabase createJob error:', {
                 error: error.message,
@@ -2093,7 +2093,7 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         winston.info('Job created successfully:', data.id);
         return data;
     },
@@ -2124,20 +2124,20 @@ const db = {
             'contact_website',
             'company_pdf_url'
         ];
-        
+
         const clean = {};
         for (const key of allowed) {
             if (jobData[key] !== undefined) {
                 // Convert empty strings to null for optional fields
-                if ((key === 'description' || key === 'contact_phone' || key === 'contact_website' || 
-                     key === 'experience' || key === 'category' || key === 'company_pdf_url') && jobData[key] === '') {
+                if ((key === 'description' || key === 'contact_phone' || key === 'contact_website' ||
+                    key === 'experience' || key === 'category' || key === 'company_pdf_url') && jobData[key] === '') {
                     clean[key] = null;
                 } else {
                     clean[key] = jobData[key];
                 }
             }
         }
-        
+
         // Ensure required fields if being updated
         if (clean.title !== undefined && (!clean.title || clean.title.trim() === '')) {
             throw new Error('Title is required and cannot be empty');
@@ -2154,16 +2154,16 @@ const db = {
         if (clean.contact_email !== undefined && (!clean.contact_email || clean.contact_email.trim() === '')) {
             throw new Error('Contact email is required and cannot be empty');
         }
-        
+
         clean.updated_at = new Date().toISOString();
-        
+
         const { data, error } = await supabase
             .from('jobs')
             .update(clean)
             .eq('id', id)
             .select()
             .single();
-        
+
         if (error) {
             winston.error('Supabase updateJob error:', {
                 error: error.message,
@@ -2175,11 +2175,11 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         if (!data) {
             throw new Error('Job not found');
         }
-        
+
         winston.info('Job updated successfully:', data.id);
         return data;
     },
@@ -2197,20 +2197,20 @@ const db = {
         if (!supabase) {
             throw new Error('Supabase not configured.');
         }
-        
+
         const insertData = {
             user_id: applicationData.user_id,
             job_id: applicationData.job_id,
             cover_letter: applicationData.cover_letter || null,
             resume_url: applicationData.resume_url || null,
         };
-        
+
         const { data, error } = await supabase
             .from('job_applications')
             .insert([insertData])
             .select()
             .single();
-        
+
         if (error) {
             winston.error('Supabase createJobApplication error:', {
                 error: error.message,
@@ -2220,7 +2220,7 @@ const db = {
             });
             throw new Error(`Database error: ${error.message}${error.details ? ` - ${error.details}` : ''}`);
         }
-        
+
         return data;
     },
 
@@ -2234,7 +2234,7 @@ const db = {
             .eq('user_id', userId)
             .eq('job_id', jobId)
             .maybeSingle();
-        
+
         if (error) throw error;
         return data;
     },
@@ -2248,7 +2248,7 @@ const db = {
             .select('*, jobs(*)')
             .eq('user_id', userId)
             .order('applied_at', { ascending: false });
-        
+
         if (error) throw error;
         return data || [];
     },
@@ -2263,7 +2263,7 @@ const db = {
             .select('applications_count')
             .eq('id', jobId)
             .single();
-        
+
         if (job) {
             const newCount = (job.applications_count || 0) + 1;
             await supabase
@@ -2282,7 +2282,7 @@ const db = {
             .insert([{ user_id: userId, job_id: jobId }])
             .select()
             .single();
-        
+
         if (error) {
             // If already saved, return existing
             if (error.code === '23505') { // Unique violation
@@ -2302,7 +2302,7 @@ const db = {
             .delete()
             .eq('user_id', userId)
             .eq('job_id', jobId);
-        
+
         if (error) throw error;
         return true;
     },
@@ -2316,9 +2316,36 @@ const db = {
             .select('*, jobs(*)')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
-        
+
         if (error) throw error;
         return data || [];
+    },
+
+    // Storage operations
+    async uploadFile(bucket, path, fileBuffer, contentType) {
+        if (!supabase) {
+            throw new Error('Supabase not configured.');
+        }
+        const { data, error } = await supabase.storage
+            .from(bucket)
+            .upload(path, fileBuffer, {
+                contentType,
+                upsert: true
+            });
+
+        if (error) throw error;
+        return data;
+    },
+
+    async getPublicUrl(bucket, path) {
+        if (!supabase) {
+            throw new Error('Supabase not configured.');
+        }
+        const { data } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(path);
+
+        return data.publicUrl;
     },
 };
 

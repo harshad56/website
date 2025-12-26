@@ -5,28 +5,19 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const { db } = require('../config/supabase');
+
 const router = express.Router();
 
-// Configure multer storage for uploaded files
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '..', 'uploads', 'documents');
-        fs.mkdirSync(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = path.extname(file.originalname);
-        cb(null, `${uniqueSuffix}${ext}`);
-    }
-});
+// Use memory storage for buffer-based uploads to Supabase
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage,
     limits: {
-        fileSize: 100 * 1024 * 1024, // 100MB
-        fieldSize: 10 * 1024 * 1024, // 10MB for other fields
-        files: 1 // Only one file at a time
+        fileSize: 10 * 1024 * 1024, // Reduced to 10MB for memory efficiency
+        fieldSize: 2 * 1024 * 1024,
+        files: 1
     }
 });
 
@@ -72,28 +63,25 @@ router.post('/upload', authenticateToken, upload.single('file'), handleMulterErr
             });
         }
 
-        // Detect base URL more robustly
-        let baseUrl = process.env.BACKEND_URL;
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(req.file.originalname);
+        const filename = `${uniqueSuffix}${ext}`;
+        const bucket = 'uploads';
+        const filePath = `documents/${filename}`;
 
-        if (!baseUrl) {
-            const host = req.get('x-forwarded-host') || req.get('host');
-            const protocol = req.get('x-forwarded-proto') || req.protocol;
-            baseUrl = `${protocol}://${host}`;
-        }
+        // Upload to Supabase Storage
+        await db.uploadFile(bucket, filePath, req.file.buffer, req.file.mimetype);
 
-        // Ensure no trailing slash
-        baseUrl = baseUrl.replace(/\/$/, '');
+        // Get permanent public URL
+        const fileUrl = await db.getPublicUrl(bucket, filePath);
 
-        const relativePath = `/uploads/documents/${req.file.filename}`;
-        const fileUrl = `${baseUrl}${relativePath}`;
-
-        winston.info(`File uploaded successfully: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
+        winston.info(`File uploaded to Supabase successfully: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
 
         res.json({
             success: true,
             message: 'File uploaded successfully',
             data: {
-                fileId: req.file.filename,
+                fileId: filename,
                 url: fileUrl,
                 originalName: req.file.originalname,
                 size: req.file.size,
@@ -118,16 +106,18 @@ router.post('/upload', authenticateToken, upload.single('file'), handleMulterErr
 // @access  Private
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
-        // For now, just echo back a constructed URL based on file ID
-        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
-        const relativePath = `/uploads/documents/${req.params.id}`;
+        const bucket = 'uploads';
+        const filePath = `documents/${req.params.id}`;
+
+        // Get permanent public URL
+        const fileUrl = await db.getPublicUrl(bucket, filePath);
 
         res.json({
             success: true,
             message: 'File retrieval endpoint',
             data: {
                 fileId: req.params.id,
-                url: `${baseUrl}${relativePath}`
+                url: fileUrl
             }
         });
     } catch (error) {
