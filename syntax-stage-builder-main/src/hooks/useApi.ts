@@ -62,14 +62,44 @@ export const useCourses = () => {
   });
 };
 
+// Hook for fetching all projects
+export const useProjects = () => {
+  return useQuery({
+    queryKey: queryKeys.projects.all,
+    queryFn: async () => {
+      const response = await apiService.getProjects();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to fetch projects');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Hook for fetching all study materials
+export const useStudyMaterials = () => {
+  return useQuery({
+    queryKey: queryKeys.studyMaterials.all,
+    queryFn: async () => {
+      const response = await apiService.getStudyMaterials();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to fetch study materials');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 // Hook for updating progress with optimistic updates
 export const useUpdateProgress = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, moduleId, topicId }: { 
-      userId: string; 
-      moduleId: string; 
+    mutationFn: async ({ userId, moduleId, topicId }: {
+      userId: string;
+      moduleId: string;
       topicId?: string;
     }) => {
       const response = await apiService.updateProgress(userId, moduleId, topicId);
@@ -80,15 +110,15 @@ export const useUpdateProgress = () => {
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch progress
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.user.progress(variables.userId) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.user.progress(variables.userId)
       });
     },
     // Optimistic update
     onMutate: async ({ userId, moduleId, topicId }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: queryKeys.user.progress(userId) 
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.user.progress(userId)
       });
 
       // Snapshot previous value
@@ -148,9 +178,9 @@ export const useSignup = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ email, password, name }: { 
-      email: string; 
-      password: string; 
+    mutationFn: ({ email, password, name }: {
+      email: string;
+      password: string;
       name: string;
     }) => {
       return apiService.signup(email, password, name);

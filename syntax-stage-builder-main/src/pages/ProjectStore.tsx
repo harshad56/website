@@ -10,43 +10,21 @@ import SEO from '@/components/SEO';
 import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProjects } from '@/hooks/useApi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 
 const ProjectStore = () => {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: projectsData, isLoading } = useProjects();
+  const projects = projectsData || [];
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedLanguage, setSelectedLanguage] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [sortBy, setSortBy] = useState('popular');
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await apiService.getProjects();
-        if (res.success && res.data) {
-          setProjects(res.data as any[]);
-        } else {
-          throw new Error(res.message || 'Failed to load projects');
-        }
-      } catch (err: any) {
-        toast({
-          title: 'Error',
-          description: err.message || 'Failed to load projects',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [toast]);
 
   const filteredProjects = useMemo(() => {
     let filtered = [...projects];
@@ -92,11 +70,11 @@ const ProjectStore = () => {
   }, [projects, searchQuery, selectedCategory, selectedLanguage, selectedDifficulty, sortBy]);
 
   const uniqueCategories = useMemo(
-    () => ['All', ...Array.from(new Set(projects.map((p) => p.category).filter(Boolean)))],
+    () => ['All', ...Array.from(new Set(projects.map((p) => p.category).filter(Boolean)))].map(String),
     [projects]
   );
   const uniqueLanguages = useMemo(
-    () => ['All', ...Array.from(new Set(projects.map((p) => p.language).filter(Boolean)))],
+    () => ['All', ...Array.from(new Set(projects.map((p) => p.language).filter(Boolean)))].map(String),
     [projects]
   );
 
@@ -297,53 +275,11 @@ const ProjectStore = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 text-white">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col gap-8">
-            {/* Hero Skeleton */}
-            <div className="space-y-4 text-center py-12">
-              <Skeleton className="h-12 w-full max-w-2xl mx-auto" />
-              <Skeleton className="h-6 w-full max-w-md mx-auto" />
-            </div>
-
-            {/* Filters Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-
-            {/* Grid Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-black/40 border-white/10 h-[300px] overflow-hidden">
-                  <CardHeader>
-                    <div className="flex gap-2 mb-2">
-                      <Skeleton className="h-5 w-16" />
-                      <Skeleton className="h-5 w-16" />
-                      <Skeleton className="h-5 w-16" />
-                    </div>
-                    <Skeleton className="h-7 w-full mb-2" />
-                    <Skeleton className="h-12 w-full" />
-                  </CardHeader>
-                  <CardContent className="mt-auto">
-                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                      <Skeleton className="h-8 w-20" />
-                      <div className="flex gap-2">
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-20" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-12 h-12 animate-spin text-purple-500 mb-4" />
+        <p className="text-lg font-medium animate-pulse">Loading project store...</p>
       </div>
     );
   }

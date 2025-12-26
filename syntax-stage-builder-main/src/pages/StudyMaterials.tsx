@@ -11,8 +11,8 @@ import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { BackButton } from '@/components/BackButton';
+import { useStudyMaterials } from '@/hooks/useApi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
 
 
 const StudyMaterials = () => {
@@ -20,36 +20,13 @@ const StudyMaterials = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [materials, setMaterials] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: materialsData, isLoading } = useStudyMaterials();
+  const materials = materialsData || [];
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await apiService.getStudyMaterials();
-        if (res.success && res.data) {
-          setMaterials(res.data as any[]);
-        } else {
-          throw new Error(res.message || 'Failed to load study materials');
-        }
-      } catch (err: any) {
-        toast({
-          title: 'Error',
-          description: err.message || 'Failed to load study materials',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [toast]);
 
   // Helper function to get type icon
   const getTypeIcon = (type: string) => {
@@ -290,56 +267,11 @@ const StudyMaterials = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-930 to-slate-950 text-white">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col gap-8">
-            {/* Hero Skeleton */}
-            <div className="space-y-4 text-center py-12">
-              <Skeleton className="h-4 w-32 mx-auto" />
-              <Skeleton className="h-12 w-full max-w-2xl mx-auto" />
-              <Skeleton className="h-6 w-full max-w-md mx-auto" />
-            </div>
-
-            {/* Filters Skeleton */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <Skeleton className="h-10 flex-1 min-w-[200px]" />
-              <Skeleton className="h-10 w-[140px]" />
-              <Skeleton className="h-10 w-[140px]" />
-              <Skeleton className="h-10 w-[140px]" />
-            </div>
-
-            {/* Grid Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-slate-900/40 border-white/10 h-[450px] overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
-                  <CardHeader>
-                    <div className="flex gap-2 mb-2">
-                      <Skeleton className="h-5 w-16" />
-                      <Skeleton className="h-5 w-16" />
-                    </div>
-                    <Skeleton className="h-7 w-full mb-2" />
-                    <Skeleton className="h-20 w-full" />
-                  </CardHeader>
-                  <CardContent className="mt-auto">
-                    <div className="pt-4 border-t border-white/10 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <Skeleton className="h-8 w-20" />
-                        <Skeleton className="h-5 w-24" />
-                      </div>
-                      <div className="flex gap-2">
-                        <Skeleton className="h-9 flex-1" />
-                        <Skeleton className="h-9 flex-1" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-930 to-slate-950 flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-12 h-12 animate-spin text-purple-500 mb-4" />
+        <p className="text-lg font-medium animate-pulse">Loading study materials...</p>
       </div>
     );
   }

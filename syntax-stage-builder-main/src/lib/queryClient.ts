@@ -68,7 +68,7 @@ export const queryKeys = {
     all: ['courses'] as const,
     detail: (courseId: string) => ['courses', courseId] as const,
     modules: (courseId: string) => ['courses', courseId, 'modules'] as const,
-    topics: (courseId: string, moduleId: string) => 
+    topics: (courseId: string, moduleId: string) =>
       ['courses', courseId, 'modules', moduleId, 'topics'] as const,
   },
   // Job queries
@@ -82,6 +82,11 @@ export const queryKeys = {
     all: ['projects'] as const,
     detail: (projectId: string) => ['projects', projectId] as const,
     featured: () => ['projects', 'featured'] as const,
+  },
+  // Study Material queries
+  studyMaterials: {
+    all: ['studyMaterials'] as const,
+    detail: (materialId: string) => ['studyMaterials', materialId] as const,
   },
 };
 
