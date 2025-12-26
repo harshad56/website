@@ -65,30 +65,16 @@
   <script type="module" src="/src/main.tsx"></script>
   <!-- Service Worker: Disabled in development to prevent interference -->
   <script>
-    // Immediately unregister service worker in development
+    // System-wide Service Worker Unregistration
+    // This resolves NetworkErrors and CORS issues on mobile/iPad caused by sw.js interception
     if ('serviceWorker' in navigator) {
-      const isDevelopment = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.includes('.local');
-
-      if (isDevelopment) {
-        // Development: Immediately unregister all service workers
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-          registrations.forEach((registration) => {
-            registration.unregister().then(() => {
-              console.log('Service worker unregistered for development');
-            });
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().then(() => {
+            console.log('Service worker deactivated for stability');
           });
-        });
-      } else {
-        // Production: Register service worker after page load
-        window.addEventListener('load', () => {
-          setTimeout(() => {
-            navigator.serviceWorker.register('/sw.js')
-              .catch(() => { }); // Silent fail
-          }, 1000);
-        });
-      }
+        }
+      });
     }
   </script>
 </body>
