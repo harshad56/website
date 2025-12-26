@@ -58,11 +58,11 @@ const Header = memo(() => {
             <div className="w-10 h-10 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:shadow-glow">
               <img src="/brand-logo.png" alt="CodeAcademy Pro Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="text-xl lg:text-2xl font-bold gradient-text hidden lg:inline">CodeAcademy Pro</span>
+            <span className="text-xl lg:text-2xl font-bold gradient-text hidden xl:inline">CodeAcademy Pro</span>
           </div>
 
           {/* Desktop Navigation - Main Items */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-5 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-1 lg:gap-5 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-base font-medium text-foreground hover:text-primary transition-colors">
@@ -148,38 +148,61 @@ const Header = memo(() => {
           </div>
 
           {/* Desktop Search Box - Right Side */}
-          <div className="hidden md:flex flex-1 max-w-xs ml-auto mr-4">
+          <div className="hidden lg:flex flex-1 max-w-xs ml-auto mr-4">
             <SearchBox className="w-full" />
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             {isAuthenticated ? (
-              <>
-                <Badge variant="secondary" className="text-xs">
-                  {user?.progress.totalPoints} pts
-                </Badge>
-                <div className="flex items-center space-x-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-sm">
-                    <div className="font-medium">{user?.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {user?.progress.currentStreak} day streak
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 p-1 px-2 hover:bg-primary/10 transition-all duration-300">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback className="bg-primary/10 text-primary">{user?.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-left hidden lg:block">
+                      <div className="text-sm font-medium leading-none mb-1">{user?.name}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {user?.progress?.currentStreak} day streak
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 mt-2">
+                  <div className="flex items-center justify-between p-2 lg:hidden border-b border-border/50 mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{user?.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{user?.progress?.currentStreak} day streak</span>
                     </div>
                   </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  className="hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                >
-                  Sign Out
-                </Button>
-              </>
+                  <DropdownMenuItem className="flex items-center justify-between">
+                    <span className="text-sm">Points</span>
+                    <Badge variant="secondary" className="text-[10px] py-0">
+                      {user?.progress?.totalPoints} pts
+                    </Badge>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                    <CircleUser className="w-4 h-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                    <MoreVertical className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Button
