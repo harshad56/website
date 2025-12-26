@@ -29,12 +29,15 @@ router.post('/chat', authenticateToken, requireSubscription('free'), async (req,
 
         messages.push({ role: "user", content: message });
 
-        const { completion, modelUsed } = await createChatCompletionWithRetry(messages, {
+        const completionData = await createChatCompletionWithRetry(messages, {
             max_tokens: 1000,
             temperature: 0.7
         });
 
-        const aiResponse = completion.choices[0].message.content;
+        const completion = completionData.completion || completionData;
+        const modelUsed = completionData.modelUsed || completion.model;
+
+        const aiResponse = completion.choices?.[0]?.message?.content || "I couldn't generate a response.";
 
         // Parse response for code blocks and suggestions
         const parsedResponse = parseAIResponse(aiResponse);

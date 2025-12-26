@@ -65,7 +65,7 @@ Format as JSON array of objects with:
 
 Return only the JSON array, no additional text.`;
 
-        const completion = await createChatCompletionWithRetry([{
+        const completionData = await createChatCompletionWithRetry([{
             role: "system",
             content: "You are an expert interview coach specializing in tech industry interviews. Generate realistic, helpful interview questions."
         }, {
@@ -77,7 +77,8 @@ Return only the JSON array, no additional text.`;
             stream: false
         });
 
-        let questions = completion.choices[0].message.content.trim();
+        const completion = completionData.completion || completionData;
+        let questions = completion.choices?.[0]?.message?.content?.trim() || "[]";
 
         try {
             questions = JSON.parse(questions);
@@ -146,13 +147,14 @@ router.post('/chat', async (req, res) => {
             }
         ];
 
-        const completion = await createChatCompletionWithRetry(messages, {
+        const completionData = await createChatCompletionWithRetry(messages, {
             max_tokens: 1000,
             temperature: 0.7,
             stream: false
         });
 
-        const reply = completion.choices[0].message.content;
+        const completion = completionData.completion || completionData;
+        const reply = completion.choices?.[0]?.message?.content || "I'm sorry, I'm having trouble responding right now.";
 
         res.json({
             success: true,
@@ -214,7 +216,7 @@ Be constructive and specific. Focus on:
 
 Return only the JSON object, no additional text.`;
 
-        const completion = await createChatCompletionWithRetry([{
+        const completionData = await createChatCompletionWithRetry([{
             role: "system",
             content: "You are an expert interview coach providing constructive feedback to help candidates improve."
         }, {
@@ -226,7 +228,8 @@ Return only the JSON object, no additional text.`;
             stream: false
         });
 
-        let feedback = completion.choices[0].message.content.trim();
+        const completion = completionData.completion || completionData;
+        let feedback = completion.choices?.[0]?.message?.content?.trim() || "{}";
 
         try {
             feedback = JSON.parse(feedback);
@@ -285,7 +288,7 @@ Format as JSON:
 
 Return only the JSON object.`;
 
-        const completion = await createChatCompletionWithRetry([{
+        const completionData = await createChatCompletionWithRetry([{
             role: "system",
             content: "You are an expert career coach specializing in tech industry interview preparation."
         }, {
@@ -297,7 +300,8 @@ Return only the JSON object.`;
             stream: false
         });
 
-        let guide = completion.choices[0].message.content.trim();
+        const completion = completionData.completion || completionData;
+        let guide = completion.choices?.[0]?.message?.content?.trim() || "{}";
 
         try {
             guide = JSON.parse(guide);
