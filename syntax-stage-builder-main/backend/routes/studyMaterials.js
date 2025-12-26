@@ -107,8 +107,23 @@ router.get('/:id', async (req, res) => {
 // Admin: create
 router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
-    winston.info('Creating study material with data:', JSON.stringify(req.body, null, 2));
-    const material = await db.createStudyMaterial(req.body);
+    // Sanitize any incoming localhost URLs from the frontend
+    const sanitizeUrl = (url) => {
+      if (!url) return url;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/https?:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedBody = { ...req.body };
+    if (sanitizedBody.image_url) sanitizedBody.image_url = sanitizeUrl(sanitizedBody.image_url);
+    if (sanitizedBody.imageUrl) sanitizedBody.imageUrl = sanitizeUrl(sanitizedBody.imageUrl);
+    if (sanitizedBody.file_url) sanitizedBody.file_url = sanitizeUrl(sanitizedBody.file_url);
+    if (sanitizedBody.setup_pdf_url) sanitizedBody.setup_pdf_url = sanitizeUrl(sanitizedBody.setup_pdf_url);
+
+    winston.info('Creating study material with sanitized data:', JSON.stringify(sanitizedBody, null, 2));
+    const material = await db.createStudyMaterial(sanitizedBody);
     winston.info('Study material created successfully:', material.id);
     res.json({ success: true, data: material });
   } catch (error) {
@@ -128,8 +143,23 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
 // Admin: update
 router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
-    winston.info(`Updating study material ${req.params.id} with data:`, JSON.stringify(req.body, null, 2));
-    const material = await db.updateStudyMaterial(req.params.id, req.body);
+    // Sanitize any incoming localhost URLs from the frontend
+    const sanitizeUrl = (url) => {
+      if (!url) return url;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/https?:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedBody = { ...req.body };
+    if (sanitizedBody.image_url) sanitizedBody.image_url = sanitizeUrl(sanitizedBody.image_url);
+    if (sanitizedBody.imageUrl) sanitizedBody.imageUrl = sanitizeUrl(sanitizedBody.imageUrl);
+    if (sanitizedBody.file_url) sanitizedBody.file_url = sanitizeUrl(sanitizedBody.file_url);
+    if (sanitizedBody.setup_pdf_url) sanitizedBody.setup_pdf_url = sanitizeUrl(sanitizedBody.setup_pdf_url);
+
+    winston.info(`Updating study material ${req.params.id} with sanitized data:`, JSON.stringify(sanitizedBody, null, 2));
+    const material = await db.updateStudyMaterial(req.params.id, sanitizedBody);
     winston.info('Study material updated successfully:', material.id);
     res.json({ success: true, data: material });
   } catch (error) {

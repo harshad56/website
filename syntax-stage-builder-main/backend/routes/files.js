@@ -72,9 +72,19 @@ router.post('/upload', authenticateToken, upload.single('file'), handleMulterErr
             });
         }
 
-        const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
-        const relativePath = `/uploads/documents/${req.file.filename}`;
+        // Detect base URL more robustly
+        let baseUrl = process.env.BACKEND_URL;
 
+        if (!baseUrl) {
+            const host = req.get('x-forwarded-host') || req.get('host');
+            const protocol = req.get('x-forwarded-proto') || req.protocol;
+            baseUrl = `${protocol}://${host}`;
+        }
+
+        // Ensure no trailing slash
+        baseUrl = baseUrl.replace(/\/$/, '');
+
+        const relativePath = `/uploads/documents/${req.file.filename}`;
         const fileUrl = `${baseUrl}${relativePath}`;
 
         winston.info(`File uploaded successfully: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);

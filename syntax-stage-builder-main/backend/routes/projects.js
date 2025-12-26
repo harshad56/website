@@ -97,7 +97,22 @@ router.get('/:id', async (req, res) => {
 // Admin: create project
 router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
-    const project = await db.createProject(req.body);
+    // Sanitize any incoming localhost URLs from the frontend 
+    // (prevents feedback loops where frontend sends back transformed localhost URLs)
+    const sanitizeUrl = (url) => {
+      if (!url) return url;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/https?:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedBody = { ...req.body };
+    if (sanitizedBody.image_url) sanitizedBody.image_url = sanitizeUrl(sanitizedBody.image_url);
+    if (sanitizedBody.download_url) sanitizedBody.download_url = sanitizeUrl(sanitizedBody.download_url);
+    if (sanitizedBody.setup_pdf_url) sanitizedBody.setup_pdf_url = sanitizeUrl(sanitizedBody.setup_pdf_url);
+
+    const project = await db.createProject(sanitizedBody);
     res.json({ success: true, data: project });
   } catch (error) {
     winston.error('Create project error:', error);
@@ -108,7 +123,21 @@ router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
 // Admin: update project
 router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
-    const project = await db.updateProject(req.params.id, req.body);
+    // Sanitize any incoming localhost URLs from the frontend
+    const sanitizeUrl = (url) => {
+      if (!url) return url;
+      if (process.env.BACKEND_URL && url.includes('localhost:5000')) {
+        return url.replace(/https?:\/\/localhost:5000/g, process.env.BACKEND_URL);
+      }
+      return url;
+    };
+
+    const sanitizedBody = { ...req.body };
+    if (sanitizedBody.image_url) sanitizedBody.image_url = sanitizeUrl(sanitizedBody.image_url);
+    if (sanitizedBody.download_url) sanitizedBody.download_url = sanitizeUrl(sanitizedBody.download_url);
+    if (sanitizedBody.setup_pdf_url) sanitizedBody.setup_pdf_url = sanitizeUrl(sanitizedBody.setup_pdf_url);
+
+    const project = await db.updateProject(req.params.id, sanitizedBody);
     res.json({ success: true, data: project });
   } catch (error) {
     winston.error('Update project error:', error);
