@@ -225,27 +225,46 @@ app.use(cors({
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
-// Handle OPTIONS requests for uploads (CORS preflight)
-app.options('/uploads/*', (req, res) => {
+// Middleware to handle static uploads with robust security headers and 404 falling back to a transparent pixel
+// This prevents OpaqueResponseBlocking (ORB) when images are missing from Render's ephemeral disk
+const fs = require('fs');
+
+app.use('/uploads', (req, res, next) => {
+    // Always set permissive security headers for the uploads path
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.sendStatus(200);
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+
+    // Check if the file exists locally
+    const filePath = path.join(__dirname, 'uploads', req.path);
+    const fileExists = fs.existsSync(filePath);
+
+    if (!fileExists) {
+        // If it's an image request but file is missing, serve a 1x1 transparent PNG
+        // This prevents the browser from receiving a JSON/HTML 404 which triggers ORB
+        const isImage = /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(req.path);
+
+        if (isImage) {
+            const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+            res.setHeader('Content-Type', 'image/png');
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+            return res.send(pixel);
+        }
+    }
+
+    next();
 });
 
 // Static file serving for uploads (documents, etc.)
-// Set proper headers for file downloads and CORS
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
     setHeaders: (res, filePath) => {
-        // Add permissive CORS and CORP headers for public static files
-        // Note: Credentials must be false when using '*'
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
-        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
-
         // Force download for certain file types
         if (filePath.endsWith('.zip') || filePath.endsWith('.pdf') || filePath.endsWith('.rar')) {
             const filename = path.basename(filePath);
