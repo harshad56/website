@@ -65,14 +65,13 @@ Format as JSON array of objects with:
 
 Return only the JSON array, no additional text.`;
 
-        const completion = await createChatCompletionWithRetry({
-            messages: [{
-                role: "system",
-                content: "You are an expert interview coach specializing in tech industry interviews. Generate realistic, helpful interview questions."
-            }, {
-                role: "user",
-                content: prompt
-            }],
+        const completion = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert interview coach specializing in tech industry interviews. Generate realistic, helpful interview questions."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             max_tokens: 1000,
             temperature: 0.7,
             stream: false
@@ -147,8 +146,7 @@ router.post('/chat', async (req, res) => {
             }
         ];
 
-        const completion = await createChatCompletionWithRetry({
-            messages: messages,
+        const completion = await createChatCompletionWithRetry(messages, {
             max_tokens: 1000,
             temperature: 0.7,
             stream: false
@@ -216,14 +214,13 @@ Be constructive and specific. Focus on:
 
 Return only the JSON object, no additional text.`;
 
-        const completion = await createChatCompletionWithRetry({
-            messages: [{
-                role: "system",
-                content: "You are an expert interview coach providing constructive feedback to help candidates improve."
-            }, {
-                role: "user",
-                content: prompt
-            }],
+        const completion = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert interview coach providing constructive feedback to help candidates improve."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             max_tokens: 500,
             temperature: 0.5,
             stream: false
@@ -288,14 +285,13 @@ Format as JSON:
 
 Return only the JSON object.`;
 
-        const completion = await createChatCompletionWithRetry({
-            messages: [{
-                role: "system",
-                content: "You are an expert career coach specializing in tech industry interview preparation."
-            }, {
-                role: "user",
-                content: prompt
-            }],
+        const completion = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert career coach specializing in tech industry interview preparation."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             max_tokens: 1500,
             temperature: 0.6,
             stream: false

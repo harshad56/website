@@ -1,19 +1,32 @@
 const OpenAI = require('openai');
 const winston = require('winston');
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI/OpenRouter
+const apiKey = process.env.OPENAI_API_KEY;
+const isOpenRouter = apiKey?.startsWith('sk-or-v1-') || process.env.USE_OPENROUTER === 'true';
+
+const config = {
+    apiKey: apiKey
+};
+
+if (isOpenRouter) {
+    config.baseURL = 'https://openrouter.ai/api/v1';
+    config.defaultHeaders = {
+        'HTTP-Referer': process.env.FRONTEND_URL || 'https://codeacademy-pro.vercel.app',
+        'X-Title': 'CodeAcademy Pro'
+    };
+}
+
+const openai = new OpenAI(config);
 
 // Fallback models sequence for OpenRouter/OpenAI
-const FALLBACK_MODELS = [
+const FALLBACK_MODELS = isOpenRouter ? [
     "google/gemini-2.0-flash-exp:free",
     "meta-llama/llama-3.1-8b-instruct:free",
     "meta-llama/llama-3.2-3b-instruct:free",
     "mistralai/mistral-7b-instruct:free",
     "google/gemini-flash-1.5:free"
-];
+] : ["gpt-3.5-turbo"];
 
 /**
  * Creates a chat completion with retry logic and model fallback.

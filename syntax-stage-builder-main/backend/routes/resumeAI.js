@@ -1,42 +1,12 @@
 const express = require('express');
-const OpenAI = require('openai');
-const winston = require('winston');
+const { openai, createChatCompletionWithRetry } = require('../utils/ai');
 
 const router = express.Router();
 
-// Initialize OpenAI/OpenRouter - supports both OpenAI and OpenRouter
-const useOpenRouter = process.env.USE_OPENROUTER === 'true' || process.env.OPENAI_API_KEY?.startsWith('sk-or-v1-');
-const apiKey = process.env.OPENAI_API_KEY;
-
-// Log configuration on startup
-if (useOpenRouter) {
-    winston.info('🤖 Resume AI: Using OpenRouter API');
-    winston.info(`📝 Model: ${process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo'}`);
-} else {
-    winston.info('🤖 Resume AI: Using OpenAI API');
-    winston.info('📝 Model: gpt-3.5-turbo');
-}
-
-// Configure based on whether using OpenRouter or OpenAI
-const openaiConfig = {
-    apiKey: apiKey
-};
-
-// If using OpenRouter, set the baseURL
-if (useOpenRouter) {
-    openaiConfig.baseURL = 'https://openrouter.ai/api/v1';
-    // Add OpenRouter headers
-    openaiConfig.defaultHeaders = {
-        'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000',
-        'X-Title': 'CodeAcademy Pro Resume Builder'
-    };
-}
-
-const openai = new OpenAI(openaiConfig);
-
 // Default model - use free model if OpenRouter, otherwise gpt-3.5-turbo
-const DEFAULT_MODEL = useOpenRouter 
-    ? (process.env.OPENROUTER_MODEL || 'openai/gpt-3.5-turbo') // You can use free models like 'openai/gpt-oss-120b:free'
+// We detect this from the client configuration now
+const DEFAULT_MODEL = openai.baseURL.includes('openrouter')
+    ? (process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free')
     : 'gpt-3.5-turbo';
 
 // Generate professional summary
@@ -69,22 +39,21 @@ Requirements:
 
 Generate only the summary text, no additional commentary.`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert resume writer specializing in creating professional, ATS-friendly resume summaries for tech professionals."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert resume writer specializing in creating professional, ATS-friendly resume summaries for tech professionals."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 200,
             temperature: 0.7,
             stream: false
         });
 
         const summary = completion.choices[0].message.content.trim();
-        
+
         winston.info('✅ Resume AI: Summary generated successfully');
         winston.info(`📊 Tokens used: ${completion.usage?.total_tokens || 'N/A'}`);
 
@@ -97,10 +66,10 @@ Generate only the summary text, no additional commentary.`;
     } catch (error) {
         winston.error('❌ Generate summary error:', error);
         winston.error('Error details:', error.message);
-        
+
         // Fallback response if OpenAI fails
         const fallbackSummary = `Experienced ${req.body.title || 'professional'} with expertise in ${req.body.skills?.slice(0, 5).join(', ') || 'software development'}. Proven track record of delivering high-quality solutions and driving results.`;
-        
+
         res.json({
             success: true,
             summary: fallbackSummary,
@@ -136,15 +105,14 @@ Requirements:
 
 Return only the improved bullet point, starting with "• "`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert resume writer specializing in creating impactful, ATS-optimized bullet points for tech professionals."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert resume writer specializing in creating impactful, ATS-optimized bullet points for tech professionals."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 150,
             temperature: 0.7,
             stream: false
@@ -164,10 +132,10 @@ Return only the improved bullet point, starting with "• "`;
 
     } catch (error) {
         winston.error('Improve text error:', error);
-        
+
         // Fallback: simple improvement
         const fallback = `• ${req.body.text.replace(/^[•-]\s*/, '').trim()}`;
-        
+
         res.json({
             success: true,
             improvedText: fallback,
@@ -194,22 +162,21 @@ Requirements:
 
 Format as a JSON array of strings. Example format: ["• Developed...", "• Led...", "• Optimized..."]`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert resume writer specializing in creating impactful achievement statements for tech professionals."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert resume writer specializing in creating impactful achievement statements for tech professionals."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 300,
             temperature: 0.8,
             stream: false
         });
 
         let achievements = completion.choices[0].message.content.trim();
-        
+
         // Try to parse as JSON, fallback to text parsing
         try {
             achievements = JSON.parse(achievements);
@@ -231,14 +198,14 @@ Format as a JSON array of strings. Example format: ["• Developed...", "• Led
 
     } catch (error) {
         winston.error('Generate achievements error:', error);
-        
+
         // Fallback achievements
         const fallback = [
             `• Developed and deployed scalable solutions improving system performance by 40%`,
             `• Led cross-functional team of 5 developers to deliver project ahead of schedule`,
             `• Optimized database queries reducing response time by 60%`
         ];
-        
+
         res.json({
             success: true,
             achievements: fallback,
@@ -271,22 +238,21 @@ Provide 5-8 specific, actionable suggestions to improve ATS compatibility. Focus
 
 Format as a JSON array of suggestion strings.`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert in ATS (Applicant Tracking System) optimization for tech resumes."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert in ATS (Applicant Tracking System) optimization for tech resumes."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 400,
             temperature: 0.5,
             stream: false
         });
 
         let suggestions = completion.choices[0].message.content.trim();
-        
+
         try {
             suggestions = JSON.parse(suggestions);
         } catch {
@@ -306,7 +272,7 @@ Format as a JSON array of suggestion strings.`;
 
     } catch (error) {
         winston.error('ATS suggestions error:', error);
-        
+
         // Fallback suggestions
         const fallback = [
             "Add a professional summary section",
@@ -315,7 +281,7 @@ Format as a JSON array of suggestion strings.`;
             "Use strong action verbs in descriptions",
             "Ensure contact information is complete"
         ];
-        
+
         res.json({
             success: true,
             suggestions: fallback,
@@ -349,22 +315,21 @@ ${jobDescription.substring(0, 2000)}
 
 Return a JSON array of unique keywords (strings only, no duplicates). Prioritize technical skills over soft skills.`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert at analyzing job descriptions and extracting relevant technical keywords for resume optimization."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert at analyzing job descriptions and extracting relevant technical keywords for resume optimization."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 300,
             temperature: 0.3,
             stream: false
         });
 
         let keywords = completion.choices[0].message.content.trim();
-        
+
         try {
             keywords = JSON.parse(keywords);
         } catch {
@@ -386,13 +351,13 @@ Return a JSON array of unique keywords (strings only, no duplicates). Prioritize
 
     } catch (error) {
         winston.error('Extract keywords error:', error);
-        
+
         // Fallback: simple keyword extraction
         const techKeywords = ['JavaScript', 'React', 'Node.js', 'Python', 'SQL', 'AWS', 'Docker', 'Git'];
-        const foundKeywords = techKeywords.filter(keyword => 
+        const foundKeywords = techKeywords.filter(keyword =>
             req.body.jobDescription?.toLowerCase().includes(keyword.toLowerCase())
         );
-        
+
         res.json({
             success: true,
             keywords: foundKeywords.length > 0 ? foundKeywords : ['No specific keywords found'],
@@ -428,22 +393,21 @@ Provide analysis in JSON format:
 
 Be specific and actionable.`;
 
-        const completion = await openai.chat.completions.create({
+        const { completion } = await createChatCompletionWithRetry([{
+            role: "system",
+            content: "You are an expert resume reviewer specializing in tech industry resumes. Provide constructive, actionable feedback."
+        }, {
+            role: "user",
+            content: prompt
+        }], {
             model: DEFAULT_MODEL,
-            messages: [{
-                role: "system",
-                content: "You are an expert resume reviewer specializing in tech industry resumes. Provide constructive, actionable feedback."
-            }, {
-                role: "user",
-                content: prompt
-            }],
             max_tokens: 500,
             temperature: 0.5,
             stream: false
         });
 
         let analysis = completion.choices[0].message.content.trim();
-        
+
         try {
             analysis = JSON.parse(analysis);
         } catch {
@@ -465,7 +429,7 @@ Be specific and actionable.`;
 
     } catch (error) {
         winston.error('Analyze resume error:', error);
-        
+
         // Fallback analysis
         const score = calculateBasicScore(req.body);
         const fallback = {
@@ -474,7 +438,7 @@ Be specific and actionable.`;
             weaknesses: score < 70 ? ['Needs improvement'] : [],
             recommendations: ['Add more content', 'Include achievements']
         };
-        
+
         res.json({
             success: true,
             analysis: fallback,
