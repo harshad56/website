@@ -227,11 +227,9 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Handle OPTIONS requests for uploads (CORS preflight)
 app.options('/uploads/*', (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.setHeader('Access-Control-Allow-Origin', frontendUrl);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.sendStatus(200);
 });
@@ -241,9 +239,9 @@ app.options('/uploads/*', (req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
     setHeaders: (res, filePath) => {
         // Add permissive CORS and CORP headers for public static files
+        // Note: Credentials must be false when using '*'
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
         res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
