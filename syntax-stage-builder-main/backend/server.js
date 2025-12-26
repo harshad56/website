@@ -43,9 +43,8 @@ const { testConnection } = require('./config/supabase');
 const socketHandlers = require('./socket/handlers');
 
 // Initialize Express app
-// Initialize Express app
 const app = express();
-// Enable trust proxy for Render/Heroku (required for rate limiting and secure cookies)
+// Enable trust proxy for Render/Vercel (required for rate limiting and secure cookies)
 app.set('trust proxy', 1);
 
 const server = createServer(app);
@@ -57,8 +56,9 @@ require('./config/passport')();
 const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://codeacadmy.vercel.app", // User's broken domain
+    "https://codeacadmy.vercel.app",
     "https://codeacademy-pro.vercel.app",
+    "https://syntax-stage-builder.vercel.app",
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
