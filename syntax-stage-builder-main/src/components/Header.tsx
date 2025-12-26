@@ -62,7 +62,7 @@ const Header = memo(() => {
           </div>
 
           {/* Desktop Navigation - Main Items */}
-          <div className="hidden md:flex items-center gap-1 lg:gap-5 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-4 lg:gap-8 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-base font-medium text-foreground hover:text-primary transition-colors">
@@ -171,32 +171,10 @@ const Header = memo(() => {
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 mt-2">
-                  <div className="flex items-center justify-between p-2 lg:hidden border-b border-border/50 mb-2">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{user?.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{user?.progress?.currentStreak} day streak</span>
-                    </div>
-                  </div>
-                  <DropdownMenuItem className="flex items-center justify-between">
-                    <span className="text-sm">Points</span>
-                    <Badge variant="secondary" className="text-[10px] py-0">
-                      {user?.progress?.totalPoints} pts
-                    </Badge>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
-                    <CircleUser className="w-4 h-4 mr-2" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
-                    <MoreVertical className="w-4 h-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="end" className="w-48 mt-2">
                   <DropdownMenuItem
                     onClick={logout}
-                    className="text-destructive focus:text-destructive cursor-pointer"
+                    className="text-destructive focus:text-destructive cursor-pointer font-medium"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
                     Sign Out
