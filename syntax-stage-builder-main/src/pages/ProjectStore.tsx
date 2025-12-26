@@ -10,7 +10,8 @@ import SEO from '@/components/SEO';
 import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ProjectStore = () => {
   const { toast } = useToast();
@@ -117,12 +118,12 @@ const ProjectStore = () => {
       setProcessingId(project.id);
       const response = await apiService.downloadProject(project.id);
       setProcessingId(null);
-      
+
       if (response.success && response.data) {
         const data = response.data as any;
-        
+
         console.log('Download response:', data);
-        
+
         // Function to trigger download
         const triggerDownload = (url: string, filename: string) => {
           const link = document.createElement('a');
@@ -133,7 +134,7 @@ const ProjectStore = () => {
           link.click();
           document.body.removeChild(link);
         };
-        
+
         // Download project file
         if (data.download_url) {
           setTimeout(() => {
@@ -148,7 +149,7 @@ const ProjectStore = () => {
             }
           }, 100);
         }
-        
+
         // Download setup PDF
         if (data.setup_pdf_url) {
           setTimeout(() => {
@@ -163,18 +164,18 @@ const ProjectStore = () => {
             }
           }, 500);
         }
-        
+
         if (data.download_url || data.setup_pdf_url) {
-          toast({ 
-            title: 'Download started', 
+          toast({
+            title: 'Download started',
             description: 'Your download should start shortly. If it doesn\'t, check your browser\'s popup blocker settings.',
             variant: 'default'
           });
         } else {
-          toast({ 
-            title: 'No download available', 
+          toast({
+            title: 'No download available',
             description: 'Download URLs are not configured for this project. Please contact support.',
-            variant: 'destructive' 
+            variant: 'destructive'
           });
         }
       } else {
@@ -226,8 +227,8 @@ const ProjectStore = () => {
             });
             setProcessingId(null);
             if (verifyResponse.success) {
-              toast({ 
-                title: 'Payment Successful', 
+              toast({
+                title: 'Payment Successful',
                 description: 'Your payment has been verified. Download starting...',
                 variant: 'default'
               });
@@ -237,10 +238,10 @@ const ProjectStore = () => {
             }
           } catch (error: any) {
             setProcessingId(null);
-            toast({ 
-              title: 'Payment Error', 
+            toast({
+              title: 'Payment Error',
               description: error.message || 'Failed to verify payment',
-              variant: 'destructive' 
+              variant: 'destructive'
             });
           }
         },
@@ -249,7 +250,7 @@ const ProjectStore = () => {
           email: user?.email || '',
         },
         theme: { color: '#9333ea' },
-        modal: { 
+        modal: {
           ondismiss: () => {
             setProcessingId(null);
           }
@@ -257,7 +258,7 @@ const ProjectStore = () => {
       };
 
       const razorpay = new (window as any).Razorpay(options);
-      
+
       razorpay.on('payment.failed', (response: any) => {
         setProcessingId(null);
         toast({
@@ -297,7 +298,54 @@ const ProjectStore = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 text-white">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col gap-8">
+            {/* Hero Skeleton */}
+            <div className="space-y-4 text-center py-12">
+              <Skeleton className="h-12 w-full max-w-2xl mx-auto" />
+              <Skeleton className="h-6 w-full max-w-md mx-auto" />
+            </div>
+
+            {/* Filters Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+
+            {/* Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-black/40 border-white/10 h-[300px] overflow-hidden">
+                  <CardHeader>
+                    <div className="flex gap-2 mb-2">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                    <Skeleton className="h-7 w-full mb-2" />
+                    <Skeleton className="h-12 w-full" />
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                      <Skeleton className="h-8 w-20" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-20" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const structuredData = {
@@ -449,58 +497,58 @@ const ProjectStore = () => {
               style={{ willChange: "transform" }}
             >
               <Card className="bg-black/40 border-white/10 hover:border-purple-500/50 transition-all duration-300 overflow-hidden group h-full">
-              <Link to={`/project/${project.id}`} className="flex-1 flex flex-col">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    {project.language && (
-                      <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-400">
-                        {project.language}
-                      </Badge>
-                    )}
-                    {project.category && (
-                      <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
-                        {project.category}
-                      </Badge>
-                    )}
-                    {project.difficulty && (
-                      <Badge className={`text-xs ${getDifficultyColor(project.difficulty)}`}>
-                        {project.difficulty}
-                      </Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-white text-base line-clamp-2">{project.title}</CardTitle>
-                  <CardDescription className="text-gray-400 line-clamp-2">{project.description}</CardDescription>
-                </CardHeader>
-              </Link>
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xl font-bold text-white">₹{project.price || 0}</span>
-                    {project.original_price && (
-                      <span className="text-gray-500 line-through text-sm ml-1">₹{project.original_price}</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Link to={`/project/${project.id}`}>
-                      <Button size="sm" variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                        View Details
+                <Link to={`/project/${project.id}`} className="flex-1 flex flex-col">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      {project.language && (
+                        <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-400">
+                          {project.language}
+                        </Badge>
+                      )}
+                      {project.category && (
+                        <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
+                          {project.category}
+                        </Badge>
+                      )}
+                      {project.difficulty && (
+                        <Badge className={`text-xs ${getDifficultyColor(project.difficulty)}`}>
+                          {project.difficulty}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-white text-base line-clamp-2">{project.title}</CardTitle>
+                    <CardDescription className="text-gray-400 line-clamp-2">{project.description}</CardDescription>
+                  </CardHeader>
+                </Link>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xl font-bold text-white">₹{project.price || 0}</span>
+                      {project.original_price && (
+                        <span className="text-gray-500 line-through text-sm ml-1">₹{project.original_price}</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Link to={`/project/${project.id}`}>
+                        <Button size="sm" variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                          View Details
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-500 to-pink-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBuyOrDownload(project);
+                        }}
+                        disabled={processingId === project.id}
+                      >
+                        {processingId === project.id ? 'Processing...' : project.price > 0 ? 'Buy' : 'Download'}
                       </Button>
-                    </Link>
-                    <Button
-                      size="sm"
-                      className="bg-gradient-to-r from-purple-500 to-pink-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBuyOrDownload(project);
-                      }}
-                      disabled={processingId === project.id}
-                    >
-                      {processingId === project.id ? 'Processing...' : project.price > 0 ? 'Buy' : 'Download'}
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </div>

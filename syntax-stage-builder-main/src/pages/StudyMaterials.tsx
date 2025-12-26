@@ -11,7 +11,8 @@ import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { BackButton } from '@/components/BackButton';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const StudyMaterials = () => {
@@ -98,18 +99,18 @@ const StudyMaterials = () => {
   const handleDownload = async (material: any) => {
     try {
       setProcessingId(material.id);
-      
+
       // Wait a bit to ensure purchase is fully saved
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       console.log('Requesting download for study material:', material.id);
       const response = await apiService.downloadStudyMaterial(material.id);
       console.log('Download response:', response);
       setProcessingId(null);
-      
+
       if (response.success && response.data) {
         const data = response.data as any;
-        
+
         // Function to trigger download
         const triggerDownload = (url: string, filename: string) => {
           const link = document.createElement('a');
@@ -120,7 +121,7 @@ const StudyMaterials = () => {
           link.click();
           document.body.removeChild(link);
         };
-        
+
         // Download main file
         if (data.download_url) {
           setTimeout(() => {
@@ -137,7 +138,7 @@ const StudyMaterials = () => {
             }
           }, 200);
         }
-        
+
         // Download setup PDF
         if (data.setup_pdf_url) {
           setTimeout(() => {
@@ -154,18 +155,18 @@ const StudyMaterials = () => {
             }
           }, 600);
         }
-        
+
         if (data.download_url || data.setup_pdf_url) {
-          toast({ 
-            title: 'Download started', 
+          toast({
+            title: 'Download started',
             description: 'Your download should start shortly.',
             variant: 'default'
           });
         } else {
-          toast({ 
-            title: 'No download available', 
+          toast({
+            title: 'No download available',
             description: 'Download URLs are not configured for this material.',
-            variant: 'destructive' 
+            variant: 'destructive'
           });
         }
       } else {
@@ -217,8 +218,8 @@ const StudyMaterials = () => {
             });
             setProcessingId(null);
             if (verifyResponse.success) {
-              toast({ 
-                title: 'Payment Successful', 
+              toast({
+                title: 'Payment Successful',
                 description: 'Your payment has been verified. Download starting...',
                 variant: 'default'
               });
@@ -231,10 +232,10 @@ const StudyMaterials = () => {
             }
           } catch (error: any) {
             setProcessingId(null);
-            toast({ 
-              title: 'Payment Error', 
+            toast({
+              title: 'Payment Error',
               description: error.message || 'Failed to verify payment',
-              variant: 'destructive' 
+              variant: 'destructive'
             });
           }
         },
@@ -243,7 +244,7 @@ const StudyMaterials = () => {
           email: user?.email || '',
         },
         theme: { color: '#9333ea' },
-        modal: { 
+        modal: {
           ondismiss: () => {
             setProcessingId(null);
           }
@@ -251,7 +252,7 @@ const StudyMaterials = () => {
       };
 
       const razorpay = new (window as any).Razorpay(options);
-      
+
       razorpay.on('payment.failed', (response: any) => {
         setProcessingId(null);
         toast({
@@ -290,7 +291,57 @@ const StudyMaterials = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-930 to-slate-950 text-white">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col gap-8">
+            {/* Hero Skeleton */}
+            <div className="space-y-4 text-center py-12">
+              <Skeleton className="h-4 w-32 mx-auto" />
+              <Skeleton className="h-12 w-full max-w-2xl mx-auto" />
+              <Skeleton className="h-6 w-full max-w-md mx-auto" />
+            </div>
+
+            {/* Filters Skeleton */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              <Skeleton className="h-10 flex-1 min-w-[200px]" />
+              <Skeleton className="h-10 w-[140px]" />
+              <Skeleton className="h-10 w-[140px]" />
+              <Skeleton className="h-10 w-[140px]" />
+            </div>
+
+            {/* Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-slate-900/40 border-white/10 h-[450px] overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <CardHeader>
+                    <div className="flex gap-2 mb-2">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                    <Skeleton className="h-7 w-full mb-2" />
+                    <Skeleton className="h-20 w-full" />
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Skeleton className="h-8 w-20" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-9 flex-1" />
+                        <Skeleton className="h-9 flex-1" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const structuredData = {
@@ -380,7 +431,7 @@ const StudyMaterials = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
             >
-              Get complete PDFs, ebooks, and study notes for all programming languages. 
+              Get complete PDFs, ebooks, and study notes for all programming languages.
               Perfect for building your knowledge base and mastering new skills.
             </motion.p>
             <motion.div
@@ -494,124 +545,125 @@ const StudyMaterials = () => {
               style={{ willChange: "transform" }}
             >
               <Card className="bg-slate-900/70 border-white/20 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 overflow-hidden group h-full flex flex-col">
-              {material.thumbnail_url && (
-                <div className="relative w-full h-48 bg-slate-800 overflow-hidden">
-                  <img
-                    src={material.thumbnail_url}
-                    alt={material.title || 'Study material thumbnail'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      const parent = (e.target as HTMLImageElement).parentElement;
-                      if (parent) {
-                        parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm bg-slate-800">No Image</div>';
-                      }
-                    }}
-                  />
-                </div>
-              )}
-              <Link 
-                to={`/study-material/${material.id}`}
-                state={{ from: '/study-materials' }}
-                className="flex-1 flex flex-col"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    {/* Type badge - always show, default to "Document" if no type */}
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs border font-medium flex items-center gap-1 ${getTypeColor(material.type || 'Document')}`}
-                    >
-                      {getTypeIcon(material.type || 'Document')}
-                      {material.type || 'Document'}
-                    </Badge>
-                    {material.category && (
-                      <Badge variant="outline" className="text-xs border-gray-400/60 text-gray-200 bg-gray-500/20 font-medium">
-                        {material.category}
-                      </Badge>
-                    )}
-                    {material.language && (
-                      <Badge variant="outline" className="text-xs border-purple-500/60 text-purple-300 bg-purple-500/20 font-medium">
-                        {material.language}
-                      </Badge>
-                    )}
-                    {material.is_featured && (
-                      <Badge className="text-xs bg-yellow-500/30 text-yellow-300 border-yellow-500/40 font-medium">
-                        ⭐ Featured
-                      </Badge>
-                    )}
+                {material.thumbnail_url && (
+                  <div className="relative w-full h-48 bg-slate-800 overflow-hidden">
+                    <img
+                      src={material.thumbnail_url}
+                      alt={material.title || 'Study material thumbnail'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const parent = (e.target as HTMLImageElement).parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm bg-slate-800">No Image</div>';
+                        }
+                      }}
+                    />
                   </div>
-                  <CardTitle className="text-white text-xl font-bold line-clamp-2 mb-2 group-hover:text-purple-300 transition-colors">
-                    {material.title}
-                  </CardTitle>
-                  {material.description && (
-                    <CardDescription className="text-gray-300 text-sm line-clamp-3 leading-relaxed">
-                      {material.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-              </Link>
-              <CardContent className="pt-0 mt-auto">
-                <div className="pt-4 border-t border-white/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-white">₹{material.price || 0}</span>
-                        {material.original_price && material.original_price > material.price && (
-                          <span className="text-gray-400 line-through text-sm">₹{material.original_price}</span>
+                )}
+                <Link
+                  to={`/study-material/${material.id}`}
+                  state={{ from: '/study-materials' }}
+                  className="flex-1 flex flex-col"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {/* Type badge - always show, default to "Document" if no type */}
+                      <Badge
+                        variant="outline"
+                        className={`text-xs border font-medium flex items-center gap-1 ${getTypeColor(material.type || 'Document')}`}
+                      >
+                        {getTypeIcon(material.type || 'Document')}
+                        {material.type || 'Document'}
+                      </Badge>
+                      {material.category && (
+                        <Badge variant="outline" className="text-xs border-gray-400/60 text-gray-200 bg-gray-500/20 font-medium">
+                          {material.category}
+                        </Badge>
+                      )}
+                      {material.language && (
+                        <Badge variant="outline" className="text-xs border-purple-500/60 text-purple-300 bg-purple-500/20 font-medium">
+                          {material.language}
+                        </Badge>
+                      )}
+                      {material.is_featured && (
+                        <Badge className="text-xs bg-yellow-500/30 text-yellow-300 border-yellow-500/40 font-medium">
+                          ⭐ Featured
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-white text-xl font-bold line-clamp-2 mb-2 group-hover:text-purple-300 transition-colors">
+                      {material.title}
+                    </CardTitle>
+                    {material.description && (
+                      <CardDescription className="text-gray-300 text-sm line-clamp-3 leading-relaxed">
+                        {material.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                </Link>
+                <CardContent className="pt-0 mt-auto">
+                  <div className="pt-4 border-t border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-white">₹{material.price || 0}</span>
+                          {material.original_price && material.original_price > material.price && (
+                            <span className="text-gray-400 line-through text-sm">₹{material.original_price}</span>
+                          )}
+                        </div>
+                        {material.price === 0 && (
+                          <span className="text-sm font-medium text-green-400">Free</span>
                         )}
                       </div>
-                      {material.price === 0 && (
-                        <span className="text-sm font-medium text-green-400">Free</span>
-                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-white">
-                      <Download className="w-4 h-4 text-blue-400" />
-                      <span className="font-semibold">{material.total_downloads || 0} downloads</span>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1.5 text-white">
+                        <Download className="w-4 h-4 text-blue-400" />
+                        <span className="font-semibold">{material.total_downloads || 0} downloads</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link 
-                      to={`/study-material/${material.id}`}
-                      state={{ from: '/study-materials' }}
-                      className="flex-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex gap-2">
+                      <Link
+                        to={`/study-material/${material.id}`}
+                        state={{ from: '/study-materials' }}
+                        className="flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full border-white/40 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/50 hover:text-white shadow-sm"
+                        >
+                          View Details
+                        </Button>
+                      </Link>
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="w-full border-white/40 bg-white/10 text-white font-semibold hover:bg-white/20 hover:border-white/50 hover:text-white shadow-sm"
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleBuyOrDownload(material);
+                        }}
+                        disabled={processingId === material.id}
                       >
-                        View Details
+                        {processingId === material.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : material.price > 0 ? (
+                          'Buy Now'
+                        ) : (
+                          'Download'
+                        )}
                       </Button>
-                    </Link>
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleBuyOrDownload(material);
-                      }}
-                      disabled={processingId === material.id}
-                    >
-                      {processingId === material.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : material.price > 0 ? (
-                        'Buy Now'
-                      ) : (
-                        'Download'
-                      )}
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </div>

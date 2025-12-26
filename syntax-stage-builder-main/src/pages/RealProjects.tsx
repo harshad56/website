@@ -11,6 +11,8 @@ import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const RealProjects = memo(() => {
   const { toast } = useToast();
@@ -116,18 +118,18 @@ const RealProjects = memo(() => {
   const handleDownload = async (project: any) => {
     try {
       setProcessingId(project.id);
-      
+
       // Wait a bit more to ensure purchase is fully saved
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const response = await apiService.downloadProject(project.id);
       setProcessingId(null);
-      
+
       if (response.success && response.data) {
         const data = response.data as any;
-        
+
         console.log('Download response:', data);
-        
+
         // Function to trigger download
         const triggerDownload = (url: string, filename: string) => {
           const link = document.createElement('a');
@@ -138,7 +140,7 @@ const RealProjects = memo(() => {
           link.click();
           document.body.removeChild(link);
         };
-        
+
         // Download project file
         if (data.download_url) {
           setTimeout(() => {
@@ -153,7 +155,7 @@ const RealProjects = memo(() => {
             }
           }, 100);
         }
-        
+
         // Download setup PDF
         if (data.setup_pdf_url) {
           setTimeout(() => {
@@ -168,18 +170,18 @@ const RealProjects = memo(() => {
             }
           }, 500);
         }
-        
+
         if (data.download_url || data.setup_pdf_url) {
-          toast({ 
-            title: 'Download started', 
+          toast({
+            title: 'Download started',
             description: 'Your download should start shortly. If it doesn\'t, check your browser\'s popup blocker settings.',
             variant: 'default'
           });
         } else {
-          toast({ 
-            title: 'No download available', 
+          toast({
+            title: 'No download available',
             description: 'Download URLs are not configured for this project. Please contact support.',
-            variant: 'destructive' 
+            variant: 'destructive'
           });
         }
       } else {
@@ -232,8 +234,8 @@ const RealProjects = memo(() => {
             });
             setProcessingId(null);
             if (verifyResponse.success) {
-              toast({ 
-                title: 'Payment Successful', 
+              toast({
+                title: 'Payment Successful',
                 description: 'Your payment has been verified. Download starting...',
                 variant: 'default'
               });
@@ -246,10 +248,10 @@ const RealProjects = memo(() => {
             }
           } catch (error: any) {
             setProcessingId(null);
-            toast({ 
-              title: 'Payment Error', 
+            toast({
+              title: 'Payment Error',
               description: error.message || 'Failed to verify payment',
-              variant: 'destructive' 
+              variant: 'destructive'
             });
           }
         },
@@ -258,7 +260,7 @@ const RealProjects = memo(() => {
           email: user?.email || '',
         },
         theme: { color: '#9333ea' },
-        modal: { 
+        modal: {
           ondismiss: () => {
             setProcessingId(null);
           }
@@ -266,7 +268,7 @@ const RealProjects = memo(() => {
       };
 
       const razorpay = new (window as any).Razorpay(options);
-      
+
       razorpay.on('payment.failed', (response: any) => {
         setProcessingId(null);
         toast({
@@ -306,7 +308,58 @@ const RealProjects = memo(() => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-930 to-slate-950 text-white">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col gap-8">
+            {/* Hero Skeleton */}
+            <div className="space-y-4 text-center py-12">
+              <Skeleton className="h-4 w-32 mx-auto" />
+              <Skeleton className="h-12 w-full max-w-2xl mx-auto" />
+              <Skeleton className="h-6 w-full max-w-md mx-auto" />
+            </div>
+
+            {/* Filters Skeleton */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              <Skeleton className="h-10 flex-1 min-w-[200px]" />
+              <Skeleton className="h-10 w-[140px]" />
+              <Skeleton className="h-10 w-[140px]" />
+              <Skeleton className="h-10 w-[140px]" />
+              <Skeleton className="h-10 w-[160px]" />
+            </div>
+
+            {/* Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-slate-900/40 border-white/10 h-[450px] overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <CardHeader>
+                    <div className="flex gap-2 mb-2">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                    <Skeleton className="h-7 w-full mb-2" />
+                    <Skeleton className="h-20 w-full" />
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Skeleton className="h-8 w-20" />
+                        <Skeleton className="h-5 w-24" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-9 flex-1" />
+                        <Skeleton className="h-9 flex-1" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const structuredData = {
@@ -369,7 +422,7 @@ const RealProjects = memo(() => {
               </span>
             </h1>
             <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto mb-8">
-              Get complete source code, documentation, and setup guides for professional projects. 
+              Get complete source code, documentation, and setup guides for professional projects.
               Perfect for building your portfolio and learning industry best practices.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
@@ -465,6 +518,7 @@ const RealProjects = memo(() => {
                     src={project.thumbnail_url}
                     alt={project.title || 'Project thumbnail'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                       const parent = (e.target as HTMLImageElement).parentElement;
@@ -475,8 +529,8 @@ const RealProjects = memo(() => {
                   />
                 </div>
               )}
-              <Link 
-                to={`/project/${project.id}`} 
+              <Link
+                to={`/project/${project.id}`}
                 state={{ from: '/real-projects' }}
                 className="flex-1 flex flex-col"
               >
@@ -528,7 +582,7 @@ const RealProjects = memo(() => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Link 
+                    <Link
                       to={`/project/${project.id}`}
                       state={{ from: '/real-projects' }}
                       className="flex-1"
