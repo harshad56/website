@@ -165,14 +165,16 @@ const limiter = rateLimit({
 
 // Security middleware
 app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:"]
+            imgSrc: ["'self'", "data:", "https:", "*"],
+            connectSrc: ["'self'", "ws:", "wss:", "*"]
         }
     }
 }));
@@ -192,7 +194,6 @@ app.use(compression({
 }));
 
 // CORS configuration
-// CORS configuration
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -203,21 +204,21 @@ app.use(cors({
             "http://localhost:5173",
             "https://codeacadmy.vercel.app",
             "https://codeacademy-pro.vercel.app",
+            "https://syntax-stage-builder.vercel.app",
             process.env.FRONTEND_URL
         ].filter(Boolean);
 
         if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
             callback(null, true);
         } else {
-            // For troubleshooting, you might want to log the blocked origin
-            console.log('Blocked by CORS:', origin);
-            // Temporarily allow all during debugging if needed, but best to block
+            // Log for debugging but allow to fix deployment blockers
+            winston.info('CORS Request from:', origin);
             callback(null, true);
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
 // Body parsing middleware
