@@ -89,8 +89,10 @@ class ApiService {
       'Content-Type': 'application/json',
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    // Use internal token or fallback to localStorage
+    const token = this.token || localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     return headers;
@@ -101,7 +103,8 @@ class ApiService {
       const url = `${this.baseUrl}${endpoint}`;
       const headers = this.getHeaders();
 
-      console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!this.token });
+      const hasToken = this.token || localStorage.getItem('auth_token');
+      console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!hasToken });
 
       const response = await fetch(url, {
         ...options,
@@ -166,8 +169,9 @@ class ApiService {
       const url = `${this.baseUrl}${endpoint}`;
 
       const headers: HeadersInit = {};
-      if (this.token) {
-        headers['Authorization'] = `Bearer ${this.token}`;
+      const token = this.token || localStorage.getItem('auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       console.log('API Upload Request:', { url, method: 'POST', hasToken: !!this.token });

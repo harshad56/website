@@ -20,13 +20,14 @@ if (isOpenRouter) {
 const openai = new OpenAI(config);
 
 // Fallback models sequence for OpenRouter/OpenAI
+const DEFAULT_OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 const FALLBACK_MODELS = isOpenRouter ? [
-    "google/gemini-2.0-flash-exp:free",
+    DEFAULT_OPENROUTER_MODEL,
     "meta-llama/llama-3.1-8b-instruct:free",
     "meta-llama/llama-3.2-3b-instruct:free",
     "mistralai/mistral-7b-instruct:free",
     "google/gemini-flash-1.5:free"
-] : ["gpt-3.5-turbo"];
+].filter((model, index, self) => self.indexOf(model) === index) : ["gpt-3.5-turbo"];
 
 /**
  * Creates a chat completion with retry logic and model fallback.

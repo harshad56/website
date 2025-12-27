@@ -97,10 +97,10 @@ const AITutor = () => {
   }, [messages, activeTab]);
 
   useEffect(() => {
-    if (activeTab === "learning" && recommendations.length === 0) {
+    if (activeTab === "learning" && recommendations.length === 0 && isAuthenticated) {
       fetchRecommendations();
     }
-  }, [activeTab]);
+  }, [activeTab, isAuthenticated]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
@@ -117,10 +117,13 @@ const AITutor = () => {
     setIsTyping(true);
 
     try {
+      // Build context from last 5 messages
+      const context = messages.slice(-5).map(m => `${m.type}: ${m.content}`).join('\n');
+
       const response = await apiService.aiTutorChat({
         message: inputMessage,
-        language: user?.preferences?.preferredLanguage,
-        context: messages.slice(-5).map(m => `${m.type}: ${m.content}`).join('\n')
+        language: user?.preferences?.preferredLanguage || 'general',
+        context: context
       });
 
       if (response.success) {
@@ -135,12 +138,16 @@ const AITutor = () => {
         };
         setMessages(prev => [...prev, aiMsg]);
       } else {
-        throw new Error(response.message || "Failed to get AI response");
+        toast({
+          title: "Error",
+          description: response.message || "Failed to get AI response",
+          variant: "destructive"
+        });
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Connection failed. Please try again.",
+        title: "Connection Error",
+        description: error.message || "Could not connect to the AI service",
         variant: "destructive"
       });
     } finally {
@@ -148,15 +155,26 @@ const AITutor = () => {
     }
   };
 
-  const handleAnalyzeCode = async () => {
-    if (!analysisCode.trim() || isAnalyzing) return;
+  const handleAnalyzeCode = async (task?: string) => {
+    if (!analysisCode.trim() || isAnalyzing) {
+      if (!analysisCode.trim()) {
+        toast({
+          title: "Input Required",
+          description: "Please paste some code in the Source Input box first.",
+        });
+      }
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisResult(null);
+    setActiveTab('code');
 
     try {
       const response = await apiService.aiTutorAnalyzeCode({
         code: analysisCode,
-        language: analysisLanguage
+        language: analysisLanguage,
+        task: task || 'General code review'
       });
 
       if (response.success) {
@@ -174,6 +192,22 @@ const AITutor = () => {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleUtilityTool = (toolLabel: string) => {
+    let task = '';
+    switch (toolLabel) {
+      case "Structural Explanation":
+        task = "Explain the architecture and data flow of this code in simple terms.";
+        break;
+      case "Fault Simulation":
+        task = "Find potential bugs, edge cases, and security vulnerabilities in this code.";
+        break;
+      case "Atomic Optimization":
+        task = "Suggest ways to improve the performance and readability of this code through refactoring.";
+        break;
+    }
+    handleAnalyzeCode(task);
   };
 
   const fetchRecommendations = async () => {
@@ -268,10 +302,27 @@ const AITutor = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content Area */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 relative">
+            {!isAuthenticated && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#020617]/40 backdrop-blur-md rounded-[32px] border border-white/5">
+                <div className="text-center space-y-4 p-8">
+                  <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-indigo-400" />
+                  </div>
+                  <h3 className="text-2xl font-black">Sign In Required</h3>
+                  <p className="text-slate-400 max-w-xs mx-auto">Please login to your CodeAcademy Pro account to access the AI Studio and specialized tutors.</p>
+                  <Button
+                    onClick={() => window.location.href = '/sign-in'}
+                    className="rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold"
+                  >
+                    Take Me To Login
+                  </Button>
+                </div>
+              </div>
+            )}
             <motion.div
               layout
-              className="bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[750px]"
+              className={`bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col min-h-[850px] ${!isAuthenticated ? 'opacity-50 grayscale' : ''}`}
             >
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                 {/* Tabs Navigation */}
@@ -299,7 +350,7 @@ const AITutor = () => {
                 </div>
 
                 {/* Chat Content */}
-                <TabsContent value="chat" className="flex-1 flex flex-col m-0 overflow-hidden">
+                <TabsContent value="chat" className="flex-1 flex flex-col justify-start m-0 overflow-hidden">
                   <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
                     <AnimatePresence initial={false}>
                       {messages.map((msg) => (
@@ -317,8 +368,8 @@ const AITutor = () => {
 
                             <div className={`space-y-3 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                               <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border ${msg.type === 'user'
-                                  ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
-                                  : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md'
+                                ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
+                                : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md'
                                 }`}>
                                 {msg.content}
                               </div>
@@ -410,192 +461,202 @@ const AITutor = () => {
                 </TabsContent>
 
                 {/* Code Analysis Content */}
-                <TabsContent value="code" className="flex-1 m-0 overflow-hidden overflow-y-auto px-8 py-8 scrollbar-thin">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-                    <div className="flex flex-col space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold flex items-center gap-2">
-                          <Terminal className="w-5 h-5 text-indigo-400" /> Source Input
-                        </h3>
-                        <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
-                          <SelectTrigger className="w-[140px] bg-slate-800/50 border-white/10 h-10 rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-white/10 text-white">
-                            <SelectItem value="javascript">JavaScript</SelectItem>
-                            <SelectItem value="python">Python</SelectItem>
-                            <SelectItem value="java">Java</SelectItem>
-                            <SelectItem value="cpp">C++</SelectItem>
-                            <SelectItem value="typescript">TypeScript</SelectItem>
-                          </SelectContent>
-                        </Select>
+                <TabsContent value="code" className="flex-1 m-0 overflow-hidden flex flex-col justify-start h-full">
+                  <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-thin flex flex-col">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+                      <div className="flex flex-col space-y-6 h-full">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xl font-bold flex items-center gap-2">
+                            <Terminal className="w-5 h-5 text-indigo-400" /> Source Input
+                          </h3>
+                          <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
+                            <SelectTrigger className="w-[140px] bg-slate-800/50 border-white/10 h-10 rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-white/10 text-white">
+                              <SelectItem value="javascript">JavaScript</SelectItem>
+                              <SelectItem value="python">Python</SelectItem>
+                              <SelectItem value="java">Java</SelectItem>
+                              <SelectItem value="cpp">C++</SelectItem>
+                              <SelectItem value="typescript">TypeScript</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex-1 flex flex-col relative group min-h-[450px]">
+                          <div className="absolute inset-0 bg-indigo-500/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                          <Textarea
+                            placeholder="// Paste snippets for quality and security analysis..."
+                            className="flex-1 bg-slate-950/50 border-white/10 rounded-2xl font-mono text-[13px] leading-relaxed focus-visible:ring-indigo-500/30 transition-all scrollbar-thin relative z-10"
+                            value={analysisCode}
+                            onChange={(e) => setAnalysisCode(e.target.value)}
+                          />
+                        </div>
+
+                        <Button
+                          className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold text-lg shadow-xl shadow-indigo-500/20"
+                          onClick={() => handleAnalyzeCode()}
+                          disabled={isAnalyzing || !analysisCode.trim()}
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                              Auditing Intelligence...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="mr-2 h-5 w-5 fill-current" />
+                              Start Deep Audit
+                            </>
+                          )}
+                        </Button>
                       </div>
 
-                      <Textarea
-                        placeholder="// Paste snippets for quality and security analysis..."
-                        className="flex-1 min-h-[400px] bg-slate-950/50 border-white/10 rounded-2xl font-mono text-[13px] leading-relaxed focus-visible:ring-indigo-500/30 transition-all scrollbar-thin"
-                        value={analysisCode}
-                        onChange={(e) => setAnalysisCode(e.target.value)}
-                      />
+                      <div className="rounded-[32px] bg-white/[0.02] border border-white/5 p-8 flex flex-col h-full min-h-[450px]">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-bold flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-indigo-400" /> Audit Report
+                          </h3>
+                        </div>
 
-                      <Button
-                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold text-lg shadow-xl shadow-indigo-500/20"
-                        onClick={handleAnalyzeCode}
-                        disabled={isAnalyzing || !analysisCode.trim()}
-                      >
-                        {isAnalyzing ? (
-                          <>
-                            <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                            Auditing Intelligence...
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="mr-2 h-5 w-5 fill-current" />
-                            Start Deep Audit
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                        <div className="flex-1">
+                          <AnimatePresence mode="wait">
+                            {!analysisResult && !isAnalyzing ? (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="h-full min-h-[300px] flex flex-col items-center justify-center text-center space-y-4"
+                              >
+                                <div className="w-20 h-20 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mb-2">
+                                  <Bot className="w-10 h-10 text-slate-500 opacity-20" />
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-400">Analysis Idle</h4>
+                                <p className="text-sm text-slate-500 max-w-xs">Run a deep audit to uncover security flaws, performance bottlenecks, and best practice violations.</p>
+                              </motion.div>
+                            ) : isAnalyzing ? (
+                              <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="h-full flex flex-col items-center justify-center text-center space-y-6"
+                              >
+                                <div className="relative">
+                                  <div className="w-20 h-20 rounded-full border-4 border-indigo-500/20 animate-spin border-t-indigo-500"></div>
+                                  <Sparkles className="w-6 h-6 text-indigo-400 absolute inset-0 m-auto animate-pulse" />
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="text-lg font-bold">Scanning Codebase</h4>
+                                  <p className="text-sm text-slate-500">Running quality heuristics...</p>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="result"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="space-y-6"
+                              >
+                                <div className="space-y-4">
+                                  <div className="group p-5 rounded-[24px] bg-indigo-500/[0.03] border border-white/5 hover:border-indigo-500/30 transition-all">
+                                    <h5 className="flex items-center text-indigo-400 font-bold mb-3 text-sm">
+                                      <Code className="w-4 h-4 mr-3" /> Code Integrity
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.quality}</p>
+                                  </div>
 
-                    <div className="rounded-[32px] bg-white/[0.02] border border-white/5 p-8 overflow-y-auto scrollbar-thin">
-                      <AnimatePresence mode="wait">
-                        {!analysisResult && !isAnalyzing ? (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="h-full flex flex-col items-center justify-center text-center space-y-4"
-                          >
-                            <div className="w-20 h-20 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mb-2">
-                              <Bot className="w-10 h-10 text-slate-500 opacity-20" />
-                            </div>
-                            <h4 className="text-xl font-bold text-slate-400">Analysis Idle</h4>
-                            <p className="text-sm text-slate-500 max-w-xs">Run a deep audit to uncover security flaws, performance bottlenecks, and best practice violations.</p>
-                          </motion.div>
-                        ) : isAnalyzing ? (
-                          <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="h-full flex flex-col items-center justify-center text-center space-y-6"
-                          >
-                            <div className="relative">
-                              <div className="w-24 h-24 rounded-full border-4 border-indigo-500/20 animate-spin border-t-indigo-500"></div>
-                              <Sparkles className="w-8 h-8 text-indigo-400 absolute inset-0 m-auto animate-pulse" />
-                            </div>
-                            <div className="space-y-2">
-                              <h4 className="text-xl font-bold">Scanning Codebase</h4>
-                              <p className="text-sm text-slate-500">Running quality heuristics and security patterns...</p>
-                            </div>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="result"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="space-y-8"
-                          >
-                            <div className="flex items-center justify-between">
-                              <h3 className="text-2xl font-black tracking-tight">Audit Report</h3>
-                              <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1">Verified Correct</Badge>
-                            </div>
+                                  <div className="group p-5 rounded-[24px] bg-amber-500/[0.03] border border-white/5 hover:border-amber-500/30 transition-all">
+                                    <h5 className="flex items-center text-amber-400 font-bold mb-3 text-sm">
+                                      <Zap className="w-4 h-4 mr-3" /> Improvement Vector
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.improvements}</p>
+                                  </div>
 
-                            <div className="space-y-4">
-                              <div className="group p-5 rounded-[24px] bg-blue-500/[0.03] border border-blue-500/10 hover:border-blue-500/30 transition-all">
-                                <h5 className="flex items-center text-blue-400 font-bold mb-3">
-                                  <ShieldCheck className="w-5 h-5 mr-3" /> Code Integrity
-                                </h5>
-                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.quality}</p>
-                              </div>
-
-                              <div className="group p-5 rounded-[24px] bg-amber-500/[0.03] border border-amber-500/10 hover:border-amber-500/30 transition-all">
-                                <h5 className="flex items-center text-amber-400 font-bold mb-3">
-                                  <Zap className="w-5 h-5 mr-3" /> Improvement Vector
-                                </h5>
-                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.improvements}</p>
-                              </div>
-
-                              <div className="group p-5 rounded-[24px] bg-emerald-500/[0.03] border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
-                                <h5 className="flex items-center text-emerald-400 font-bold mb-3">
-                                  <CheckCircle className="w-5 h-5 mr-3" /> Professional Standards
-                                </h5>
-                                <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.bestPractices}</p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                                  <div className="group p-5 rounded-[24px] bg-emerald-500/[0.03] border border-white/5 hover:border-emerald-500/30 transition-all">
+                                    <h5 className="flex items-center text-emerald-400 font-bold mb-3 text-sm">
+                                      <CheckCircle className="w-4 h-4 mr-3" /> Professional Standards
+                                    </h5>
+                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.bestPractices}</p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
 
                 {/* Learning Path Content */}
-                <TabsContent value="learning" className="flex-1 m-0 overflow-y-auto px-8 py-8 scrollbar-thin">
-                  <div className="max-w-4xl mx-auto space-y-10">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
-                      <div className="space-y-2">
-                        <h2 className="text-3xl font-black">AI Learning Path</h2>
-                        <p className="text-slate-400">A dynamic curriculum built uniquely for your skill level.</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 h-12 px-6 font-bold"
-                        onClick={fetchRecommendations}
-                        disabled={isLoadingRecs}
-                      >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingRecs ? 'animate-spin' : ''}`} /> Sync Path
-                      </Button>
-                    </div>
-
-                    {isLoadingRecs ? (
-                      <div className="space-y-6">
-                        {[1, 2, 3].map(i => (
-                          <div key={i} className="h-[140px] rounded-[32px] bg-white/[0.02] border border-white/5 animate-pulse"></div>
-                        ))}
-                      </div>
-                    ) : recommendations.length > 0 ? (
-                      <div className="grid gap-6">
-                        {recommendations.map((rec, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                          >
-                            <Card className="group bg-slate-900/40 border-white/10 hover:border-indigo-500/50 shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 rounded-[32px] overflow-hidden backdrop-blur-md">
-                              <CardContent className="p-8">
-                                <div className="flex flex-col md:flex-row items-start justify-between gap-6">
-                                  <div className="space-y-4 flex-1">
-                                    <div className="flex items-center gap-3">
-                                      <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-3 py-1 font-bold">{rec.category}</Badge>
-                                      <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{rec.difficulty}</span>
-                                    </div>
-                                    <h4 className="text-xl font-black tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{rec.title}</h4>
-                                    <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">{rec.description}</p>
-                                    <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
-                                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {rec.estimatedTime}</span>
-                                      <span className="w-1 h-1 bg-white/10 rounded-full"></span>
-                                      <span className="flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Interactive exercises</span>
-                                    </div>
-                                  </div>
-                                  <Button className="rounded-2xl h-14 px-8 bg-indigo-600 hover:bg-white hover:text-indigo-600 font-black tracking-tight shadow-xl shadow-indigo-600/10 group-hover:scale-105 transition-all shrink-0">
-                                    CONTINUE MODULE <ChevronRight className="w-5 h-5 ml-2" />
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-20 text-center space-y-6">
-                        <div className="w-24 h-24 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mx-auto mb-4">
-                          <TrendingUp className="w-10 h-10 text-slate-600 opacity-30" />
+                <TabsContent value="learning" className="flex-1 m-0 overflow-hidden flex flex-col justify-start">
+                  <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-thin">
+                    <div className="max-w-4xl mx-auto space-y-10">
+                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
+                        <div className="space-y-2">
+                          <h2 className="text-3xl font-black">AI Learning Path</h2>
+                          <p className="text-slate-400">A dynamic curriculum built uniquely for your skill level.</p>
                         </div>
-                        <h4 className="text-2xl font-black">Ready To Map Your Growth?</h4>
-                        <p className="text-slate-500 max-w-sm mx-auto">Click sync so I can analyze your recent activity and build a custom module roadmap for you.</p>
-                        <Button size="lg" onClick={fetchRecommendations} className="rounded-2xl h-14 px-10 bg-indigo-600 hover:bg-indigo-500 font-bold">Initialize Roadmap</Button>
+                        <Button
+                          variant="outline"
+                          className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 h-12 px-6 font-bold"
+                          onClick={fetchRecommendations}
+                          disabled={isLoadingRecs}
+                        >
+                          <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingRecs ? 'animate-spin' : ''}`} /> Sync Path
+                        </Button>
                       </div>
-                    )}
+
+                      {isLoadingRecs ? (
+                        <div className="space-y-6">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="h-[140px] rounded-[32px] bg-white/[0.02] border border-white/5 animate-pulse"></div>
+                          ))}
+                        </div>
+                      ) : recommendations.length > 0 ? (
+                        <div className="grid gap-6">
+                          {recommendations.map((rec, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.1 }}
+                            >
+                              <Card className="group bg-slate-900/40 border-white/10 hover:border-indigo-500/50 shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 rounded-[32px] overflow-hidden backdrop-blur-md">
+                                <CardContent className="p-8">
+                                  <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+                                    <div className="space-y-4 flex-1">
+                                      <div className="flex items-center gap-3">
+                                        <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-3 py-1 font-bold">{rec.category}</Badge>
+                                        <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{rec.difficulty}</span>
+                                      </div>
+                                      <h4 className="text-xl font-black tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{rec.title}</h4>
+                                      <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">{rec.description}</p>
+                                      <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+                                        <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {rec.estimatedTime}</span>
+                                        <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+                                        <span className="flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Interactive exercises</span>
+                                      </div>
+                                    </div>
+                                    <Button className="rounded-2xl h-14 px-8 bg-indigo-600 hover:bg-white hover:text-indigo-600 font-black tracking-tight shadow-xl shadow-indigo-600/10 group-hover:scale-105 transition-all shrink-0">
+                                      CONTINUE MODULE <ChevronRight className="w-5 h-5 ml-2" />
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-20 text-center space-y-6">
+                          <div className="w-24 h-24 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center mx-auto mb-4">
+                            <TrendingUp className="w-10 h-10 text-slate-600 opacity-30" />
+                          </div>
+                          <h4 className="text-2xl font-black">Ready To Map Your Growth?</h4>
+                          <p className="text-slate-500 max-w-sm mx-auto">Click sync so I can analyze your recent activity and build a custom module roadmap for you.</p>
+                          <Button size="lg" onClick={fetchRecommendations} className="rounded-2xl h-14 px-10 bg-indigo-600 hover:bg-indigo-500 font-bold">Initialize Roadmap</Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -656,7 +717,11 @@ const AITutor = () => {
                     { icon: Bug, label: "Fault Simulation", color: "pink" },
                     { icon: Lightbulb, label: "Atomic Optimization", color: "amber" },
                   ].map((tool, i) => (
-                    <button key={i} className="w-full flex items-center p-5 hover:bg-white/[0.03] transition-colors group">
+                    <button
+                      key={i}
+                      onClick={() => handleUtilityTool(tool.label)}
+                      className="w-full flex items-center p-5 hover:bg-white/[0.03] transition-colors group"
+                    >
                       <div className={`w-10 h-10 rounded-xl bg-${tool.color}-500/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform`}>
                         <tool.icon className={`w-5 h-5 text-${tool.color}-400`} />
                       </div>
