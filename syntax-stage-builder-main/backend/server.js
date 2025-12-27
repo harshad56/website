@@ -294,8 +294,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Rate limiting
-app.use('/api/', limiter);
+// Rate limiting - TEMPORARILY DISABLED TO FIX 429 ERRORS
+// app.use('/api/', limiter);
 
 // Request logging
 app.use(requestLogger);
