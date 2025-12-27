@@ -367,7 +367,7 @@ const AITutor = () => {
                             </div>
 
                             <div className={`space-y-3 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                              <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border ${msg.type === 'user'
+                              <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border whitespace-pre-wrap ${msg.type === 'user'
                                 ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
                                 : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md'
                                 }`}>
@@ -561,21 +561,21 @@ const AITutor = () => {
                                     <h5 className="flex items-center text-indigo-400 font-bold mb-3 text-sm">
                                       <Code className="w-4 h-4 mr-3" /> Code Integrity
                                     </h5>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.quality}</p>
+                                    <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{analysisResult.quality}</p>
                                   </div>
 
                                   <div className="group p-5 rounded-[24px] bg-amber-500/[0.03] border border-white/5 hover:border-amber-500/30 transition-all">
                                     <h5 className="flex items-center text-amber-400 font-bold mb-3 text-sm">
                                       <Zap className="w-4 h-4 mr-3" /> Improvement Vector
                                     </h5>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.improvements}</p>
+                                    <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{analysisResult.improvements}</p>
                                   </div>
 
                                   <div className="group p-5 rounded-[24px] bg-emerald-500/[0.03] border border-white/5 hover:border-emerald-500/30 transition-all">
                                     <h5 className="flex items-center text-emerald-400 font-bold mb-3 text-sm">
                                       <CheckCircle className="w-4 h-4 mr-3" /> Professional Standards
                                     </h5>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{analysisResult.bestPractices}</p>
+                                    <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">{analysisResult.bestPractices}</p>
                                   </div>
                                 </div>
                               </motion.div>
@@ -630,7 +630,7 @@ const AITutor = () => {
                                         <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{rec.difficulty}</span>
                                       </div>
                                       <h4 className="text-xl font-black tracking-tight group-hover:text-indigo-400 transition-colors uppercase">{rec.title}</h4>
-                                      <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">{rec.description}</p>
+                                      <p className="text-sm text-slate-400 leading-relaxed max-w-2xl whitespace-pre-wrap">{rec.description}</p>
                                       <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
                                         <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {rec.estimatedTime}</span>
                                         <span className="w-1 h-1 bg-white/10 rounded-full"></span>

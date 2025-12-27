@@ -84,15 +84,22 @@ ${code}
 
 Task: ${task || 'General code review'}
 
-Please provide:
-1. Code quality assessment
-2. Potential improvements
-3. Best practices suggestions
-4. Security considerations (if applicable)
-5. Performance optimizations (if applicable)
-6. Specific examples of improvements
+Please provide your analysis in a clean, line-by-line format with bullet points for each section. Use a clear structure.
 
-Format your response with clear sections like "# Quality", "# Improvements", etc.
+Format your response exactly with these sections:
+# Quality
+[Your point-by-point quality assessment here]
+
+# Improvements
+[Your point-by-point improvement suggestions here]
+
+# Best Practices
+[Your point-by-point best practice suggestions here]
+
+# Security (if applicable)
+[Your security notes here]
+
+Ensure each point starts on a new line with a bullet point (• or -).
 `;
 
         const { completion, modelUsed } = await createChatCompletionWithRetry([
@@ -251,8 +258,9 @@ Language: ${language}
 Guidelines:
 1. Explain concepts simply for ${difficulty} level.
 2. Provide code examples using markdown blocks.
-3. Be encouraging and provide practical tips.
-4. If code is provided, refer to it specifically.`;
+3. Use bullet points and clear line breaks to make your answers easy to read (like ChatGPT).
+4. Be encouraging and provide practical tips.
+5. If code is provided, refer to it specifically.`;
 }
 
 function parseAIResponse(response) {
@@ -269,11 +277,17 @@ function parseAIResponse(response) {
 function parseCodeAnalysis(analysis) {
     const sections = { quality: '', improvements: '', bestPractices: '' };
     const parts = analysis.split(/^#\s+/m);
+
     parts.forEach(part => {
-        if (part.toLowerCase().startsWith('quality')) sections.quality = part;
-        else if (part.toLowerCase().startsWith('improvement')) sections.improvements = part;
-        else if (part.toLowerCase().startsWith('best practice')) sections.bestPractices = part;
+        const lines = part.trim().split('\n');
+        const header = lines[0].toLowerCase();
+        const content = lines.slice(1).join('\n').trim();
+
+        if (header.includes('quality')) sections.quality = content;
+        else if (header.includes('improvement')) sections.improvements = content;
+        else if (header.includes('best practice')) sections.bestPractices = content;
     });
+
     return sections;
 }
 
