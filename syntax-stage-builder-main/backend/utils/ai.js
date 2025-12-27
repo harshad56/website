@@ -19,14 +19,27 @@ if (isOpenRouter) {
 
 const openai = new OpenAI(config);
 
+// Direct Gemini Configuration (Secondary Fallback)
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiDirect = geminiApiKey ? new OpenAI({
+    apiKey: geminiApiKey,
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+}) : null;
+
 // Fallback models sequence for OpenRouter/OpenAI
 const DEFAULT_OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 const FALLBACK_MODELS = isOpenRouter ? [
     DEFAULT_OPENROUTER_MODEL,
+    "google/gemini-2.0-flash-exp:free",
+    "google/gemini-flash-1.5:free",
     "meta-llama/llama-3.1-8b-instruct:free",
     "meta-llama/llama-3.2-3b-instruct:free",
     "mistralai/mistral-7b-instruct:free",
-    "google/gemini-flash-1.5:free"
+    "qwen/qwen-2.5-72b-instruct:free",
+    "microsoft/phi-3-medium-128k-instruct:free",
+    "huggingfaceh4/zephyr-7b-beta:free",
+    "google/gemma-2-9b-it:free",
+    "nousresearch/hermes-3-llama-3.1-8b:free"
 ].filter((model, index, self) => self.indexOf(model) === index) : ["gpt-3.5-turbo"];
 
 /**
@@ -66,8 +79,8 @@ async function createChatCompletionWithRetry(messages, options = {}) {
                     errorMessage.toLowerCase().includes("quota exceeded");
 
                 if (isQuotaExceeded) {
-                    winston.warn(`Daily free quota hit for OpenRouter. Skipping further models.`);
-                    throw new Error("FREE_QUOTA_EXCEEDED: You've hit the daily limit for free AI models on OpenRouter. Please try again later or add credits to your OpenRouter account.");
+                    winston.warn(`Daily free quota hit for model ${model}. Attempting next model in sequence.`);
+                    break; // Skip to next model instead of throwing
                 }
 
                 // If 404 (Not Found), it's likely a dead endpoint, skip to next model
@@ -91,6 +104,28 @@ async function createChatCompletionWithRetry(messages, options = {}) {
                     break;
                 }
             }
+        }
+    }
+
+    // FINAL FALLBACK: Direct Google Gemini (if key provided)
+    if (geminiDirect) {
+        try {
+            winston.info(`All OpenRouter models failed or throttled. Attempting direct fallback to Google Gemini API.`);
+            const completion = await geminiDirect.chat.completions.create({
+                model: "gemini-2.0-flash-exp",
+                messages: messages,
+                max_tokens: options.max_tokens || 1000,
+                temperature: options.temperature || 0.7,
+                stream: false
+            });
+
+            return {
+                completion,
+                modelUsed: "gemini-2.0-flash-exp (direct)"
+            };
+        } catch (error) {
+            winston.error(`Direct Gemini fallback failed: ${error.message}`);
+            lastError = error;
         }
     }
 
