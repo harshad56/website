@@ -155,8 +155,8 @@ const limiter = rateLimit({
     skip: (req) => {
         // Skip rate limiting for health checks
         if (req.path === '/health') return true;
-        // Skip rate limiting for AI Tutor routes
-        if (req.path.startsWith('/api/ai-tutor')) return true;
+        // Skip rate limiting for AI Tutor routes (use originalUrl to get full path)
+        if (req.originalUrl && req.originalUrl.includes('/api/ai-tutor')) return true;
         // Skip rate limiting if DISABLE_RATE_LIMIT is set
         if (process.env.DISABLE_RATE_LIMIT === 'true') {
             return true;
