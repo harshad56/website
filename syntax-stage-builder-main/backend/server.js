@@ -147,8 +147,8 @@ if (process.env.NODE_ENV !== 'production') {
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: process.env.NODE_ENV === 'production'
-        ? (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000)
-        : (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5000), // Much higher limit in development
+        ? (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000) // Increased to 10000
+        : (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 50000), // Much higher limit in development
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -156,7 +156,10 @@ const limiter = rateLimit({
         // Skip rate limiting for health checks
         if (req.path === '/health') return true;
         // Skip rate limiting for AI Tutor routes (use originalUrl to get full path)
-        if (req.originalUrl && req.originalUrl.includes('/api/ai-tutor')) return true;
+        if (req.originalUrl && req.originalUrl.includes('/api/ai-tutor')) {
+            winston.info(`Rate limiting skipped for AI Tutor route: ${req.originalUrl}`);
+            return true;
+        }
         // Skip rate limiting if DISABLE_RATE_LIMIT is set
         if (process.env.DISABLE_RATE_LIMIT === 'true') {
             return true;
