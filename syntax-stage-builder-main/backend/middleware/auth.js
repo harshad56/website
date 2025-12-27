@@ -191,13 +191,13 @@ const authRateLimiter = createRateLimiter(
 
 const codeExecutionRateLimiter = createRateLimiter(
     60 * 1000, // 1 minute
-    10, // 10 requests per window
+    50, // 50 requests per window
     'Too many code execution requests, please try again later.'
 );
 
 const apiRateLimiter = createRateLimiter(
     15 * 60 * 1000, // 15 minutes
-    100, // 100 requests per window
+    1000, // 1000 requests per window
     'Too many API requests, please try again later.'
 );
 

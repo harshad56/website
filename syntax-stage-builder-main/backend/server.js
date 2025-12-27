@@ -147,16 +147,16 @@ if (process.env.NODE_ENV !== 'production') {
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: process.env.NODE_ENV === 'production'
-        ? (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100)
-        : (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000), // Much higher limit in development
+        ? (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000)
+        : (parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5000), // Much higher limit in development
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => {
         // Skip rate limiting for health checks
         if (req.path === '/health') return true;
-        // Skip rate limiting in development if DISABLE_RATE_LIMIT is set
-        if (process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true') {
+        // Skip rate limiting if DISABLE_RATE_LIMIT is set
+        if (process.env.DISABLE_RATE_LIMIT === 'true') {
             return true;
         }
         return false;
