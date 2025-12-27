@@ -270,11 +270,11 @@ const AITutor = () => {
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-500/5 blur-[100px] rounded-full"></div>
       </div>
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Navbar-style Breadcrumb */}
-        <div className="py-6 flex items-center justify-between border-b border-white/5 mb-8">
+        <div className="py-4 sm:py-6 flex items-center justify-between border-b border-white/5 mb-6 sm:mb-8">
           <BackButton />
-          <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+          <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-slate-400">
             <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> AI Protected</span>
             <span className="w-1 h-1 bg-white/10 rounded-full"></span>
             <span className="flex items-center gap-1.5"><Cpu className="w-3.5 h-3.5 text-indigo-400" /> GPT-4o Specialized</span>
@@ -282,25 +282,25 @@ const AITutor = () => {
         </div>
 
         {/* Hero Section */}
-        <header className="mb-12 text-center relative">
+        <header className="mb-8 sm:mb-12 text-center relative px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-4 sm:mb-6 backdrop-blur-md"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-400 fill-indigo-400/20" />
             <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-300">Intelligent Studio</span>
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black mb-4 sm:mb-6 tracking-tight">
             Elevate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-400 to-violet-400 antialiased">Craft</span> With AI.
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Not just another chatbot. A specialized pair programmer trained to explain deep concepts, audit your code, and architect your learning journey.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Main Content Area */}
           <div className="lg:col-span-3 relative">
             {!isAuthenticated && (
@@ -322,36 +322,36 @@ const AITutor = () => {
             )}
             <motion.div
               layout
-              className={`bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl flex flex-col min-h-[850px] ${!isAuthenticated ? 'opacity-50 grayscale' : ''}`}
+              className={`bg-slate-900/40 backdrop-blur-2xl border border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl flex flex-col min-h-[600px] sm:min-h-[850px] ${!isAuthenticated ? 'opacity-50 grayscale' : ''}`}
             >
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                 {/* Tabs Navigation */}
-                <div className="px-8 pt-6 border-b border-white/5 bg-white/[0.02]">
-                  <TabsList className="bg-transparent h-14 p-0 space-x-8 justify-start">
+                <div className="px-4 sm:px-8 pt-4 sm:pt-6 border-b border-white/5 bg-white/[0.02] overflow-x-auto">
+                  <TabsList className="bg-transparent h-12 sm:h-14 p-0 space-x-4 sm:space-x-8 justify-start min-w-max">
                     <TabsTrigger
                       value="chat"
-                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap text-sm sm:text-base"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" /> Chat Console
+                      <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Chat Console</span><span className="sm:hidden">Chat</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="code"
-                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap text-sm sm:text-base"
                     >
-                      <Terminal className="w-4 h-4 mr-2" /> Analysis Engine
+                      <Terminal className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> <span className="hidden sm:inline">Analysis Engine</span><span className="sm:hidden">Analysis</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="learning"
-                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap"
+                      className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-semibold whitespace-nowrap text-sm sm:text-base"
                     >
-                      <Target className="w-4 h-4 mr-2" /> Curriculum
+                      <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" /> Curriculum
                     </TabsTrigger>
                   </TabsList>
                 </div>
 
                 {/* Chat Content */}
                 <TabsContent value="chat" className="flex-1 flex flex-col justify-start m-0 overflow-hidden">
-                  <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 scrollbar-thin scrollbar-thumb-white/10">
                     <AnimatePresence initial={false}>
                       {messages.map((msg) => (
                         <motion.div
@@ -424,8 +424,8 @@ const AITutor = () => {
                   </div>
 
                   {/* Input Controls */}
-                  <div className="p-8 pt-0 mt-auto bg-slate-900/40">
-                    <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="p-4 sm:p-8 pt-0 mt-auto bg-slate-900/40">
+                    <div className="hidden sm:flex flex-wrap gap-2 mb-4">
                       {quickQuestions.map((q, i) => (
                         <button
                           key={i}
@@ -438,22 +438,22 @@ const AITutor = () => {
                     </div>
 
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-[24px] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                      <div className="relative flex items-center bg-slate-800/80 border border-white/10 rounded-[24px] p-2 focus-within:border-indigo-500/50 transition-all">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-violet-500/20 rounded-[16px] sm:rounded-[24px] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                      <div className="relative flex items-center bg-slate-800/80 border border-white/10 rounded-[16px] sm:rounded-[24px] p-1.5 sm:p-2 focus-within:border-indigo-500/50 transition-all">
                         <Input
                           value={inputMessage}
                           onChange={(e) => setInputMessage(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder="Ask anything about programming..."
-                          className="bg-transparent border-0 focus-visible:ring-0 text-white h-12 px-4 placeholder:text-slate-500"
+                          placeholder="Ask anything..."
+                          className="bg-transparent border-0 focus-visible:ring-0 text-white h-10 sm:h-12 px-3 sm:px-4 placeholder:text-slate-500 text-sm sm:text-base"
                           disabled={isTyping}
                         />
                         <Button
                           onClick={handleSendMessage}
-                          disabled={!inputMessage.trim() || isTyping}
-                          className="h-10 w-10 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white shrink-0 shadow-lg shadow-indigo-600/20"
+                          disabled={isTyping || !inputMessage.trim()}
+                          className="rounded-xl sm:rounded-2xl h-10 sm:h-12 px-4 sm:px-6 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-xl shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                         >
-                          <Send className="w-4 h-4" />
+                          <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </div>
@@ -462,15 +462,15 @@ const AITutor = () => {
 
                 {/* Code Analysis Content */}
                 <TabsContent value="code" className="flex-1 m-0 overflow-hidden flex flex-col justify-start h-full">
-                  <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-thin flex flex-col">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 scrollbar-thin flex flex-col">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 flex-1">
                       <div className="flex flex-col space-y-6 h-full">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-bold flex items-center gap-2">
-                            <Terminal className="w-5 h-5 text-indigo-400" /> Source Input
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                          <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                            <Terminal className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" /> Source Input
                           </h3>
                           <Select value={analysisLanguage} onValueChange={setAnalysisLanguage}>
-                            <SelectTrigger className="w-[140px] bg-slate-800/50 border-white/10 h-10 rounded-xl">
+                            <SelectTrigger className="w-full sm:w-[140px] bg-slate-800/50 border-white/10 h-10 rounded-xl">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-slate-900 border-white/10 text-white">
@@ -483,39 +483,41 @@ const AITutor = () => {
                           </Select>
                         </div>
 
-                        <div className="flex-1 flex flex-col relative group min-h-[450px]">
+                        <div className="flex-1 flex flex-col relative group min-h-[300px] sm:min-h-[450px]">
                           <div className="absolute inset-0 bg-indigo-500/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
                           <Textarea
-                            placeholder="// Paste snippets for quality and security analysis..."
-                            className="flex-1 bg-slate-950/50 border-white/10 rounded-2xl font-mono text-[13px] leading-relaxed focus-visible:ring-indigo-500/30 transition-all scrollbar-thin relative z-10"
+                            placeholder="// Paste code here..."
+                            className="flex-1 bg-slate-950/50 border-white/10 rounded-2xl font-mono text-xs sm:text-[13px] leading-relaxed focus-visible:ring-indigo-500/30 transition-all scrollbar-thin relative z-10"
                             value={analysisCode}
                             onChange={(e) => setAnalysisCode(e.target.value)}
                           />
                         </div>
 
                         <Button
-                          className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold text-lg shadow-xl shadow-indigo-500/20"
+                          className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold text-base sm:text-lg shadow-xl shadow-indigo-500/20"
                           onClick={() => handleAnalyzeCode()}
                           disabled={isAnalyzing || !analysisCode.trim()}
                         >
                           {isAnalyzing ? (
                             <>
-                              <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                              Auditing Intelligence...
+                              <RefreshCw className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                              <span className="hidden sm:inline">Auditing Intelligence...</span>
+                              <span className="sm:hidden">Analyzing...</span>
                             </>
                           ) : (
                             <>
-                              <Zap className="mr-2 h-5 w-5 fill-current" />
-                              Start Deep Audit
+                              <Zap className="mr-2 h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                              <span className="hidden sm:inline">Start Deep Audit</span>
+                              <span className="sm:hidden">Analyze Code</span>
                             </>
                           )}
                         </Button>
                       </div>
 
-                      <div className="rounded-[32px] bg-white/[0.02] border border-white/5 p-8 flex flex-col h-full min-h-[450px]">
-                        <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-xl font-bold flex items-center gap-2">
-                            <ShieldCheck className="w-5 h-5 text-indigo-400" /> Audit Report
+                      <div className="rounded-[24px] sm:rounded-[32px] bg-white/[0.02] border border-white/5 p-4 sm:p-8 flex flex-col h-full min-h-[300px] sm:min-h-[450px]">
+                        <div className="flex items-center justify-between mb-4 sm:mb-6">
+                          <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" /> Audit Report
                           </h3>
                         </div>
 
@@ -663,17 +665,17 @@ const AITutor = () => {
             </motion.div>
           </div>
 
-          {/* Sidebar Area */}
-          <div className="lg:col-span-1 space-y-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6 sm:space-y-8">
             {/* Stats Overview */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
-                <CardHeader className="p-6 border-b border-white/5">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="lg:sticky lg:top-8">
+              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl">
+                <CardHeader className="p-4 sm:p-6 border-b border-white/5">
                   <CardTitle className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 flex items-center">
-                    <TrendingUp className="w-4 h-4 mr-2 text-emerald-400" /> Proficiency Radar
+                    <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 text-emerald-400" /> Proficiency Radar
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 space-y-8">
+                <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Velocity</span>
@@ -704,11 +706,11 @@ const AITutor = () => {
             </motion.div>
 
             {/* Quick Actions */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
-                <CardHeader className="p-6 border-b border-white/5">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="lg:sticky lg:top-[28rem]">
+              <Card className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl">
+                <CardHeader className="p-4 sm:p-6 border-b border-white/5">
                   <CardTitle className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 flex items-center">
-                    <Sparkles className="w-4 h-4 mr-2 text-blue-400" /> Utility Tools
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 text-blue-400" /> Utility Tools
                   </CardTitle>
                 </CardHeader>
                 <div className="divide-y divide-white/5">
@@ -720,12 +722,12 @@ const AITutor = () => {
                     <button
                       key={i}
                       onClick={() => handleUtilityTool(tool.label)}
-                      className="w-full flex items-center p-5 hover:bg-white/[0.03] transition-colors group"
+                      className="w-full flex items-center p-4 sm:p-5 hover:bg-white/[0.03] transition-colors group"
                     >
-                      <div className={`w-10 h-10 rounded-xl bg-${tool.color}-500/10 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform`}>
-                        <tool.icon className={`w-5 h-5 text-${tool.color}-400`} />
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-${tool.color}-500/10 flex items-center justify-center mr-3 sm:mr-4 group-hover:scale-110 transition-transform`}>
+                        <tool.icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${tool.color}-400`} />
                       </div>
-                      <span className="text-[13px] font-bold text-slate-300 group-hover:text-white transition-colors">{tool.label}</span>
+                      <span className="text-xs sm:text-[13px] font-bold text-slate-300 group-hover:text-white transition-colors">{tool.label}</span>
                     </button>
                   ))}
                 </div>
