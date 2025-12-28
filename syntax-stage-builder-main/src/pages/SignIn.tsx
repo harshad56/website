@@ -122,7 +122,7 @@ const SignIn = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-xl"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
