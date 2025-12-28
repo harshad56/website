@@ -43,6 +43,7 @@
         "qrcode": "^1.5.3",
         "razorpay": "^2.9.6",
         "redis": "^4.6.10",
+        "resend": "^2.0.0",
         "sharp": "^0.32.6",
         "simple-git": "^3.20.0",
         "socket.io": "^4.7.4",

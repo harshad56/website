@@ -1,23 +1,10 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const winston = require('winston');
 
-// Create transporter
-const createTransporter = () => {
-    winston.info(`Creating email transporter using service: 'gmail'`);
+// Initialize Resend with API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        },
-        // Add debug options for troubleshooting
-        debug: true,
-        logger: true
-    });
-};
-
-// Email templates
+// Email templates (same as before, adapted if needed)
 const emailTemplates = {
     emailVerification: (data) => ({
         subject: 'Verify your email address',
@@ -83,11 +70,9 @@ const emailTemplates = {
     })
 };
 
-// Send email function
+// Send email function using Resend
 const sendEmail = async ({ to, subject, template, data, html, text }) => {
     try {
-        const transporter = createTransporter();
-
         let emailContent = {};
 
         if (template && emailTemplates[template]) {
@@ -99,25 +84,33 @@ const sendEmail = async ({ to, subject, template, data, html, text }) => {
             };
         }
 
-        const mailOptions = {
-            from: process.env.EMAIL_FROM || 'noreply@codeacademy-pro.com',
-            to,
+        const from = process.env.EMAIL_FROM_NAME
+            ? `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM_ADDRESS || 'onboarding@resend.dev'}>`
+            : 'CodeAcademy Pro <onboarding@resend.dev>';
+
+        winston.info(`Sending email via Resend to: ${to}`);
+
+        const { data: responseData, error } = await resend.emails.send({
+            from: from,
+            to: [to],
             subject: emailContent.subject,
             html: emailContent.html,
-            text: emailContent.text || emailContent.html.replace(/<[^>]*>/g, '')
-        };
+            text: emailContent.text // Resend can handle plain text too
+        });
 
-        const info = await transporter.sendMail(mailOptions);
+        if (error) {
+            winston.error('Resend API Error:', error);
+            throw new Error(`Resend failed: ${error.message}`);
+        }
 
-        winston.info('Email sent successfully:', {
-            messageId: info.messageId,
-            to,
-            subject: emailContent.subject
+        winston.info('Email sent successfully via Resend:', {
+            id: responseData.id,
+            to
         });
 
         return {
             success: true,
-            messageId: info.messageId
+            messageId: responseData.id
         };
     } catch (error) {
         winston.error('Email sending failed:', error);

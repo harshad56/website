@@ -93,10 +93,14 @@ const io = new Server(server, {
 
 
 // Initialize Redis (optional for development and production)
+// Initialize Redis (optional for development and production)
 let redisClient = null;
 const redisUrl = process.env.REDIS_URL;
 
-if (redisUrl) {
+// Only initialize Redis if URL is present and NOT localhost in production
+const shouldInitRedis = redisUrl && !(process.env.NODE_ENV === 'production' && redisUrl.includes('localhost'));
+
+if (shouldInitRedis) {
     winston.info('Initializing Redis client...');
     redisClient = Redis.createClient({
         url: redisUrl,
@@ -109,9 +113,16 @@ if (redisUrl) {
         }
     });
 
-    redisClient.on('error', (err) => winston.warn('Redis Client Error', err));
+    redisClient.on('error', (err) => {
+        // Suppress connection refused errors to avoid log spam if Redis dies
+        if (err.code === 'ECONNREFUSED') {
+            winston.warn('Redis connection refused (caching disabled)');
+        } else {
+            winston.warn('Redis Client Error', err);
+        }
+    });
 } else {
-    winston.warn('REDIS_URL not found, Redis disabled');
+    winston.info('Redis disabled (not configured or localhost in production)');
 }
 
 // Configure Winston logger
