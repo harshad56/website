@@ -153,77 +153,77 @@ const ResetPassword = () => {
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="password", className="text-slate-300 flex items-center gap-2">
-                        <Lock className="w-3 h-3" /> New Password
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="bg-slate-800/50 border-white/10 focus:border-indigo-500/50 text-white h-11 transition-all"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <div className="bg-slate-950/50 p-3 rounded-lg border border-white/5 mt-2">
-                        <p className="text-[10px] text-slate-500 leading-relaxed">
-                          <span className="text-indigo-400 font-bold uppercase tracking-widest block mb-1">Requirement</span>
-                          8+ characters, uppercase, lowercase, numbers, and symbols (@$!%*?&).
-                        </p>
+                        <Label htmlFor="password" className="text-slate-300 flex items-center gap-2">
+                          <Lock className="w-3 h-3" /> New Password
+                        </Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="••••••••"
+                          className="bg-slate-800/50 border-white/10 focus:border-indigo-500/50 text-white h-11 transition-all"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <div className="bg-slate-950/50 p-3 rounded-lg border border-white/5 mt-2">
+                          <p className="text-[10px] text-slate-500 leading-relaxed">
+                            <span className="text-indigo-400 font-bold uppercase tracking-widest block mb-1">Requirement</span>
+                            8+ characters, uppercase, lowercase, numbers, and symbols (@$!%*?&).
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword" className="text-slate-300 flex items-center gap-2">
+                          <Lock className="w-3 h-3" /> Confirm Password
+                        </Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="••••••••"
+                          className="bg-slate-800/50 border-white/10 focus:border-indigo-500/50 text-white h-11 transition-all"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword", className="text-slate-300 flex items-center gap-2">
-                      <Lock className="w-3 h-3" /> Confirm Password
-                    </Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      className="bg-slate-800/50 border-white/10 focus:border-indigo-500/50 text-white h-11 transition-all"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                    <div className="flex flex-col gap-3 pt-2">
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition-all duration-300 shadow-xl shadow-indigo-500/20 group"
+                      >
+                        {isSubmitting ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" /> Updating...
+                          </span>
+                        ) : (
+                          "Reset Password"
+                        )}
+                      </Button>
 
-                <div className="flex flex-col gap-3 pt-2">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition-all duration-300 shadow-xl shadow-indigo-500/20 group"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Updating...
-                      </span>
-                    ) : (
-                      "Reset Password"
-                    )}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full hover:bg-white/5 text-slate-400 hover:text-white flex items-center justify-center gap-2 text-sm transition-colors"
-                    onClick={() => navigate(-1)}
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Cancel & Return
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full hover:bg-white/5 text-slate-400 hover:text-white flex items-center justify-center gap-2 text-sm transition-colors"
+                        onClick={() => navigate(-1)}
+                      >
+                        <ArrowLeft className="w-4 h-4" /> Cancel & Return
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
               </Card>
-      </motion.div>
+            </motion.div>
           )}
-    </AnimatePresence>
+        </AnimatePresence>
 
-        {/* Footer Brand */ }
-  <p className="text-center mt-8 text-slate-600 text-xs tracking-widest uppercase">
-    Powered by CodeAcademy Pro Security
-  </p>
+        {/* Footer Brand */}
+        <p className="text-center mt-8 text-slate-600 text-xs tracking-widest uppercase">
+          Powered by CodeAcademy Pro Security
+        </p>
       </motion.div >
     </div >
   );
