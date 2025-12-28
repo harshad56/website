@@ -48,7 +48,7 @@ const Header = memo(() => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-sm">
-      <div className="container mx-auto px-6 pt-4 pb-3 md:pb-4">
+      <div className="container mx-auto px-6 py-4">
         <nav className="flex items-center gap-3 lg:gap-6">
           {/* Logo */}
           <div
@@ -228,9 +228,16 @@ const Header = memo(() => {
               </>
             )}
           </div>
+        </nav>
 
-          {/* Mobile Actions - Text Navigation */}
-          <div className="md:hidden flex items-center gap-1 w-full overflow-x-auto no-scrollbar mask-gradient-right">
+        {/* Mobile Search Box - Dedicated row for better usability */}
+        <div className="md:hidden mt-3 px-1">
+          <SearchBox className="w-full h-9" />
+        </div>
+
+        {/* Mobile Actions - Text Navigation */}
+        <nav className="md:hidden mt-3">
+          <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar mask-gradient-right">
             <div className="flex items-center gap-1 flex-nowrap pr-2">
               <Button
                 variant="ghost"
@@ -274,17 +281,16 @@ const Header = memo(() => {
                 <div className="mr-1 ml-1 flex-shrink-0">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <div className="cursor-pointer active:scale-95 transition-transform">
-                        <Avatar className="w-8 h-8 border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                      <button className="flex items-center outline-none">
+                        <Avatar className="w-8 h-8 border-2 border-primary/20 hover:border-primary/50 transition-colors">
                           <AvatarImage src={user?.avatar} />
                           <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                      </div>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      sideOffset={8}
-                      className="w-64 p-1.5 bg-background/90 border-border/50 backdrop-blur-xl shadow-2xl animate-in zoom-in-95 duration-200"
+                      className="w-64 mt-2 p-1.5 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
                     >
                       {/* User Info Header */}
                       <div className="px-3 py-2.5 mb-1 border-b border-border/10">
@@ -428,11 +434,6 @@ const Header = memo(() => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
-
-          {/* Mobile Search - Dedicated Row */}
-          <div className="md:hidden mt-3 max-w-full">
-            <SearchBox className="w-full h-10" />
           </div>
         </nav>
       </div>

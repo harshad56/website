@@ -82,31 +82,28 @@ const ResetPassword = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="bg-slate-900/50 border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+              <Card className="bg-slate-900/50 border-white/10 backdrop-blur-xl shadow-2xl text-center p-6 sm:p-8 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
-                <CardHeader className="space-y-3 sm:space-y-4 pt-6 sm:pt-8 text-center">
+                <CardContent className="pt-6 flex flex-col items-center space-y-6">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 200, damping: 10, delay: 0.2 }}
-                    className="mx-auto w-12 h-12 sm:w-14 sm:h-14 bg-green-500/10 rounded-2xl flex items-center justify-center border border-green-500/20"
+                    className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center"
                   >
-                    <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" />
+                    <CheckCircle className="w-10 h-10 text-green-400" />
                   </motion.div>
 
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl sm:text-2xl font-bold text-white">Password Reset!</CardTitle>
+                  <div className="space-y-2">
+                    <CardTitle className="text-3xl font-bold text-white">Success!</CardTitle>
                     <CardDescription className="text-slate-400 text-lg">
                       Your password has been reset successfully.
                     </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent className="px-5 sm:px-8 pb-6 sm:pb-8">
-                  <div className="bg-slate-950/50 rounded-xl p-4 border border-white/5 mb-6">
-                    <p className="text-slate-300 text-sm leading-relaxed text-center">
-                      Your password has been successfully updated. You can now use your new password to sign in to your account.
-                    </p>
-                  </div>
+
+                  <p className="text-slate-500 text-sm">
+                    Security is our priority. Your authentication credentials have been updated.
+                  </p>
 
                   <Button
                     className="w-full h-12 bg-green-600 hover:bg-green-500 text-white font-bold transition-all duration-300 shadow-lg shadow-green-900/20"
@@ -127,19 +124,19 @@ const ResetPassword = () => {
               <Card className="bg-slate-900/50 border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
 
-                <CardHeader className="space-y-3 sm:space-y-4 pt-6 sm:pt-8 text-center">
-                  <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 rotate-3 transition-transform hover:rotate-0 duration-300">
-                    <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-400" />
+                <CardHeader className="space-y-4 pt-8 text-center">
+                  <div className="mx-auto w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 rotate-3 transition-transform hover:rotate-0 duration-300">
+                    <ShieldCheck className="w-8 h-8 text-indigo-400" />
                   </div>
                   <div className="space-y-1">
-                    <CardTitle className="text-xl sm:text-2xl font-bold text-white tracking-tight">Set New Password</CardTitle>
-                    <CardDescription className="text-slate-400 text-sm sm:text-base">
+                    <CardTitle className="text-2xl font-bold text-white tracking-tight">Set New Password</CardTitle>
+                    <CardDescription className="text-slate-400">
                       Almost there! Choose a secure password for your account.
                     </CardDescription>
                   </div>
                 </CardHeader>
 
-                <CardContent className="px-5 sm:px-8 pb-6 sm:pb-8">
+                <CardContent className="px-5 sm:px-8 pb-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
                       <motion.div
