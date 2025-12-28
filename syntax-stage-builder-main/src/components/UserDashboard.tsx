@@ -6,19 +6,21 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  Trophy, 
-  Target, 
-  Calendar, 
-  TrendingUp, 
-  BookOpen, 
-  Code, 
+import {
+  Trophy,
+  Target,
+  Calendar,
+  TrendingUp,
+  BookOpen,
+  Code,
   Star,
   Award,
   Zap,
   Users,
   Clock,
-  CheckCircle
+  Clock,
+  CheckCircle,
+  LogOut
 } from "lucide-react";
 
 const UserDashboard = () => {
@@ -80,11 +82,16 @@ const UserDashboard = () => {
                 <p className="text-muted-foreground">Ready to continue your learning journey?</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="secondary">
+            <div className="flex items-center space-x-3">
+              <Badge variant="secondary" className="px-3 py-1 text-sm bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                 {user.progress.totalPoints} points
               </Badge>
-              <Button variant="outline" onClick={logout}>
+              <Button
+                variant="ghost"
+                onClick={logout}
+                className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors duration-300"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
               </Button>
             </div>
@@ -253,13 +260,12 @@ const UserDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {achievements.map((achievement) => (
-                    <Card 
+                    <Card
                       key={achievement.id}
-                      className={`transition-all duration-300 ${
-                        achievement.unlocked 
-                          ? 'border-green-200 bg-green-50' 
-                          : 'border-muted bg-muted/30'
-                      }`}
+                      className={`transition-all duration-300 ${achievement.unlocked
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-muted bg-muted/30'
+                        }`}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-3">

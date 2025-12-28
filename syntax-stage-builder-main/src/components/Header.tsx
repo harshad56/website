@@ -15,7 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp } from "lucide-react";
+import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp, LogOut } from "lucide-react";
 
 const Header = memo(() => {
   const navigate = useNavigate();
@@ -155,32 +155,53 @@ const Header = memo(() => {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 p-1 px-2 hover:bg-primary/10 transition-all duration-300">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={user?.avatar} />
-                      <AvatarFallback className="bg-primary/10 text-primary">{user?.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-left hidden lg:block">
-                      <div className="text-sm font-medium leading-none mb-1">{user?.name}</div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {user?.progress?.currentStreak} day streak
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2 p-1 px-2 hover:bg-primary/10 transition-all duration-300">
+                      <Avatar className="w-8 h-8 ring-2 ring-primary/20">
+                        <AvatarImage src={user?.avatar} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-left hidden lg:block">
+                        <div className="text-sm font-semibold leading-none mb-1 text-foreground">{user?.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-medium">
+                          {user?.progress?.currentStreak} day streak 🔥
+                        </div>
                       </div>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 mt-2">
-                  <DropdownMenuItem
-                    onClick={logout}
-                    className="text-destructive focus:text-destructive cursor-pointer font-medium"
-                  >
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 mt-2 p-2">
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer font-medium mb-1">
+                      <CircleUser className="w-4 h-4 mr-2 text-primary" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer font-medium mb-1">
+                      <Blocks className="w-4 h-4 mr-2 text-primary" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="text-destructive focus:text-destructive cursor-pointer font-medium bg-destructive/5"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="hidden xl:flex items-center gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </Button>
+              </div>
             ) : (
               <>
                 <Button
