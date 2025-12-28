@@ -230,11 +230,6 @@ const Header = memo(() => {
           </div>
         </nav>
 
-        {/* Mobile Search Box - Dedicated row for better usability */}
-        <div className="md:hidden mt-3 px-1">
-          <SearchBox className="w-full h-9" />
-        </div>
-
         {/* Mobile Actions - Text Navigation */}
         <nav className="md:hidden mt-3">
           <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar mask-gradient-right">
