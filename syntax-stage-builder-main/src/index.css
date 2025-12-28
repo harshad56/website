@@ -196,6 +196,7 @@
 
   /* Mobile Optimizations */
   @media (max-width: 768px) {
+
     /* Ensure minimum touch target size */
     button,
     a,
@@ -241,7 +242,7 @@
     [data-framer-motion],
     [data-language-card],
     .motion-component {
-      will-change: transform, opacity;
+      /* will-change removed to prevent memory warning */
       transform: translateZ(0);
       backface-visibility: hidden;
       perspective: 1000px;
@@ -255,6 +256,7 @@
 
     /* Reduce motion for accessibility */
     @media (prefers-reduced-motion: reduce) {
+
       *,
       *::before,
       *::after {
