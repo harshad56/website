@@ -7,7 +7,7 @@ const winston = require('winston');
 const router = express.Router();
 
 // Stripe webhook endpoint
-router.post('/webhook', express.raw({ type: 'application/json' }), async(req, res) => {
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
 
@@ -54,7 +54,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async(req, re
 });
 
 // Create subscription
-router.post('/create-subscription', authenticateToken, async(req, res) => {
+router.post('/create-subscription', authenticateToken, async (req, res) => {
     try {
         const { priceId, paymentMethodId } = req.body;
 
@@ -123,7 +123,7 @@ router.post('/create-subscription', authenticateToken, async(req, res) => {
 });
 
 // Get subscription status
-router.get('/subscription', authenticateToken, async(req, res) => {
+router.get('/subscription', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
 
@@ -159,7 +159,7 @@ router.get('/subscription', authenticateToken, async(req, res) => {
 });
 
 // Cancel subscription
-router.post('/cancel-subscription', authenticateToken, async(req, res) => {
+router.post('/cancel-subscription', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
 
@@ -188,7 +188,7 @@ router.post('/cancel-subscription', authenticateToken, async(req, res) => {
 });
 
 // Get payment methods
-router.get('/payment-methods', authenticateToken, async(req, res) => {
+router.get('/payment-methods', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
 

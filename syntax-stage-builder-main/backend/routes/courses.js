@@ -55,7 +55,7 @@ const router = express.Router();
 // @route   GET /api/courses
 // @desc    Get all courses
 // @access  Public
-router.get('/', async(req, res) => {
+router.get('/', async (req, res) => {
     try {
         const courses = await db.getCourses();
         res.json({
@@ -74,7 +74,7 @@ router.get('/', async(req, res) => {
 // @route   GET /api/courses/stats/summary
 // @desc    Get course stats for admin dashboard
 // @access  Private/Admin
-router.get('/stats/summary', authenticateToken, authorize('admin'), async(req, res) => {
+router.get('/stats/summary', authenticateToken, authorize('admin'), async (req, res) => {
     try {
         const stats = await db.getCourseStats();
         res.json({ success: true, data: stats });
@@ -87,7 +87,7 @@ router.get('/stats/summary', authenticateToken, authorize('admin'), async(req, r
 // @route   GET /api/courses/categories
 // @desc    Get all course categories
 // @access  Public
-router.get('/categories', async(req, res) => {
+router.get('/categories', async (req, res) => {
     try {
         const categories = await db.getCourseCategories();
         res.json({ success: true, data: categories });
@@ -100,7 +100,7 @@ router.get('/categories', async(req, res) => {
 // @route   POST /api/courses/categories
 // @desc    Create a new category
 // @access  Private/Admin
-router.post('/categories', authenticateToken, authorize('admin'), async(req, res) => {
+router.post('/categories', authenticateToken, authorize('admin'), async (req, res) => {
     try {
         const { name } = req.body;
         if (!name || !name.trim()) {
@@ -117,7 +117,7 @@ router.post('/categories', authenticateToken, authorize('admin'), async(req, res
 // @route   GET /api/courses/languages
 // @desc    Get all course languages
 // @access  Public
-router.get('/languages', async(req, res) => {
+router.get('/languages', async (req, res) => {
     try {
         const languages = await db.getCourseLanguages();
         res.json({ success: true, data: languages });
@@ -130,7 +130,7 @@ router.get('/languages', async(req, res) => {
 // @route   POST /api/courses/languages
 // @desc    Create a new language
 // @access  Private/Admin
-router.post('/languages', authenticateToken, authorize('admin'), async(req, res) => {
+router.post('/languages', authenticateToken, authorize('admin'), async (req, res) => {
     try {
         const { name } = req.body;
         if (!name || !name.trim()) {
@@ -147,10 +147,10 @@ router.post('/languages', authenticateToken, authorize('admin'), async(req, res)
 // @route   POST /api/courses
 // @desc    Create a new course (admin only)
 // @access  Private/Admin
-router.post('/', async(req, res, next) => {
+router.post('/', async (req, res, next) => {
     // In development, allow without auth for testing
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     if (isDevelopment && !req.headers['authorization']) {
         // Create a mock user for development
         req.user = {
@@ -162,15 +162,15 @@ router.post('/', async(req, res, next) => {
         };
         return next();
     }
-    
+
     // Otherwise, require authentication
     return authenticateToken(req, res, next);
-}, async(req, res) => {
+}, async (req, res) => {
     try {
         // Check if user is admin or allow in development
         const isAdmin = req.user?.role === 'admin' || req.user?.role === 'Admin';
         const isDevelopment = process.env.NODE_ENV !== 'production';
-        
+
         if (!isAdmin && !isDevelopment) {
             return res.status(403).json({
                 success: false,
@@ -219,14 +219,14 @@ router.post('/', async(req, res, next) => {
                 winston.warn('Invalid image URL format. Must start with http:// or https://');
             }
         }
-        
+
         if (price !== undefined && price !== null && price !== '') {
             const priceValue = parseFloat(price);
             if (!isNaN(priceValue) && priceValue >= 0) {
                 courseData.price = priceValue;
             }
         }
-        
+
         if (tags) {
             if (Array.isArray(tags) && tags.length > 0) {
                 courseData.tags = tags;
@@ -253,10 +253,10 @@ router.post('/', async(req, res, next) => {
             stack: error.stack,
             user: req.user?.id
         });
-        
+
         const errorMessage = error.message || 'Failed to create course';
         const statusCode = error.message?.includes('permission') || error.message?.includes('permission') ? 403 : 500;
-        
+
         res.status(statusCode).json({
             success: false,
             message: errorMessage,
@@ -271,7 +271,7 @@ router.post('/', async(req, res, next) => {
 // @route   GET /api/courses/:id
 // @desc    Get course by ID
 // @access  Public
-router.get('/:id', async(req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const course = await db.getCourseById(req.params.id);
         if (!course) {
@@ -297,7 +297,7 @@ router.get('/:id', async(req, res) => {
 // @route   GET /api/courses/:id/certificate
 // @desc    Generate a simple course completion certificate PDF
 // @access  Private (requires auth)
-router.get('/:id/certificate', authenticateToken, async(req, res) => {
+router.get('/:id/certificate', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.id;
         const userId = req.user?.id || 'user';
@@ -417,9 +417,9 @@ router.get('/:id/certificate', authenticateToken, async(req, res) => {
 // @route   PUT /api/courses/:id
 // @desc    Update a course
 // @access  Private/Admin
-router.put('/:id', async(req, res, next) => {
+router.put('/:id', async (req, res, next) => {
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     if (isDevelopment && !req.headers['authorization']) {
         req.user = {
             id: 'dev-user-id',
@@ -430,13 +430,13 @@ router.put('/:id', async(req, res, next) => {
         };
         return next();
     }
-    
+
     return authenticateToken(req, res, next);
-}, async(req, res) => {
+}, async (req, res) => {
     try {
         const isAdmin = req.user?.role === 'admin' || req.user?.role === 'Admin';
         const isDevelopment = process.env.NODE_ENV !== 'production';
-        
+
         if (!isAdmin && !isDevelopment) {
             return res.status(403).json({
                 success: false,
@@ -477,14 +477,14 @@ router.put('/:id', async(req, res, next) => {
                 }
             }
         }
-        
+
         if (price !== undefined && price !== null && price !== '') {
             const priceValue = parseFloat(price);
             if (!isNaN(priceValue) && priceValue >= 0) {
                 courseData.price = priceValue;
             }
         }
-        
+
         if (tags) {
             if (Array.isArray(tags) && tags.length > 0) {
                 courseData.tags = tags;
@@ -509,7 +509,7 @@ router.put('/:id', async(req, res, next) => {
             stack: error.stack,
             courseId: req.params.id
         });
-        
+
         const errorMessage = error.message || 'Failed to update course';
         res.status(500).json({
             success: false,
@@ -525,9 +525,9 @@ router.put('/:id', async(req, res, next) => {
 // @route   DELETE /api/courses/:id
 // @desc    Delete a course
 // @access  Private/Admin
-router.delete('/:id', async(req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     if (isDevelopment && !req.headers['authorization']) {
         req.user = {
             id: 'dev-user-id',
@@ -538,13 +538,13 @@ router.delete('/:id', async(req, res, next) => {
         };
         return next();
     }
-    
+
     return authenticateToken(req, res, next);
-}, async(req, res) => {
+}, async (req, res) => {
     try {
         const isAdmin = req.user?.role === 'admin' || req.user?.role === 'Admin';
         const isDevelopment = process.env.NODE_ENV !== 'production';
-        
+
         if (!isAdmin && !isDevelopment) {
             return res.status(403).json({
                 success: false,
@@ -564,7 +564,7 @@ router.delete('/:id', async(req, res, next) => {
             stack: error.stack,
             courseId: req.params.id
         });
-        
+
         const errorMessage = error.message || 'Failed to delete course';
         res.status(500).json({
             success: false,
@@ -577,7 +577,7 @@ router.delete('/:id', async(req, res, next) => {
 // @route   POST /api/courses/:id/enroll
 // @desc    Enroll user in a course
 // @access  Private (must be logged in)
-router.post('/:id/enroll', authenticateToken, async(req, res) => {
+router.post('/:id/enroll', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.id;
         const userId = req.user.id;
@@ -637,7 +637,7 @@ router.post('/:id/enroll', authenticateToken, async(req, res) => {
 // @route   GET /api/courses/:id/enrollment
 // @desc    Check if user is enrolled in course
 // @access  Private (must be logged in)
-router.get('/:id/enrollment', authenticateToken, async(req, res) => {
+router.get('/:id/enrollment', authenticateToken, async (req, res) => {
     try {
         const enrollment = await db.getEnrollment(req.user.id, req.params.id);
         if (enrollment) {
@@ -663,14 +663,14 @@ router.get('/:id/enrollment', authenticateToken, async(req, res) => {
 // @route   GET /api/courses/:id/content
 // @desc    Get course content (modules, lessons, videos, documents)
 // @access  Private (enrolled users only, or admin)
-router.get('/:id/content', authenticateToken, async(req, res) => {
+router.get('/:id/content', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.id;
         const userId = req.user.id;
 
         // Check enrollment (or allow admin)
         const isAdmin = req.user?.role === 'admin' || req.user?.role === 'Admin';
-        
+
         if (!isAdmin) {
             const enrollment = await db.getEnrollment(userId, courseId);
             if (!enrollment) {
@@ -701,7 +701,7 @@ router.get('/:id/content', authenticateToken, async(req, res) => {
 // @route   POST /api/courses/:id/checkout
 // @desc    Create Stripe Checkout session for a paid course
 // @access  Private (must be logged in)
-router.post('/:id/checkout', authenticateToken, async(req, res) => {
+router.post('/:id/checkout', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.id;
         const userId = req.user.id;
@@ -806,7 +806,7 @@ router.post('/:id/checkout', authenticateToken, async(req, res) => {
 // @route   POST /api/courses/:id/payment/verify
 // @desc    Verify Razorpay payment signature and enroll user in course
 // @access  Private (must be logged in)
-router.post('/:id/payment/verify', authenticateToken, async(req, res) => {
+router.post('/:id/payment/verify', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.id;
         const userId = req.user.id;
