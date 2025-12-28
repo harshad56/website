@@ -3,14 +3,22 @@ const winston = require('winston');
 
 // Create transporter
 const createTransporter = () => {
+    const port = Number(process.env.EMAIL_PORT) || 587;
+    const isSecure = port === 465; // true for 465, false for other ports
+
+    winston.info(`Creating email transporter: ${process.env.EMAIL_HOST}:${port} (secure: ${isSecure})`);
+
     return nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: Number(process.env.EMAIL_PORT) || 587,
-        secure: false, // true for 465, false for other ports
+        port: port,
+        secure: isSecure,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
-        }
+        },
+        // Add debug options for troubleshooting
+        debug: true,
+        logger: true
     });
 };
 
@@ -81,7 +89,7 @@ const emailTemplates = {
 };
 
 // Send email function
-const sendEmail = async({ to, subject, template, data, html, text }) => {
+const sendEmail = async ({ to, subject, template, data, html, text }) => {
     try {
         const transporter = createTransporter();
 
@@ -123,7 +131,7 @@ const sendEmail = async({ to, subject, template, data, html, text }) => {
 };
 
 // Send verification email
-const sendVerificationEmail = async(user, verificationUrl) => {
+const sendVerificationEmail = async (user, verificationUrl) => {
     return sendEmail({
         to: user.email,
         template: 'emailVerification',
@@ -135,7 +143,7 @@ const sendVerificationEmail = async(user, verificationUrl) => {
 };
 
 // Send password reset email
-const sendPasswordResetEmail = async(user, resetUrl) => {
+const sendPasswordResetEmail = async (user, resetUrl) => {
     return sendEmail({
         to: user.email,
         template: 'passwordReset',
@@ -147,7 +155,7 @@ const sendPasswordResetEmail = async(user, resetUrl) => {
 };
 
 // Send welcome email
-const sendWelcomeEmail = async(user) => {
+const sendWelcomeEmail = async (user) => {
     return sendEmail({
         to: user.email,
         template: 'welcomeEmail',
