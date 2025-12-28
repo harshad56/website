@@ -298,7 +298,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
   }, []);
 
-  const updatePreferences = useCallback((preferences: Partial<User['preferences']>) => {
+  const updatePreferences = useCallback(async (preferences: Partial<User['preferences']>) => {
+    // Optimistic update
     setUser((prevUser) => {
       if (!prevUser) return prevUser;
 
@@ -308,6 +309,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
 
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+
+      // Sync with backend
+      apiService.updatePreferences(prevUser.id, preferences).catch(err => {
+        console.error("Failed to sync preferences to backend:", err);
+        // Optionally revert state here if strict consistency is needed
+      });
+
       return updatedUser;
     });
   }, []);
