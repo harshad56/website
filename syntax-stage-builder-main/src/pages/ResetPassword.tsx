@@ -82,7 +82,7 @@ const ResetPassword = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="bg-slate-900/50 border-white/10 backdrop-blur-xl shadow-2xl text-center p-8 overflow-hidden relative">
+              <Card className="bg-slate-900/50 border-white/10 backdrop-blur-xl shadow-2xl text-center p-6 sm:p-8 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
                 <CardContent className="pt-6 flex flex-col items-center space-y-6">
                   <motion.div
@@ -136,7 +136,7 @@ const ResetPassword = () => {
                   </div>
                 </CardHeader>
 
-                <CardContent className="px-8 pb-8">
+                <CardContent className="p-6 sm:px-8 sm:pb-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
                       <motion.div

@@ -259,6 +259,10 @@ const Header = memo(() => {
                 Courses
               </Button>
 
+              <div className="flex-shrink-0 w-[140px] sm:w-[180px]">
+                <SearchBox className="h-8 translate-y-[1px]" />
+              </div>
+
               {!isAuthenticated && (
                 <Button
                   variant="ghost"
