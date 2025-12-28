@@ -15,7 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp, LogOut } from "lucide-react";
+import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp, LogOut, Lock } from "lucide-react";
 
 const Header = memo(() => {
   const navigate = useNavigate();

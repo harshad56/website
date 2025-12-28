@@ -38,6 +38,7 @@ interface AuthContextType {
   updateProgress: (moduleId: string, topicId?: string) => void;
   updatePreferences: (preferences: Partial<User['preferences']>) => void;
   handleOAuthSuccess: (token: string) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -215,169 +216,193 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  } finally {
+    setIsLoading(false);
+  }
+}, [toast]);
 
-  const logout = useCallback(() => {
-    console.log("🔒 Logging out and clearing all local session data");
-    setUser(null);
-    localStorage.removeItem(CURRENT_USER_KEY);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem(LOCAL_USERS_KEY); // Clear local mock database for clean slate
-    apiService.setToken(null);
-    toast({
-      title: "Logged out",
-      description: "Come back soon to continue learning!",
-    });
-  }, [toast]);
+const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
+  try {
+    const response = await apiService.changePassword(oldPassword, newPassword);
+    if (!response.success) {
+      throw new Error(response.error || "Failed to change password");
+    }
 
-  const syncUserFromApi = useCallback(async (token: string, options?: { showToast?: boolean }) => {
-    try {
-      setIsLoading(true);
-      console.log(`📡 Syncing user profile for: ${token.substring(0, 10)}...`);
-      apiService.setToken(token);
-      const response = await apiService.getProfile();
-      if (response.success && response.data) {
-        const apiUser = buildUserFromApi(response.data);
-        console.log(`👤 Profile synced successfully for identity: ${apiUser.email}`);
-        setUser(apiUser);
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(apiUser));
-        if (options?.showToast) {
-          toast({
-            title: "Signed in successfully",
-            description: `Welcome back, ${apiUser.name}!`,
-          });
-        }
-        return;
+    // Update local storage if it's a local user (mock behavior)
+    if (user?.email) {
+      const accounts = getStoredAccounts();
+      const existing = accounts[user.email.toLowerCase()];
+      if (existing) {
+        accounts[user.email.toLowerCase()] = { ...existing, password: newPassword };
+        persistStoredAccounts(accounts);
       }
-      throw new Error(response.error || response.message || 'Failed to load user profile');
-    } catch (error) {
+    }
+  } catch (error) {
+    throw error;
+  }
+}, [user]);
+
+const logout = useCallback(() => {
+  console.log("🔒 Logging out and clearing all local session data");
+  setUser(null);
+  localStorage.removeItem(CURRENT_USER_KEY);
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem(LOCAL_USERS_KEY); // Clear local mock database for clean slate
+  apiService.setToken(null);
+  toast({
+    title: "Logged out",
+    description: "Come back soon to continue learning!",
+  });
+}, [toast]);
+
+const syncUserFromApi = useCallback(async (token: string, options?: { showToast?: boolean }) => {
+  try {
+    setIsLoading(true);
+    console.log(`📡 Syncing user profile for: ${token.substring(0, 10)}...`);
+    apiService.setToken(token);
+    const response = await apiService.getProfile();
+    if (response.success && response.data) {
+      const apiUser = buildUserFromApi(response.data);
+      console.log(`👤 Profile synced successfully for identity: ${apiUser.email}`);
+      setUser(apiUser);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(apiUser));
       if (options?.showToast) {
         toast({
-          title: "Sign-in failed",
-          description: error instanceof Error ? error.message : "Could not complete the sign-in process.",
-          variant: "destructive",
+          title: "Signed in successfully",
+          description: `Welcome back, ${apiUser.name}!`,
         });
       }
-      throw error;
+      return;
+    }
+    throw new Error(response.error || response.message || 'Failed to load user profile');
+  } catch (error) {
+    if (options?.showToast) {
+      toast({
+        title: "Sign-in failed",
+        description: error instanceof Error ? error.message : "Could not complete the sign-in process.",
+        variant: "destructive",
+      });
+    }
+    throw error;
+  } finally {
+    setIsLoading(false);
+  }
+}, [toast]);
+
+const handleOAuthSuccess = useCallback(async (token: string) => {
+  await syncUserFromApi(token, { showToast: true });
+}, [syncUserFromApi]);
+
+const updateProgress = useCallback((moduleId: string, topicId?: string) => {
+  setUser((prevUser) => {
+    if (!prevUser) return prevUser;
+
+    const updatedUser = { ...prevUser };
+
+    if (!updatedUser.progress.completedModules.includes(moduleId)) {
+      updatedUser.progress.completedModules.push(moduleId);
+    }
+
+    if (topicId && !updatedUser.progress.completedTopics.includes(topicId)) {
+      updatedUser.progress.completedTopics.push(topicId);
+    }
+
+    updatedUser.progress.totalPoints += topicId ? 50 : 100;
+
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+    const accounts = getStoredAccounts();
+    const existing = accounts[updatedUser.email.toLowerCase()];
+    if (existing) {
+      accounts[updatedUser.email.toLowerCase()] = {
+        ...existing,
+        user: updatedUser
+      };
+      persistStoredAccounts(accounts);
+    }
+    return updatedUser;
+  });
+}, []);
+
+const updatePreferences = useCallback(async (preferences: Partial<User['preferences']>) => {
+  // Optimistic update
+  setUser((prevUser) => {
+    if (!prevUser) return prevUser;
+
+    const updatedUser = {
+      ...prevUser,
+      preferences: { ...prevUser.preferences, ...preferences }
+    };
+
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+
+    // Sync with backend
+    apiService.updatePreferences(prevUser.id, preferences).catch(err => {
+      console.error("Failed to sync preferences to backend:", err);
+      // Optionally revert state here if strict consistency is needed
+    });
+
+    return updatedUser;
+  });
+}, []);
+
+// Non-blocking auth check
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const savedUser = localStorage.getItem(CURRENT_USER_KEY);
+      const token = localStorage.getItem('auth_token');
+
+      if (savedUser && token) {
+        const userData = JSON.parse(savedUser);
+        const normalizedUser: User = {
+          ...userData,
+          role: determineRole(userData.email, userData.role)
+        };
+        setUser(normalizedUser);
+        // Sync with profile to ensure token is still valid
+        syncUserFromApi(token).catch(err => {
+          console.error("Session sync failed:", err);
+        });
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  };
 
-  const handleOAuthSuccess = useCallback(async (token: string) => {
-    await syncUserFromApi(token, { showToast: true });
-  }, [syncUserFromApi]);
+  checkAuth();
+}, [syncUserFromApi]);
 
-  const updateProgress = useCallback((moduleId: string, topicId?: string) => {
-    setUser((prevUser) => {
-      if (!prevUser) return prevUser;
+const value = useMemo(
+  () => ({
+    user,
+    isAuthenticated: !!user,
+    isAdmin: user?.role === "admin",
+    isLoading,
+    login,
+    signup,
+    logout,
+    updateProgress,
+    updatePreferences,
+    handleOAuthSuccess
+  }),
+  [user, isLoading, login, signup, logout, updateProgress, updatePreferences, handleOAuthSuccess]
+);
 
-      const updatedUser = { ...prevUser };
-
-      if (!updatedUser.progress.completedModules.includes(moduleId)) {
-        updatedUser.progress.completedModules.push(moduleId);
-      }
-
-      if (topicId && !updatedUser.progress.completedTopics.includes(topicId)) {
-        updatedUser.progress.completedTopics.push(topicId);
-      }
-
-      updatedUser.progress.totalPoints += topicId ? 50 : 100;
-
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
-      const accounts = getStoredAccounts();
-      const existing = accounts[updatedUser.email.toLowerCase()];
-      if (existing) {
-        accounts[updatedUser.email.toLowerCase()] = {
-          ...existing,
-          user: updatedUser
-        };
-        persistStoredAccounts(accounts);
-      }
-      return updatedUser;
+// Handle token persistence on mount if user is not set
+useEffect(() => {
+  const token = localStorage.getItem('auth_token');
+  if (!user && token && !isLoading) {
+    syncUserFromApi(token).catch(() => {
+      // Silent failure
     });
-  }, []);
+  }
+}, [syncUserFromApi, user, isLoading]);
 
-  const updatePreferences = useCallback(async (preferences: Partial<User['preferences']>) => {
-    // Optimistic update
-    setUser((prevUser) => {
-      if (!prevUser) return prevUser;
-
-      const updatedUser = {
-        ...prevUser,
-        preferences: { ...prevUser.preferences, ...preferences }
-      };
-
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
-
-      // Sync with backend
-      apiService.updatePreferences(prevUser.id, preferences).catch(err => {
-        console.error("Failed to sync preferences to backend:", err);
-        // Optionally revert state here if strict consistency is needed
-      });
-
-      return updatedUser;
-    });
-  }, []);
-
-  // Non-blocking auth check
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const savedUser = localStorage.getItem(CURRENT_USER_KEY);
-        const token = localStorage.getItem('auth_token');
-
-        if (savedUser && token) {
-          const userData = JSON.parse(savedUser);
-          const normalizedUser: User = {
-            ...userData,
-            role: determineRole(userData.email, userData.role)
-          };
-          setUser(normalizedUser);
-          // Sync with profile to ensure token is still valid
-          syncUserFromApi(token).catch(err => {
-            console.error("Session sync failed:", err);
-          });
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [syncUserFromApi]);
-
-  const value = useMemo(
-    () => ({
-      user,
-      isAuthenticated: !!user,
-      isAdmin: user?.role === "admin",
-      isLoading,
-      login,
-      signup,
-      logout,
-      updateProgress,
-      updatePreferences,
-      handleOAuthSuccess
-    }),
-    [user, isLoading, login, signup, logout, updateProgress, updatePreferences, handleOAuthSuccess]
-  );
-
-  // Handle token persistence on mount if user is not set
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!user && token && !isLoading) {
-      syncUserFromApi(token).catch(() => {
-        // Silent failure
-      });
-    }
-  }, [syncUserFromApi, user, isLoading]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+return (
+  <AuthContext.Provider value={value}>
+    {children}
+  </AuthContext.Provider>
+);
 };
