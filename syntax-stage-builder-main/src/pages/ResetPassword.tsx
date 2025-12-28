@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/services/ApiService";
 
+import { CheckCircle } from "lucide-react";
+
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -14,6 +16,7 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,11 +46,14 @@ const ResetPassword = () => {
 
     try {
       const response = await apiService.resetPassword(token, password);
+      // Show success state instead of navigating immediately
+      setIsSuccess(true);
       toast({
         title: "Password updated",
         description: response.message || "Your password has been reset successfully.",
+        variant: "default",
+        className: "bg-green-600 text-white border-none"
       });
-      navigate("/sign-in");
     } catch (error) {
       toast({
         title: "Reset failed",
@@ -59,6 +65,30 @@ const ResetPassword = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md shadow-xl border border-border/60 text-center p-6">
+          <CardContent className="pt-6 flex flex-col items-center space-y-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-2">
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-green-700 dark:text-green-400">Success!</CardTitle>
+            <CardDescription className="text-base">
+              Your password has been reset successfully. You can now log in with your new password.
+            </CardDescription>
+            <Button
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => navigate("/sign-in")}
+            >
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
