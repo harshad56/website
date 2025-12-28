@@ -72,7 +72,7 @@ const Header = memo(() => {
               <DropdownMenuContent
                 sideOffset={10}
                 align="start"
-                className="max-h-[400px] overflow-y-auto pt-2 bg-slate-900/90 border-white/10 backdrop-blur-xl shadow-2xl"
+                className="max-h-[400px] overflow-y-auto pt-2 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
               >
                 <DropdownMenuItem onClick={() => navigate("/python-learning")} className="mt-1">Python</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/javascript-learning")}>JavaScript</DropdownMenuItem>
@@ -118,7 +118,7 @@ const Header = memo(() => {
               <DropdownMenuContent
                 sideOffset={10}
                 align="start"
-                className="max-h-[400px] overflow-y-auto pt-2 bg-slate-900/90 border-white/10 backdrop-blur-xl shadow-2xl"
+                className="max-h-[400px] overflow-y-auto pt-2 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
               >
                 <DropdownMenuItem onClick={() => navigate('/learning-paths')} className="mt-1">Learning Paths</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/code-playground')}>Code Playground</DropdownMenuItem>
@@ -171,36 +171,36 @@ const Header = memo(() => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-64 mt-2 p-1.5 bg-slate-900/90 border-white/10 backdrop-blur-xl shadow-2xl"
+                    className="w-64 mt-2 p-1.5 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
                   >
                     {/* User Info Header */}
-                    <div className="px-3 py-3 mb-1 border-b border-white/5">
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Account</p>
+                    <div className="px-3 py-3 mb-1 border-b border-border/10">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Account</p>
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10 ring-2 ring-primary/20">
                           <AvatarImage src={user?.avatar} />
                           <AvatarFallback className="bg-primary/10 text-primary font-bold">{user?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-white leading-tight">{user?.name}</span>
-                          <span className="text-[11px] text-slate-400 truncate max-w-[140px]">{user?.email}</span>
+                          <span className="text-sm font-bold text-foreground leading-tight">{user?.name}</span>
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">{user?.email}</span>
                         </div>
                       </div>
                     </div>
 
                     <DropdownMenuItem
                       onClick={() => navigate('/settings')}
-                      className="cursor-pointer font-medium px-3 py-2.5 rounded-md mb-0.5 text-slate-300 hover:text-white hover:bg-white/5 transition-all outline-none border-none focus:bg-white/5 focus:text-white"
+                      className="cursor-pointer font-medium px-3 py-2.5 rounded-md mb-0.5 text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-all outline-none border-none focus:bg-muted/50 focus:text-foreground"
                     >
-                      <Blocks className="w-4 h-4 mr-3 text-indigo-400" />
+                      <Blocks className="w-4 h-4 mr-3 text-indigo-500" />
                       Settings
                     </DropdownMenuItem>
 
-                    <DropdownMenuSeparator className="bg-white/5 my-1" />
+                    <DropdownMenuSeparator className="bg-border/50 my-1" />
 
                     <DropdownMenuItem
                       onClick={logout}
-                      className="cursor-pointer text-red-400 font-medium px-3 py-2.5 rounded-md hover:text-red-300 hover:bg-red-500/10 transition-all outline-none border-none focus:bg-red-500/10 focus:text-red-300"
+                      className="cursor-pointer text-red-500 font-medium px-3 py-2.5 rounded-md hover:text-red-600 hover:bg-red-500/10 transition-all outline-none border-none focus:bg-red-500/10 focus:text-red-600"
                     >
                       <LogOut className="w-4 h-4 mr-3" />
                       Sign Out
@@ -286,7 +286,7 @@ const Header = memo(() => {
                     More
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[280px] max-h-[80vh] overflow-y-auto bg-slate-900/95 border-white/10 backdrop-blur-xl shadow-2xl p-2">
+                <DropdownMenuContent align="end" className="w-[280px] max-h-[80vh] overflow-y-auto bg-background/95 border-border/50 backdrop-blur-xl shadow-2xl p-2">
                   {/* Languages Accordion */}
                   <DropdownMenuItem
                     onClick={(e) => {
