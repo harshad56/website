@@ -70,7 +70,47 @@ const SignIn = () => {
     }
   };
 
-  // ... (lines 71-112 skipped) ...
+  const backendAuthBase = useMemo(() => {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) return "";
+    return apiUrl.replace(/\/api\/?$/, "");
+  }, []);
+
+  const handleOAuthSignIn = (provider: "google" | "github") => {
+    if (!backendAuthBase) {
+      toast({
+        title: "Configuration missing",
+        description: "Backend URL is not configured. Please set VITE_API_URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const promptParam = provider === "google" ? "?prompt=select_account" : "";
+    window.location.href = `${backendAuthBase}/api/auth/${provider}${promptParam}`;
+  };
+
+  const benefits = [
+    {
+      icon: Shield,
+      title: "Enterprise-grade security",
+      description: "Encrypted sessions, MFA support, and OAuth providers.",
+    },
+    {
+      icon: Zap,
+      title: "Instant workspace access",
+      description: "Resume progress, sync devices, and pick up where you left off.",
+    },
+    {
+      icon: Award,
+      title: "Pro learning experience",
+      description: "Unlock pro paths, certifications, and AI copilots.",
+    },
+  ];
+
+  const socialProviders: { label: string; provider: "google" | "github" }[] = [
+    { label: "Continue with Google", provider: "google" },
+    { label: "Continue with GitHub", provider: "github" },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
