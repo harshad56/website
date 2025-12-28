@@ -37,14 +37,14 @@ const SignIn = () => {
         setIsSuccess(true);
         setTimeout(() => {
           navigate("/");
-        }, 1500);
+        }, 1000);
       } else {
         await signup(email, password, name || email.split("@")[0]);
         setSuccessMessage("Account created successfully! Welcome aboard.");
         setIsSuccess(true);
         setTimeout(() => {
           navigate("/");
-        }, 1500);
+        }, 1000);
         return;
       }
     } catch (error) {
@@ -115,30 +115,70 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Success Overlay */}
+      {/* Success Overlay - Premium Design */}
       <AnimatePresence>
         {isSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md"
+            className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
           >
-            <Card className="w-full max-w-md shadow-2xl border-2 border-green-500/50 bg-slate-900 text-center p-8">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", duration: 0.5 }}
-                className="flex flex-col items-center space-y-4"
-              >
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-2">
-                  <CheckCircle className="w-10 h-10 text-green-500" />
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="w-full max-w-sm"
+            >
+              <Card className="border-0 bg-transparent shadow-none">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/95 p-8 text-center border border-white/10 shadow-2xl backdrop-blur-xl ring-1 ring-white/20">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-green-500/10 via-emerald-500/10 to-teal-500/10" />
+
+                  <motion.div
+                    className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 ring-1 ring-green-500/50"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                  >
+                    <motion.div
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                    >
+                      <CheckCircle className="h-10 w-10 text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
+                    </motion.div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <h2 className="mb-2 text-3xl font-bold text-white tracking-tight">Success!</h2>
+                    <p className="text-base text-slate-300 font-medium leading-relaxed">
+                      {successMessage}
+                    </p>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="mt-6 flex justify-center gap-1"
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="h-2 w-2 rounded-full bg-green-500"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                      />
+                    ))}
+                  </motion.div>
                 </div>
-                <h2 className="text-3xl font-bold text-white">Success!</h2>
-                <p className="text-xl text-white/80">{successMessage}</p>
-                <p className="text-sm text-white/50 animate-pulse mt-4">Redirecting you to dashboard...</p>
-              </motion.div>
-            </Card>
+              </Card>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
