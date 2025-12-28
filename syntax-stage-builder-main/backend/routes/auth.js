@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { db } = require('../config/supabase');
+const { db, supabase } = require('../config/supabase');
 const { authRateLimiter } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 const passport = require('passport');
@@ -14,43 +14,43 @@ const router = express.Router();
 // Validation middleware
 const validateSignup = [
     body('name')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Name must be between 2 and 50 characters'),
+        .trim()
+        .isLength({ min: 2, max: 50 })
+        .withMessage('Name must be between 2 and 50 characters'),
     body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please enter a valid email'),
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Please enter a valid email'),
     body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
 ];
 
 const validateLogin = [
     body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please enter a valid email'),
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Please enter a valid email'),
     body('password')
-    .notEmpty()
-    .withMessage('Password is required')
+        .notEmpty()
+        .withMessage('Password is required')
 ];
 
 const validatePasswordReset = [
     body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please enter a valid email')
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Please enter a valid email')
 ];
 
 const validatePasswordUpdate = [
     body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
 ];
 
 // Helper function to handle validation errors
@@ -69,20 +69,20 @@ const handleValidationErrors = (req, res, next) => {
 // Helper function to generate JWT token
 const generateToken = (user) => {
     return jwt.sign({
-            id: user.id,
-            email: user.email,
-            role: user.role
-        },
+        id: user.id,
+        email: user.email,
+        role: user.role
+    },
         process.env.JWT_SECRET || 'your-secret-key', {
-            expiresIn: process.env.JWT_EXPIRE || '7d'
-        }
+        expiresIn: process.env.JWT_EXPIRE || '7d'
+    }
     );
 };
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
-router.post('/register', validateSignup, handleValidationErrors, authRateLimiter, async(req, res) => {
+router.post('/register', validateSignup, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -162,7 +162,7 @@ router.post('/register', validateSignup, handleValidationErrors, authRateLimiter
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', validateLogin, handleValidationErrors, authRateLimiter, async(req, res) => {
+router.post('/login', validateLogin, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -229,7 +229,7 @@ router.post('/login', validateLogin, handleValidationErrors, authRateLimiter, as
 // @route   POST /api/auth/verify-email
 // @desc    Verify email address
 // @access  Public
-router.post('/verify-email', async(req, res) => {
+router.post('/verify-email', async (req, res) => {
     try {
         const { token } = req.body;
 
@@ -241,7 +241,7 @@ router.post('/verify-email', async(req, res) => {
         }
 
         // Find user with verification token
-        const { data: users, error } = await db
+        const { data: users, error } = await supabase
             .from('users')
             .select('*')
             .eq('email_verification_token', token)
@@ -281,7 +281,7 @@ router.post('/verify-email', async(req, res) => {
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset email
 // @access  Public
-router.post('/forgot-password', validatePasswordReset, handleValidationErrors, authRateLimiter, async(req, res) => {
+router.post('/forgot-password', validatePasswordReset, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -332,7 +332,7 @@ router.post('/forgot-password', validatePasswordReset, handleValidationErrors, a
 // @route   POST /api/auth/reset-password
 // @desc    Reset password with token
 // @access  Public
-router.post('/reset-password', validatePasswordUpdate, handleValidationErrors, async(req, res) => {
+router.post('/reset-password', validatePasswordUpdate, handleValidationErrors, async (req, res) => {
     try {
         const { token, password } = req.body;
 
@@ -344,7 +344,7 @@ router.post('/reset-password', validatePasswordUpdate, handleValidationErrors, a
         }
 
         // Find user with reset token
-        const { data: users, error } = await db
+        const { data: users, error } = await supabase
             .from('users')
             .select('*')
             .eq('password_reset_token', token)
@@ -388,7 +388,7 @@ router.post('/reset-password', validatePasswordUpdate, handleValidationErrors, a
 // @route   POST /api/auth/resend-verification
 // @desc    Resend email verification
 // @access  Public
-router.post('/resend-verification', validatePasswordReset, handleValidationErrors, authRateLimiter, async(req, res) => {
+router.post('/resend-verification', validatePasswordReset, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
         const { email } = req.body;
 
