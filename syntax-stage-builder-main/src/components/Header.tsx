@@ -165,29 +165,14 @@ const Header = memo(() => {
                       </Avatar>
                       <div className="text-left hidden lg:block">
                         <div className="text-sm font-semibold leading-none mb-1 text-foreground">{user?.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-medium">
-                          {user?.progress?.currentStreak} day streak 🔥
-                        </div>
                       </div>
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 mt-2 p-2">
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer font-medium mb-1">
-                      <CircleUser className="w-4 h-4 mr-2 text-primary" />
-                      Dashboard
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer font-medium mb-1">
                       <Blocks className="w-4 h-4 mr-2 text-primary" />
                       Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={logout}
-                      className="text-destructive focus:text-destructive cursor-pointer font-medium bg-destructive/5"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
