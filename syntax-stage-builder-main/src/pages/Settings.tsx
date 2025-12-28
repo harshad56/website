@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User as UserIcon,
@@ -19,15 +19,28 @@ import {
   Settings as SettingsIcon,
   Save,
   LogOut,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  Lock
 } from "lucide-react";
 
 const Settings = () => {
-  const { user, isAuthenticated, logout, updatePreferences } = useAuth();
+  const { user, isAuthenticated, logout, updatePreferences, changePassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("profile");
+  const location = useLocation();
+
+  // Support deep linking to specific tabs (e.g. from header)
+  const defaultTab = (location.state as any)?.defaultTab || "profile";
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Password state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -47,7 +60,7 @@ const Settings = () => {
     notifications: user?.preferences?.notifications ?? true
   });
 
-  // Update local state when user context changes (e.g. after initial load)
+  // Update local state when user context changes
   useEffect(() => {
     if (user) {
       setFormData({
@@ -70,16 +83,15 @@ const Settings = () => {
     setPreferences(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePasswordChangeInput = (field: string, value: string) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Update preferences via context (which calls API/Local fallback)
       await updatePreferences(preferences);
-
-      // Simulate saving profile data (name/email) - separate from preferences
-      // In a real app we'd have an updateProfile method too
       await new Promise(resolve => setTimeout(resolve, 800));
-
       toast({
         title: "Settings saved",
         description: "Your preferences have been updated successfully.",
@@ -88,6 +100,44 @@ const Settings = () => {
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Passwords do not match",
+        description: "Please ensure your new password matches the confirmation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await changePassword(passwordData.currentPassword, passwordData.newPassword);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to change password",
         variant: "destructive",
       });
     } finally {
@@ -105,16 +155,23 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Header Section */}
+          {/* Header Section with Back Button */}
           <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-              <p className="text-slate-400">Manage your account preferences and learning settings.</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/dashboard')}
+                className="rounded-full bg-slate-900/50 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 shadow-lg"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+                <p className="text-slate-400">Manage your account preferences and learning settings.</p>
+              </div>
             </div>
-            <Button variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10" onClick={logout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            {/* Redundant Sign Out removed as requested */}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -147,6 +204,9 @@ const Settings = () => {
                 <TabsList className="bg-slate-900/50 border border-white/10 p-1 w-full flex justify-start overflow-x-auto">
                   <TabsTrigger value="profile" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                     <UserIcon className="w-4 h-4 mr-2" /> Profile
+                  </TabsTrigger>
+                  <TabsTrigger value="security" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                    <Lock className="w-4 h-4 mr-2" /> Security
                   </TabsTrigger>
                   <TabsTrigger value="notifications" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                     <Bell className="w-4 h-4 mr-2" /> Notifications
@@ -232,6 +292,62 @@ const Settings = () => {
                   </Card>
                 </TabsContent>
 
+                {/* Security Tab (Password Change) */}
+                <TabsContent value="security" className="space-y-6">
+                  <Card className="bg-slate-900/50 border-white/10 backdrop-blur-sm">
+                    <CardHeader>
+                      <CardTitle className="text-white">Security Settings</CardTitle>
+                      <CardDescription className="text-slate-400">Manage your password and account security.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300">Current Password</Label>
+                          <Input
+                            type="password"
+                            value={passwordData.currentPassword}
+                            onChange={(e) => handlePasswordChangeInput("currentPassword", e.target.value)}
+                            className="bg-slate-800/50 border-white/10 text-white focus:ring-indigo-500"
+                            placeholder="Enter current password"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">New Password</Label>
+                            <Input
+                              type="password"
+                              value={passwordData.newPassword}
+                              onChange={(e) => handlePasswordChangeInput("newPassword", e.target.value)}
+                              className="bg-slate-800/50 border-white/10 text-white focus:ring-indigo-500"
+                              placeholder="Min. 6 characters"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Confirm New Password</Label>
+                            <Input
+                              type="password"
+                              value={passwordData.confirmPassword}
+                              onChange={(e) => handlePasswordChangeInput("confirmPassword", e.target.value)}
+                              className="bg-slate-800/50 border-white/10 text-white focus:ring-indigo-500"
+                              placeholder="Re-enter new password"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-4 flex justify-end">
+                        <Button
+                          onClick={handlePasswordSubmit}
+                          disabled={isSaving || !passwordData.currentPassword || !passwordData.newPassword}
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white"
+                        >
+                          {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          Update Password
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
                 {/* Notifications Tab */}
                 <TabsContent value="notifications">
                   <Card className="bg-slate-900/50 border-white/10 backdrop-blur-sm">
@@ -260,7 +376,7 @@ const Settings = () => {
                   </Card>
                 </TabsContent>
 
-                {/* Privacy Tab - Placeholder for now as it wasn't focus of request but keeps UI consistent */}
+                {/* Privacy Tab */}
                 <TabsContent value="privacy">
                   <Card className="bg-slate-900/50 border-white/10 backdrop-blur-sm">
                     <CardHeader>
@@ -268,7 +384,7 @@ const Settings = () => {
                       <CardDescription className="text-slate-400">Control your public profile visibility.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="text-sm text-slate-400">
+                      <div className="text-sm text-slate-400 p-4 rounded-lg border border-dashed border-white/10 text-center">
                         Privacy controls coming soon. Your data is currently secure and private by default.
                       </div>
                     </CardContent>

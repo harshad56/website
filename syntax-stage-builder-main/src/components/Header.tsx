@@ -174,6 +174,10 @@ const Header = memo(() => {
                       <Blocks className="w-4 h-4 mr-2 text-primary" />
                       Settings
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings', { state: { defaultTab: 'security' } })} className="cursor-pointer font-medium mb-1">
+                      <Lock className="w-4 h-4 mr-2 text-primary" />
+                      Change Password
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
