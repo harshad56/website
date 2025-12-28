@@ -4,10 +4,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { apiService } from "@/services/ApiService";
-
-import { CheckCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -17,28 +15,22 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setError(null);
 
     if (!token) {
-      toast({
-        title: "Invalid link",
-        description: "The reset link is missing or invalid.",
-        variant: "destructive",
-      });
+      setError("The reset link is missing or invalid.");
       return;
     }
 
     if (password !== confirmPassword) {
-      toast({
-        title: "Passwords do not match",
-        description: "Please make sure both password fields match.",
-        variant: "destructive",
-      });
+      setError("Passwords do not match. Please make sure both password fields match.");
       return;
     }
 
@@ -55,10 +47,11 @@ const ResetPassword = () => {
         className: "bg-green-600 text-white border-none"
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "We couldn't reset your password. Try again.";
+      setError(errorMessage);
       toast({
         title: "Reset failed",
-        description:
-          error instanceof Error ? error.message : "We couldn't reset your password. Try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -101,6 +94,13 @@ const ResetPassword = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="password">New password</Label>
               <Input

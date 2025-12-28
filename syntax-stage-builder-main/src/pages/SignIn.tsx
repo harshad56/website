@@ -21,7 +21,8 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -31,21 +32,22 @@ const SignIn = () => {
     try {
       if (mode === "login") {
         await login(email, password);
-        toast({
-          title: "Welcome back!",
-          description: "You are now signed in to CodeAcademy Pro.",
-        });
+        setSuccessMessage("Welcome back! You are now signed in.");
+        setIsSuccess(true);
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
       } else {
         await signup(email, password, name || email.split("@")[0]);
-        toast({
-          title: "Account created!",
-          description: "Welcome to CodeAcademy Pro! Explore our courses and start learning.",
-        });
-        navigate("/");
+        setSuccessMessage("Account created successfully! Welcome aboard.");
+        setIsSuccess(true);
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
         return;
       }
-      navigate("/");
     } catch (error) {
+      // ... existing error handling ...
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : "Something went wrong";
       let friendlyMessage = errorMessage;
@@ -68,50 +70,38 @@ const SignIn = () => {
     }
   };
 
-  const backendAuthBase = useMemo(() => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (!apiUrl) return "";
-    return apiUrl.replace(/\/api\/?$/, "");
-  }, []);
-
-  const handleOAuthSignIn = (provider: "google" | "github") => {
-    if (!backendAuthBase) {
-      toast({
-        title: "Configuration missing",
-        description: "Backend URL is not configured. Please set VITE_API_URL.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const promptParam = provider === "google" ? "?prompt=select_account" : "";
-    window.location.href = `${backendAuthBase}/api/auth/${provider}${promptParam}`;
-  };
-
-  const benefits = [
-    {
-      icon: Shield,
-      title: "Enterprise-grade security",
-      description: "Encrypted sessions, MFA support, and OAuth providers.",
-    },
-    {
-      icon: Zap,
-      title: "Instant workspace access",
-      description: "Resume progress, sync devices, and pick up where you left off.",
-    },
-    {
-      icon: Award,
-      title: "Pro learning experience",
-      description: "Unlock pro paths, certifications, and AI copilots.",
-    },
-  ];
-
-  const socialProviders: { label: string; provider: "google" | "github" }[] = [
-    { label: "Continue with Google", provider: "google" },
-    { label: "Continue with GitHub", provider: "github" },
-  ];
+  // ... (lines 71-112 skipped) ...
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+      {/* Success Overlay */}
+      <AnimatePresence>
+        {isSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md"
+          >
+            <Card className="w-full max-w-md shadow-2xl border-2 border-green-500/50 bg-slate-900 text-center p-8">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", duration: 0.5 }}
+                className="flex flex-col items-center space-y-4"
+              >
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-2">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-white">Success!</h2>
+                <p className="text-xl text-white/80">{successMessage}</p>
+                <p className="text-sm text-white/50 animate-pulse mt-4">Redirecting you to dashboard...</p>
+              </motion.div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Enhanced Animated Background - Reduced Brightness */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Static gradient mesh - No animation for better performance */}
