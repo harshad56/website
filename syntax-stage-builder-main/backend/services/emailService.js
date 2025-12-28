@@ -3,15 +3,10 @@ const winston = require('winston');
 
 // Create transporter
 const createTransporter = () => {
-    const port = Number(process.env.EMAIL_PORT) || 587;
-    const isSecure = port === 465; // true for 465, false for other ports
-
-    winston.info(`Creating email transporter: ${process.env.EMAIL_HOST}:${port} (secure: ${isSecure})`);
+    winston.info(`Creating email transporter using service: 'gmail'`);
 
     return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: port,
-        secure: isSecure,
+        service: 'gmail',
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
