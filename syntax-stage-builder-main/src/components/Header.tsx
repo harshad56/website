@@ -228,11 +228,9 @@ const Header = memo(() => {
               </>
             )}
           </div>
-        </nav>
 
-        {/* Mobile Actions - Text Navigation */}
-        <nav className="md:hidden mt-3">
-          <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar mask-gradient-right">
+          {/* Mobile Actions - Text Navigation */}
+          <div className="md:hidden flex items-center gap-1 w-full overflow-x-auto no-scrollbar mask-gradient-right">
             <div className="flex items-center gap-1 flex-nowrap pr-2">
               <Button
                 variant="ghost"
@@ -274,52 +272,10 @@ const Header = memo(() => {
 
               {isAuthenticated && (
                 <div className="mr-1 ml-1 flex-shrink-0">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center outline-none">
-                        <Avatar className="w-8 h-8 border-2 border-primary/20 hover:border-primary/50 transition-colors">
-                          <AvatarImage src={user?.avatar} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-64 mt-2 p-1.5 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
-                    >
-                      {/* User Info Header */}
-                      <div className="px-3 py-2.5 mb-1 border-b border-border/10">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10 ring-2 ring-primary/20">
-                            <AvatarImage src={user?.avatar} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold">{user?.name?.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-bold text-foreground leading-tight">{user?.name}</span>
-                            <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">{user?.email}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <DropdownMenuItem
-                        onClick={() => navigate('/settings')}
-                        className="cursor-pointer font-medium px-3 py-2.5 rounded-md mb-0.5 text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-all outline-none border-none focus:bg-muted/50 focus:text-foreground"
-                      >
-                        <Blocks className="w-4 h-4 mr-3 text-indigo-500" />
-                        Settings
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator className="bg-border/50 my-1" />
-
-                      <DropdownMenuItem
-                        onClick={logout}
-                        className="cursor-pointer text-red-500 font-medium px-3 py-2.5 rounded-md hover:text-red-600 hover:bg-red-500/10 transition-all outline-none border-none focus:bg-red-500/10 focus:text-red-600"
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Avatar className="w-8 h-8 border-2 border-primary/20">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
                 </div>
               )}
 
