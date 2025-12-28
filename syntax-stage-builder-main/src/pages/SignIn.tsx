@@ -23,6 +23,7 @@ const SignIn = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
