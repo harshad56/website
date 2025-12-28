@@ -161,7 +161,7 @@ const Settings = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
                 className="rounded-full bg-slate-900/50 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 shadow-lg"
               >
                 <ChevronLeft className="w-5 h-5" />
