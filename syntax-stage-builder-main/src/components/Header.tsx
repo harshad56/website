@@ -174,8 +174,7 @@ const Header = memo(() => {
                     className="w-64 mt-2 p-1.5 bg-background/80 border-border/50 backdrop-blur-xl shadow-2xl"
                   >
                     {/* User Info Header */}
-                    <div className="px-3 py-3 mb-1 border-b border-border/10">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Account</p>
+                    <div className="px-3 py-2.5 mb-1 border-b border-border/10">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10 ring-2 ring-primary/20">
                           <AvatarImage src={user?.avatar} />
