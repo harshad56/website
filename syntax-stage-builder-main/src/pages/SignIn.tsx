@@ -37,14 +37,14 @@ const SignIn = () => {
         setIsSuccess(true);
         setTimeout(() => {
           navigate("/");
-        }, 100);
+        }, 500);
       } else {
         await signup(email, password, name || email.split("@")[0]);
         setSuccessMessage("You're in! Let's build something amazing.");
         setIsSuccess(true);
         setTimeout(() => {
           navigate("/");
-        }, 100);
+        }, 500);
         return;
       }
     } catch (error) {
