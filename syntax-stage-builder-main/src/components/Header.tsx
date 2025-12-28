@@ -48,7 +48,7 @@ const Header = memo(() => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[60] bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-sm">
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-6 pt-4 pb-3 md:pb-4">
         <nav className="flex items-center gap-3 lg:gap-6">
           {/* Logo */}
           <div
@@ -272,10 +272,53 @@ const Header = memo(() => {
 
               {isAuthenticated && (
                 <div className="mr-1 ml-1 flex-shrink-0">
-                  <Avatar className="w-8 h-8 border-2 border-primary/20">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="cursor-pointer active:scale-95 transition-transform">
+                        <Avatar className="w-8 h-8 border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                          <AvatarImage src={user?.avatar} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      sideOffset={8}
+                      className="w-64 p-1.5 bg-background/90 border-border/50 backdrop-blur-xl shadow-2xl animate-in zoom-in-95 duration-200"
+                    >
+                      {/* User Info Header */}
+                      <div className="px-3 py-2.5 mb-1 border-b border-border/10">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10 ring-2 ring-primary/20">
+                            <AvatarImage src={user?.avatar} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-bold">{user?.name?.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-foreground leading-tight">{user?.name}</span>
+                            <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">{user?.email}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <DropdownMenuItem
+                        onClick={() => navigate('/settings')}
+                        className="cursor-pointer font-medium px-3 py-2.5 rounded-md mb-0.5 text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-all outline-none border-none focus:bg-muted/50 focus:text-foreground"
+                      >
+                        <Blocks className="w-4 h-4 mr-3 text-indigo-500" />
+                        Settings
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator className="bg-border/50 my-1" />
+
+                      <DropdownMenuItem
+                        onClick={logout}
+                        className="cursor-pointer text-red-500 font-medium px-3 py-2.5 rounded-md hover:text-red-600 hover:bg-red-500/10 transition-all outline-none border-none focus:bg-red-500/10 focus:text-red-600"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
 
@@ -385,6 +428,11 @@ const Header = memo(() => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </div>
+
+          {/* Mobile Search - Dedicated Row */}
+          <div className="md:hidden mt-3 max-w-full">
+            <SearchBox className="w-full h-10" />
           </div>
         </nav>
       </div>
