@@ -174,22 +174,13 @@ const Header = memo(() => {
                       <Blocks className="w-4 h-4 mr-2 text-primary" />
                       Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/settings', { state: { defaultTab: 'security' } })} className="cursor-pointer font-medium mb-1">
-                      <Lock className="w-4 h-4 mr-2 text-primary" />
-                      Change Password
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive font-medium">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  className="hidden xl:flex items-center gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
-                </Button>
               </div>
             ) : (
               <>
