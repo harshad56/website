@@ -28,7 +28,7 @@ router.post('/', [
     }
 
     const { name, email, subject, message, department } = req.body;
-    const supportEmail = process.env.EMAIL_SUPPORT_ADDRESS || 'codeacademypro7@gmail.com'; // Fallback or env var
+    const supportEmail = process.env.EMAIL_SUPPORT_ADDRESS || 'codeacademy722@gmail.com'; // Fallback support email
 
     try {
         // 1. Send email to support team
@@ -51,7 +51,8 @@ router.post('/', [
             to: supportEmail,
             subject: `[Contact Form] ${subject}`,
             html: emailContent,
-            text: `Name: ${name}\nEmail: ${email}\nDepartment: ${department}\nSubject: ${subject}\n\nMessage:\n${message}`
+            text: `Name: ${name}\nEmail: ${email}\nDepartment: ${department}\nSubject: ${subject}\n\nMessage:\n${message}`,
+            replyTo: email // Allow replying directly to the user
         });
 
         // 2. (Optional) Send acknowledgement to user
