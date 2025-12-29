@@ -277,37 +277,38 @@ const LearningPathsPage = () => {
   const currentPath = learningPaths.find(path => path.id === selectedPath);
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden text-slate-100 selection:bg-primary/30">
       <SEO
         title="Learning Paths | CodeAcademy Pro"
         description="Structured learning paths for Web Development, Data Science, Mobile Apps, and more. Launch your tech career today."
       />
 
-      {/* Ambient Background Elements */}
+      {/* Dynamic Background Elements */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] opacity-50" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[100px] opacity-50" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] opacity-30 mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-500/20 rounded-full blur-[100px] opacity-30 mix-blend-screen animate-pulse" style={{ animationDuration: '7s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-indigo-500/10 rounded-full blur-[150px] opacity-20" />
       </div>
 
       {/* Header Section */}
-      <div className="relative z-10 pt-6">
-        <div className="container mx-auto px-6">
-          <BackButton label="Back to Home" />
+      <div className="relative z-10 pt-8 pb-12">
+        <div className="container mx-auto px-6 mb-8">
+          <BackButton className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md shadow-lg" label="Back to Home" />
         </div>
 
-        <div className="container mx-auto px-6 py-12 md:py-20 text-center">
+        <div className="container mx-auto px-6 py-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Badge variant="outline" className="mb-4 px-4 py-1 border-primary/20 bg-primary/5 text-primary">
+            <Badge variant="outline" className="mb-6 px-4 py-1.5 border-primary/40 bg-primary/10 text-primary-400 backdrop-blur-md">
               Career Focused Curriculum
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
-              Choose Your <span className="text-primary">Learning Path</span>
+            <h1 className="text-4xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-sm">
+              Choose Your <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">Learning Path</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
               Step-by-step guides helping you go from beginner to professional.
               Select a path to see the detailed curriculum, projects, and career outcomes.
             </p>
@@ -320,7 +321,7 @@ const LearningPathsPage = () => {
 
           {/* Sidebar - Path Selection */}
           <div className="lg:col-span-4 space-y-4">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white">
               <Layers className="w-5 h-5 text-primary" />
               Available Paths
             </h2>
@@ -332,24 +333,29 @@ const LearningPathsPage = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Card
-                    className={`cursor-pointer transition-all duration-300 border-0 ${selectedPath === path.id
-                        ? `bg-gradient-to-r ${path.color} text-white shadow-lg shadow-${path.accent ? path.accent.split('-')[1] : 'primary'}/20`
-                        : "bg-card/50 hover:bg-card border border-border/50 hover:border-primary/20"
+                    className={`cursor-pointer transition-all duration-300 border-0 overflow-hidden relative ${selectedPath === path.id
+                        ? `bg-gradient-to-r ${path.color} text-white shadow-lg`
+                        : "bg-slate-900/50 hover:bg-slate-800/80 border border-white/5 hover:border-white/10"
                       }`}
                     onClick={() => setSelectedPath(path.id)}
                   >
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${selectedPath === path.id ? 'bg-white/20' : path.bg} ${selectedPath === path.id ? 'text-white' : path.accent}`}>
+                    {/* Glass sheen effect for selected */}
+                    {selectedPath === path.id && (
+                      <div className="absolute inset-0 bg-white/10" />
+                    )}
+
+                    <CardContent className="p-4 flex items-center gap-4 relative z-10">
+                      <div className={`p-2 rounded-lg ${selectedPath === path.id ? 'bg-white/20 text-white' : `${path.bg} ${path.accent}`}`}>
                         {path.icon}
                       </div>
                       <div className="flex-1">
-                        <h3 className={`font-bold ${selectedPath === path.id ? 'text-white' : ''}`}>{path.title}</h3>
-                        <p className={`text-xs ${selectedPath === path.id ? 'text-white/80' : 'text-muted-foreground'}`}>
+                        <h3 className={`font-bold ${selectedPath === path.id ? 'text-white' : 'text-slate-200'}`}>{path.title}</h3>
+                        <p className={`text-xs ${selectedPath === path.id ? 'text-white/90' : 'text-slate-400'}`}>
                           {path.duration} • {path.difficulty}
                         </p>
                       </div>
                       {selectedPath === path.id && (
-                        <motion.div layoutId="activePath" className="bg-white/20 p-1 rounded-full">
+                        <motion.div layoutId="activePath" className="bg-white/20 p-1.5 rounded-full">
                           <ArrowRight className="w-4 h-4" />
                         </motion.div>
                       )}
@@ -374,40 +380,40 @@ const LearningPathsPage = () => {
                 >
                   {/* Path Overview Header */}
                   <motion.div variants={itemVariants}>
-                    <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-background border-t border-white/10 overflow-hidden relative">
-                      <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${currentPath.color} opacity-10 rounded-full blur-3xl -mr-32 -mt-32`} />
+                    <Card className="border-0 shadow-2xl bg-slate-900/80 border-t border-white/10 overflow-hidden relative backdrop-blur-xl">
+                      <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-br ${currentPath.color} opacity-20 rounded-full blur-3xl -mr-32 -mt-32`} />
 
                       <CardContent className="p-8">
-                        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8 relative z-10">
-                          <div className={`p-4 rounded-2xl bg-gradient-to-br ${currentPath.color} text-white shadow-lg`}>
+                        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-10 relative z-10">
+                          <div className={`p-5 rounded-2xl bg-gradient-to-br ${currentPath.color} text-white shadow-2xl shadow-primary/20`}>
                             {currentPath.icon}
                           </div>
                           <div className="flex-1">
-                            <h2 className="text-3xl font-bold mb-2">{currentPath.title}</h2>
-                            <p className="text-muted-foreground text-lg">{currentPath.description}</p>
+                            <h2 className="text-3xl md:text-4xl font-bold mb-3 text-white">{currentPath.title}</h2>
+                            <p className="text-slate-300 text-lg leading-relaxed">{currentPath.description}</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                          <div className="p-4 rounded-xl bg-background/50 border border-border/50 backdrop-blur-sm">
-                            <Clock className={`w-5 h-5 mb-2 ${currentPath.accent}`} />
-                            <div className="text-2xl font-bold">{currentPath.duration}</div>
-                            <div className="text-xs text-muted-foreground">Duration</div>
+                          <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm">
+                            <Clock className={`w-6 h-6 mb-3 ${currentPath.accent}`} />
+                            <div className="text-2xl font-bold text-white">{currentPath.duration}</div>
+                            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Duration</div>
                           </div>
-                          <div className="p-4 rounded-xl bg-background/50 border border-border/50 backdrop-blur-sm">
-                            <BookOpen className={`w-5 h-5 mb-2 ${currentPath.accent}`} />
-                            <div className="text-2xl font-bold">{currentPath.modules.length}</div>
-                            <div className="text-xs text-muted-foreground">Modules</div>
+                          <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm">
+                            <BookOpen className={`w-6 h-6 mb-3 ${currentPath.accent}`} />
+                            <div className="text-2xl font-bold text-white">{currentPath.modules.length}</div>
+                            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Modules</div>
                           </div>
-                          <div className="p-4 rounded-xl bg-background/50 border border-border/50 backdrop-blur-sm">
-                            <Briefcase className={`w-5 h-5 mb-2 ${currentPath.accent}`} />
-                            <div className="text-2xl font-bold">{currentPath.jobs.length}</div>
-                            <div className="text-xs text-muted-foreground">Careers</div>
+                          <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm">
+                            <Briefcase className={`w-6 h-6 mb-3 ${currentPath.accent}`} />
+                            <div className="text-2xl font-bold text-white">{currentPath.jobs.length}</div>
+                            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Careers</div>
                           </div>
-                          <div className="p-4 rounded-xl bg-background/50 border border-border/50 backdrop-blur-sm">
-                            <DollarSign className={`w-5 h-5 mb-2 ${currentPath.accent}`} />
-                            <div className="text-lg font-bold truncate">{currentPath.salary}</div>
-                            <div className="text-xs text-muted-foreground">Est. Salary</div>
+                          <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors backdrop-blur-sm">
+                            <DollarSign className={`w-6 h-6 mb-3 ${currentPath.accent}`} />
+                            <div className="text-xl font-bold text-white truncate">{currentPath.salary}</div>
+                            <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Est. Salary</div>
                           </div>
                         </div>
                       </CardContent>
@@ -417,22 +423,22 @@ const LearningPathsPage = () => {
                   {/* Tabs Section */}
                   <motion.div variants={itemVariants}>
                     <Tabs defaultValue="curriculum" className="w-full">
-                      <TabsList className="w-full justify-start bg-transparent p-0 border-b border-border/50 rounded-none h-auto mb-6 gap-6">
+                      <TabsList className="w-full justify-start bg-transparent p-0 border-b border-white/10 rounded-none h-auto mb-8 gap-8">
                         <TabsTrigger
                           value="curriculum"
-                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 text-base font-medium text-muted-foreground data-[state=active]:text-foreground transition-all"
+                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-4 text-base font-medium text-slate-500 data-[state=active]:text-white transition-all hover:text-slate-300"
                         >
                           Curriculum & Modules
                         </TabsTrigger>
                         <TabsTrigger
                           value="projects"
-                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 text-base font-medium text-muted-foreground data-[state=active]:text-foreground transition-all"
+                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-4 text-base font-medium text-slate-500 data-[state=active]:text-white transition-all hover:text-slate-300"
                         >
                           Real-world Projects
                         </TabsTrigger>
                         <TabsTrigger
                           value="careers"
-                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-3 text-base font-medium text-muted-foreground data-[state=active]:text-foreground transition-all"
+                          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 py-4 text-base font-medium text-slate-500 data-[state=active]:text-white transition-all hover:text-slate-300"
                         >
                           Career Outcomes
                         </TabsTrigger>
@@ -446,50 +452,50 @@ const LearningPathsPage = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                           >
-                            <Card className="group hover:border-primary/30 transition-all duration-300">
+                            <Card className="group hover:border-primary/50 transition-all duration-300 bg-slate-900/40 border-white/5 backdrop-blur-sm">
                               <CardContent className="p-0">
-                                <div className="p-6">
-                                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
-                                    <div className="flex items-center gap-4">
-                                      <div className={`w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center font-bold text-secondary-foreground`}>
+                                <div className="p-6 md:p-8">
+                                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                                    <div className="flex items-center gap-5">
+                                      <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center font-bold text-lg text-white group-hover:bg-primary/20 group-hover:text-primary transition-colors`}>
                                         {index + 1}
                                       </div>
                                       <div>
-                                        <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{module.title}</h3>
-                                        <p className="text-sm text-muted-foreground">{module.duration}</p>
+                                        <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors">{module.title}</h3>
+                                        <p className="text-sm text-slate-400">{module.duration}</p>
                                       </div>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       {module.skills.map((skill, i) => (
-                                        <Badge key={i} variant="secondary" className="text-xs bg-secondary/10">
+                                        <Badge key={i} variant="secondary" className="bg-white/5 hover:bg-white/10 text-slate-300 border-0">
                                           {skill}
                                         </Badge>
                                       ))}
                                     </div>
                                   </div>
 
-                                  <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-border/50">
+                                  <div className="grid md:grid-cols-2 gap-8 mt-6 pt-6 border-t border-white/5">
                                     <div>
-                                      <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
                                         <BookOpen className="w-4 h-4" /> Topics
                                       </h4>
-                                      <ul className="grid gap-2">
+                                      <ul className="grid gap-3">
                                         {module.topics.map((topic, i) => (
-                                          <li key={i} className="flex items-start gap-2 text-sm">
-                                            <div className="mt-1.5 w-1 h-1 rounded-full bg-primary" />
+                                          <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
+                                            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
                                             {topic}
                                           </li>
                                         ))}
                                       </ul>
                                     </div>
                                     <div>
-                                      <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
                                         <Terminal className="w-4 h-4" /> Projects
                                       </h4>
-                                      <ul className="grid gap-2">
+                                      <ul className="grid gap-3">
                                         {module.projects.map((project, i) => (
-                                          <li key={i} className="flex items-start gap-2 text-sm">
-                                            <div className="mt-1.5 w-1 h-1 rounded-full bg-secondary-foreground" />
+                                          <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
+                                            <div className="mt-1.5 w-1.5 h-1.5 rounded-full text-white bg-purple-500" />
                                             {project}
                                           </li>
                                         ))}
@@ -507,27 +513,27 @@ const LearningPathsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {currentPath.modules.flatMap((module, mIndex) =>
                             module.projects.map((project, pIndex) => (
-                              <Card key={`${mIndex}-${pIndex}`} className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 bg-gradient-to-br from-card to-background">
-                                <CardHeader className="border-b border-border/50 bg-muted/20 p-4">
+                              <Card key={`${mIndex}-${pIndex}`} className="overflow-hidden group hover:shadow-2xl transition-all duration-300 border-white/5 bg-slate-900/60 backdrop-blur-sm">
+                                <CardHeader className="border-b border-white/5 bg-white/5 p-5">
                                   <div className="flex justify-between items-center">
-                                    <Badge variant="outline" className="bg-background">Module {mIndex + 1}</Badge>
+                                    <Badge variant="outline" className="bg-transparent border-white/20 text-slate-300">Module {mIndex + 1}</Badge>
                                     <Code className={`w-5 h-5 ${currentPath.accent}`} />
                                   </div>
-                                  <CardTitle className="mt-2">{project}</CardTitle>
+                                  <CardTitle className="mt-3 text-white text-xl">{project}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                   <div className="space-y-4">
-                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-3 text-sm text-slate-400">
                                       <Layout className="w-4 h-4" />
                                       <span>Full-featured implementation</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-3 text-sm text-slate-400">
                                       <Star className="w-4 h-4" />
                                       <span>Portfolio-ready asset</span>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 mt-4">
+                                    <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/5">
                                       {module.skills.slice(0, 3).map((skill, i) => (
-                                        <span key={i} className="text-xs px-2 py-1 bg-primary/5 text-primary rounded-md">
+                                        <span key={i} className="text-xs px-2.5 py-1 bg-primary/10 text-primary-300 rounded-md border border-primary/20">
                                           {skill}
                                         </span>
                                       ))}
@@ -541,50 +547,60 @@ const LearningPathsPage = () => {
                       </TabsContent>
 
                       <TabsContent value="careers">
-                        <Card className="bg-gradient-to-br from-card to-background border-border/50">
-                          <CardContent className="p-8">
+                        <Card className="bg-slate-900/60 border-white/5 backdrop-blur-sm">
+                          <CardContent className="p-8 md:p-10">
                             <div className="grid md:grid-cols-2 gap-12">
                               <div>
-                                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                                  <Target className={`w-6 h-6 ${currentPath.accent}`} />
+                                <h3 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
+                                  <Target className={`w-7 h-7 ${currentPath.accent}`} />
                                   Target Roles
                                 </h3>
                                 <div className="space-y-4">
                                   {currentPath.jobs.map((job, index) => (
-                                    <div key={index} className="flex items-center gap-4 p-4 rounded-xl bg-background border border-border/50 hover:border-primary/30 transition-all">
-                                      <div className={`p-2 rounded-full bg-primary/10 ${currentPath.accent}`}>
+                                    <div key={index} className="flex items-center gap-4 p-5 rounded-xl bg-white/5 border border-white/5 hover:border-primary/40 hover:bg-white/10 transition-all cursor-default">
+                                      <div className={`p-2 rounded-full bg-primary/20 ${currentPath.accent}`}>
                                         <CheckCircle className="w-5 h-5" />
                                       </div>
-                                      <span className="font-semibold text-lg">{job}</span>
+                                      <span className="font-semibold text-lg text-slate-200">{job}</span>
                                     </div>
                                   ))}
                                 </div>
                               </div>
 
                               <div>
-                                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                                  <TrendingUp className={`w-6 h-6 ${currentPath.accent}`} />
+                                <h3 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
+                                  <TrendingUp className={`w-7 h-7 ${currentPath.accent}`} />
                                   Salary Insights
                                 </h3>
-                                <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 mb-6">
-                                  <div className="text-sm text-muted-foreground uppercase tracking-wider mb-2">Estimated Annual Salary</div>
-                                  <div className="text-4xl font-bold text-foreground">{currentPath.salary}</div>
-                                  <div className="mt-2 text-sm text-muted-foreground">Based on industry standards for entry to mid-level positions.</div>
+                                <div className="p-8 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 mb-8 relative overflow-hidden">
+                                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full" />
+                                  <div className="text-sm text-primary-300 uppercase tracking-widest font-semibold mb-3">Estimated Annual Salary</div>
+                                  <div className="text-5xl font-bold text-white mb-2">{currentPath.salary}</div>
+                                  <div className="text-sm text-slate-400">Based on industry standards for entry to mid-level positions.</div>
                                 </div>
-                                <div className="space-y-4">
-                                  <h4 className="font-semibold mb-2">Why this path?</h4>
-                                  <ul className="space-y-2 text-muted-foreground">
-                                    <li className="flex gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                                      High demand in the current job market
+                                <div className="space-y-6">
+                                  <h4 className="font-semibold text-white text-lg">Why this path?</h4>
+                                  <ul className="space-y-4 text-slate-300">
+                                    <li className="flex gap-4 items-start">
+                                      <div className="w-2 h-2 rounded-full bg-primary mt-2.5 shrink-0" />
+                                      <div>
+                                        <span className="font-medium text-white block mb-0.5">High Demand</span>
+                                        Consistently growing need in the tech job market.
+                                      </div>
                                     </li>
-                                    <li className="flex gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                                      Excellent remote work opportunities
+                                    <li className="flex gap-4 items-start">
+                                      <div className="w-2 h-2 rounded-full bg-primary mt-2.5 shrink-0" />
+                                      <div>
+                                        <span className="font-medium text-white block mb-0.5">Remote Opportunities</span>
+                                        Excellent flexibility for working from anywhere.
+                                      </div>
                                     </li>
-                                    <li className="flex gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                                      Strong career growth potential
+                                    <li className="flex gap-4 items-start">
+                                      <div className="w-2 h-2 rounded-full bg-primary mt-2.5 shrink-0" />
+                                      <div>
+                                        <span className="font-medium text-white block mb-0.5">Growth Potential</span>
+                                        Clear path to senior and leadership roles.
+                                      </div>
                                     </li>
                                   </ul>
                                 </div>
@@ -598,17 +614,19 @@ const LearningPathsPage = () => {
 
                   {/* CTA Section */}
                   <motion.div variants={itemVariants}>
-                    <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-8 md:p-12 text-center border border-primary/10 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
-                      <h2 className="text-3xl font-bold mb-4 relative z-10">Ready to Start Your Journey?</h2>
-                      <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto relative z-10">
+                    <div className="rounded-3xl bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-10 md:p-16 text-center border border-primary/20 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+                      <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] -ml-48 -mb-48 pointer-events-none" />
+
+                      <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white leading-tight">Ready to Start Your Journey?</h2>
+                      <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto relative z-10 leading-relaxed">
                         Join thousands of learners who have transformed their careers. Get verified certificates, portfolio projects, and mentorship.
                       </p>
-                      <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-                        <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 h-14 shadow-lg shadow-primary/20">
+                      <div className="flex flex-col sm:flex-row justify-center gap-6 relative z-10">
+                        <Button size="lg" className="bg-primary hover:bg-primary/90 text-white text-lg px-10 h-16 shadow-xl shadow-primary/25 rounded-xl transition-all hover:scale-105">
                           Start {currentPath.title} Path
                         </Button>
-                        <Button size="lg" variant="outline" className="text-lg px-8 h-14 bg-background/50 backdrop-blur-sm">
+                        <Button size="lg" variant="outline" className="text-lg px-10 h-16 bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm rounded-xl transition-all">
                           View Syllabus PDF
                         </Button>
                       </div>
