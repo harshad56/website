@@ -25,13 +25,22 @@ import {
 
 const Contact = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    department: string;
+    agreeToTerms: boolean;
+    attachment: File | null;
+  }>({
     name: "",
     email: "",
     subject: "",
     message: "",
     department: "",
-    agreeToTerms: false
+    agreeToTerms: false,
+    attachment: null
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -74,12 +83,22 @@ const Contact = () => {
 
     try {
       const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
+
+      // Create FormData object
+      const submitData = new FormData();
+      submitData.append('name', formData.name);
+      submitData.append('email', formData.email);
+      submitData.append('subject', formData.subject);
+      submitData.append('message', formData.message);
+      submitData.append('department', formData.department);
+      if (formData.attachment) {
+        submitData.append('attachment', formData.attachment);
+      }
+
       const response = await fetch(`${baseUrl}/api/contact`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        // Content-Type header must NOT be set manually when using FormData; browser sets it with boundary
+        body: submitData,
       });
 
       const data = await response.json();
@@ -93,7 +112,7 @@ const Contact = () => {
 
       toast({
         title: "Message sent successfully! 🎉",
-        description: `Thank you ${formData.name}! We'll get back to you at ${formData.email} soon.`,
+        description: `Thank you ${formData.name}! We'll get back to you immediately.`,
       });
 
       setIsSubmitted(true);
@@ -105,7 +124,8 @@ const Contact = () => {
         subject: "",
         message: "",
         department: "",
-        agreeToTerms: false
+        agreeToTerms: false,
+        attachment: null
       });
 
       setTimeout(() => setIsSubmitted(false), 5000);
@@ -120,7 +140,7 @@ const Contact = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | File | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -316,6 +336,32 @@ const Contact = () => {
                       />
                     </div>
 
+                    <div>
+                      <Label htmlFor="attachment">Attachment (Optional)</Label>
+                      <Input
+                        id="attachment"
+                        type="file"
+                        className="cursor-pointer"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file && file.size > 5 * 1024 * 1024) {
+                            toast({
+                              title: "File too large",
+                              description: "Please select a file smaller than 5MB",
+                              variant: "destructive",
+                            });
+                            e.target.value = ""; // Reset input
+                            return;
+                          }
+                          handleInputChange("attachment", file);
+                        }}
+                        accept="image/*,application/pdf"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Supported formats: Images, PDF (Max 5MB)
+                      </p>
+                    </div>
+
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="terms"
@@ -330,9 +376,9 @@ const Contact = () => {
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      disabled={!formData.agreeToTerms}
+                      disabled={!formData.agreeToTerms || isSubmitting}
                     >
-                      Send Message
+                      {isSubmitting ? "Sending..." : "Send Message"}
                       <Send className="w-4 h-4 ml-2" />
                     </Button>
                   </form>
@@ -472,21 +518,13 @@ const Contact = () => {
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Join thousands of students who have transformed their careers with CodeAcademy Pro
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="bg-white text-blue-600 hover:bg-gray-100"
-            >
-              Start Free Trial
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600"
-            >
-              Browse Courses
-            </Button>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-lg font-medium opacity-90">
+              Empowering the next generation of developers.
+            </p>
+            <p className="text-sm opacity-75 max-w-lg mx-auto">
+              CodeAcademy Pro provides world-class coding education with hands-on practice and expert mentorship.
+            </p>
           </div>
         </div>
       </div>
