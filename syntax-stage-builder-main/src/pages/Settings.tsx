@@ -255,11 +255,11 @@ const Settings = () => {
                               <SelectTrigger className="bg-slate-800/50 border-white/10 text-white">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-slate-900 border-white/10">
-                                <SelectItem value="python">Python</SelectItem>
-                                <SelectItem value="javascript">JavaScript</SelectItem>
-                                <SelectItem value="java">Java</SelectItem>
-                                <SelectItem value="cpp">C++</SelectItem>
+                              <SelectContent className="bg-slate-900 border-white/10 text-white">
+                                <SelectItem value="python" className="focus:bg-indigo-600 focus:text-white cursor-pointer">Python</SelectItem>
+                                <SelectItem value="javascript" className="focus:bg-indigo-600 focus:text-white cursor-pointer">JavaScript</SelectItem>
+                                <SelectItem value="java" className="focus:bg-indigo-600 focus:text-white cursor-pointer">Java</SelectItem>
+                                <SelectItem value="cpp" className="focus:bg-indigo-600 focus:text-white cursor-pointer">C++</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -272,10 +272,10 @@ const Settings = () => {
                               <SelectTrigger className="bg-slate-800/50 border-white/10 text-white">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-slate-900 border-white/10">
-                                <SelectItem value="beginner">Beginner</SelectItem>
-                                <SelectItem value="intermediate">Intermediate</SelectItem>
-                                <SelectItem value="advanced">Advanced</SelectItem>
+                              <SelectContent className="bg-slate-900 border-white/10 text-white">
+                                <SelectItem value="beginner" className="focus:bg-indigo-600 focus:text-white cursor-pointer">Beginner</SelectItem>
+                                <SelectItem value="intermediate" className="focus:bg-indigo-600 focus:text-white cursor-pointer">Intermediate</SelectItem>
+                                <SelectItem value="advanced" className="focus:bg-indigo-600 focus:text-white cursor-pointer">Advanced</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
