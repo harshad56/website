@@ -85,7 +85,10 @@ const Contact = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to send message');
+        const errorMessage = data.debug_error
+          ? `Error: ${data.debug_error}`
+          : (data.message || 'Failed to send message');
+        throw new Error(errorMessage);
       }
 
       toast({
