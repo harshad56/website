@@ -36,6 +36,11 @@ const { authenticateToken } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/logger');
 
+// Import routes
+const authRoutes = require('./routes/auth');
+const contactRoutes = require('./routes/contact');
+const userRoutes = require('./routes/users');
+
 // Import Supabase configuration
 const { testConnection } = require('./config/supabase');
 
@@ -353,6 +358,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', noCache, authRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/users', noCache, authenticateToken, userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api', courseContentRoutes);

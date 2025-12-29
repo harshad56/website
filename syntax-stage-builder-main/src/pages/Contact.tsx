@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Clock, 
-  MessageSquare, 
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  MessageSquare,
   Send,
   CheckCircle,
   Users,
@@ -39,7 +39,7 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
       toast({
@@ -72,17 +72,28 @@ const Contact = () => {
 
     setIsSubmitting(true);
 
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message');
+      }
+
       toast({
         title: "Message sent successfully! 🎉",
         description: `Thank you ${formData.name}! We'll get back to you at ${formData.email} soon.`,
       });
 
       setIsSubmitted(true);
-      
+
       // Reset form
       setFormData({
         name: "",
@@ -97,7 +108,7 @@ const Contact = () => {
     } catch (error) {
       toast({
         title: "Error sending message",
-        description: "Something went wrong. Please try again later.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -173,7 +184,7 @@ const Contact = () => {
       <div className="container mx-auto px-6 pt-6">
         <BackButton />
       </div>
-      
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="container mx-auto px-6 py-16">
@@ -312,8 +323,8 @@ const Contact = () => {
                       </Label>
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       disabled={!formData.agreeToTerms}
                     >
@@ -327,7 +338,7 @@ const Contact = () => {
               {/* Contact Info */}
               <div>
                 <h2 className="text-3xl font-bold mb-6">Contact Information</h2>
-                
+
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="pt-6">
@@ -458,15 +469,15 @@ const Contact = () => {
             Join thousands of students who have transformed their careers with CodeAcademy Pro
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="secondary"
               className="bg-white text-blue-600 hover:bg-gray-100"
             >
               Start Free Trial
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
               className="border-white text-white hover:bg-white hover:text-blue-600"
             >
