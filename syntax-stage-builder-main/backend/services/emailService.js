@@ -114,8 +114,6 @@ const sendEmail = async ({ to, subject, template, data, html, text }) => {
         };
     } catch (error) {
         winston.error('Email sending failed:', error);
-    } catch (error) {
-        winston.error('Email sending failed:', error);
         throw new Error(error.message);
     }
 };
