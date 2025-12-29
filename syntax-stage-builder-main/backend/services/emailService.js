@@ -71,7 +71,7 @@ const emailTemplates = {
 };
 
 // Send email function using Resend
-const sendEmail = async ({ to, subject, template, data, html, text, replyTo, attachments }) => {
+const sendEmail = async ({ to, subject, template, data, html, text, replyTo }) => {
     try {
         let emailContent = {};
 
@@ -96,8 +96,7 @@ const sendEmail = async ({ to, subject, template, data, html, text, replyTo, att
             subject: emailContent.subject,
             html: emailContent.html,
             text: emailContent.text,
-            reply_to: replyTo,
-            attachments: attachments
+            reply_to: replyTo
         });
 
         if (error) {

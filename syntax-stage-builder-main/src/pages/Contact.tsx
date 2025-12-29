@@ -56,7 +56,6 @@ const Contact = () => {
         description: "Please agree to the terms and conditions to submit.",
         variant: "destructive",
       });
-      setLoading(false);
       return;
     }
 
@@ -68,71 +67,63 @@ const Contact = () => {
         description: "Please enter a valid email address.",
         variant: "destructive",
       });
-      setLoading(false);
       return;
     }
 
-    try {
-      const data = new FormData();
-      data.append('name', formData.name);
-      data.append('email', formData.email);
-      data.append('department', formData.department);
-      data.append('subject', formData.subject);
-      data.append('message', formData.message);
-      if (attachment) {
-        data.append('attachment', attachment);
-      }
+    setIsSubmitting(true);
 
-      // Note: Do not manually set Content-Type header for FormData, 
-      // the browser sets it with the boundary automatically.
+    try {
       const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
       const response = await fetch(`${baseUrl}/api/contact`, {
         method: 'POST',
         headers: {
-          // 'Content-Type': 'application/json', // REMOVED for FormData
+          'Content-Type': 'application/json',
         },
-        body: data
+        body: JSON.stringify(formData),
       });
 
-      const responseData = await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = responseData.debug_error
-          ? `Error: ${responseData.debug_error}`
-          : (responseData.message || 'Failed to send message');
+        const errorMessage = data.debug_error
+          ? `Error: ${data.debug_error}`
+          : (data.message || 'Failed to send message');
         throw new Error(errorMessage);
       }
 
       toast({
         title: "Message sent successfully! 🎉",
-        description: "We'll get back to you soon.",
+        description: `Thank you ${formData.name}! We'll get back to you at ${formData.email} soon.`,
       });
 
+      setIsSubmitted(true);
+
+      // Reset form
       setFormData({
-        name: '',
-        email: '',
-        department: 'General Support',
-        subject: '',
-        message: ''
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        department: "",
+        agreeToTerms: false
       });
-      setAttachment(null);
 
+      setTimeout(() => setIsSubmitted(false), 5000);
     } catch (error) {
       toast({
         title: "Error sending message",
-        description: error instanceof Error ? error.message : "Please try again later.",
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again later.",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }));
   };
 

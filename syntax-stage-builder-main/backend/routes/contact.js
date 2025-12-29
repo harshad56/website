@@ -9,21 +9,7 @@ const { sendEmail } = require('../services/emailService');
  * @desc    Handle contact form submissions
  * @access  Public
  */
-const multer = require('multer');
-
-// Configure Multer for memory storage
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
-
-/**
- * @route   POST /api/contact
- * @desc    Handle contact form submissions
- * @access  Public
- */
-router.post('/', upload.single('attachment'), [
+router.post('/', [
     // Validation middleware
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Invalid email address'),
@@ -45,15 +31,6 @@ router.post('/', upload.single('attachment'), [
     const supportEmail = process.env.EMAIL_SUPPORT_ADDRESS || 'harshadbagal145@gmail.com'; // Testing mode requires registered email
 
     try {
-        // Handle attachment
-        const attachments = [];
-        if (req.file) {
-            attachments.push({
-                content: req.file.buffer,
-                filename: req.file.originalname,
-            });
-        }
-
         // 1. Send email to support team
         const emailContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -64,7 +41,6 @@ router.post('/', upload.single('attachment'), [
                 <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
                     <p style="white-space: pre-wrap;">${message}</p>
                 </div>
-                ${req.file ? '<p><strong>Attachment:</strong> See attached file.</p>' : ''}
                 <p style="color: #666; font-size: 12px; margin-top: 30px;">
                     This email was sent from the CodeAcademy Pro Contact Form.
                 </p>
@@ -76,8 +52,7 @@ router.post('/', upload.single('attachment'), [
             subject: `[Contact Form] ${subject}`,
             html: emailContent,
             text: `Name: ${name}\nEmail: ${email}\nDepartment: ${department}\nSubject: ${subject}\n\nMessage:\n${message}`,
-            replyTo: email, // Allow replying directly to the user
-            attachments: attachments
+            replyTo: email // Allow replying directly to the user
         });
 
         // 2. (Optional) Send acknowledgement to user
