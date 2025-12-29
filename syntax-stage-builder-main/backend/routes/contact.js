@@ -28,7 +28,7 @@ router.post('/', [
     }
 
     const { name, email, subject, message, department } = req.body;
-    const supportEmail = process.env.EMAIL_SUPPORT_ADDRESS || 'codeacademy722@gmail.com'; // Fallback support email
+    const supportEmail = process.env.EMAIL_SUPPORT_ADDRESS || 'harshadbagal145@gmail.com'; // Testing mode requires registered email
 
     try {
         // 1. Send email to support team
