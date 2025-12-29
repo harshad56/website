@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { db, supabase } = require('../config/supabase');
-const { authRateLimiter } = require('../middleware/auth');
+const { authRateLimiter, authenticateToken } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 const passport = require('passport');
 const winston = require('winston');
@@ -51,6 +51,17 @@ const validatePasswordUpdate = [
         .withMessage('Password must be at least 8 characters')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
         .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+];
+
+const validateChangePassword = [
+    body('currentPassword')
+        .notEmpty()
+        .withMessage('Current password is required'),
+    body('newPassword')
+        .isLength({ min: 8 })
+        .withMessage('New password must be at least 8 characters')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .withMessage('New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
 ];
 
 // Helper function to handle validation errors
@@ -340,6 +351,65 @@ router.post('/forgot-password', validatePasswordReset, handleValidationErrors, a
         res.status(500).json({
             success: false,
             message: 'Failed to send password reset email'
+        });
+    }
+});
+
+// @route   POST /api/auth/change-password
+// @desc    Change password for logged in user
+// @access  Private
+router.post('/change-password', authenticateToken, validateChangePassword, handleValidationErrors, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        // Get fresh user data including password hash
+        const user = await db.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                message: 'Incorrect current password'
+            });
+        }
+
+        // Prevent reusing the same password
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password cannot be the same as your current password'
+            });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password
+        await db.updateUser(userId, {
+            password: hashedPassword,
+            updated_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+
+    } catch (error) {
+        winston.error('Change password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to change password'
         });
     }
 });

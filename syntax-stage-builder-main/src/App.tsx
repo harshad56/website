@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from 'sonner';
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { RouteSkeleton } from '@/components/RouteSkeleton';
 
@@ -312,6 +313,7 @@ const App = () => {
             </Routes>
           </Suspense>
           <Toaster position="top-right" />
+          <ShadcnToaster />
           {import.meta.env.DEV && (
             <Suspense fallback={null}>
               <ReactQueryDevtools initialIsOpen={false} />

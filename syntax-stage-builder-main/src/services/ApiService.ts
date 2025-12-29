@@ -335,7 +335,12 @@ class ApiService {
           body: JSON.stringify({ currentPassword: oldPassword, newPassword })
         });
       }
-    } catch (e) {
+    } catch (e: any) {
+      // If it's a specific API error (like 400 Bad Request for wrong password), re-throw it
+      // so the UI can show the correct error message.
+      if (e.status && e.status >= 400 && e.status < 500) {
+        throw e;
+      }
       console.warn("API change password failed, falling back to mock behavior", e);
     }
 
