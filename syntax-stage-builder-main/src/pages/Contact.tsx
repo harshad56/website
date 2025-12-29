@@ -133,7 +133,7 @@ const Contact = () => {
       title: "Email Support",
       description: "Get help via email",
       primary: "hello@codeacademypro.com",
-      secondary: "support@codeacademypro.com",
+      secondary: "harshadbagal145@gmail.com",
       response: "Within 24 hours"
     },
     {
