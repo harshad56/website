@@ -272,10 +272,31 @@ const Header = memo(() => {
 
               {isAuthenticated && (
                 <div className="mr-1 ml-1 flex-shrink-0">
-                  <Avatar className="w-8 h-8 border-2 border-primary/20">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="p-0 h-auto hover:bg-transparent">
+                        <Avatar className="w-8 h-8 border-2 border-primary/20">
+                          <AvatarImage src={user?.avatar} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 mt-2 bg-background/95 backdrop-blur-xl border-border/50">
+                      <div className="px-3 py-2 border-b border-border/10">
+                        <p className="font-semibold">{user?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                      </div>
+                      <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
+                        <Blocks className="w-4 h-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer focus:text-red-600 focus:bg-red-500/10">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
 

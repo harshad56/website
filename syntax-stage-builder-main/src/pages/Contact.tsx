@@ -204,14 +204,12 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Back Button */}
-      <div className="container mx-auto px-6 pt-6">
-        <BackButton />
-      </div>
-
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto px-6 py-16">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white relative">
+        <div className="container mx-auto px-6 pt-6">
+          <BackButton />
+        </div>
+        <div className="container mx-auto px-6 py-10">
           <div className="text-center max-w-4xl mx-auto">
             <Badge variant="secondary" className="mb-4">
               Contact Us
