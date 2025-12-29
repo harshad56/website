@@ -55,443 +55,444 @@ const Contact = () => {
         title: "Terms required",
         description: "Please agree to the terms and conditions to submit.",
         variant: "destructive",
-      });
+        setLoading(false);
       return;
-    }
+      }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
-      const response = await fetch(`${baseUrl}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMessage = data.debug_error
-          ? `Error: ${data.debug_error}`
-          : (data.message || 'Failed to send message');
-        throw new Error(errorMessage);
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid email address.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
 
-      toast({
-        title: "Message sent successfully! 🎉",
-        description: `Thank you ${formData.name}! We'll get back to you at ${formData.email} soon.`,
-      });
+      try {
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('email', formData.email);
+        data.append('department', formData.department);
+        data.append('subject', formData.subject);
+        data.append('message', formData.message);
+        if (attachment) {
+          data.append('attachment', attachment);
+        }
 
-      setIsSubmitted(true);
+        // Note: Do not manually set Content-Type header for FormData, 
+        // the browser sets it with the boundary automatically.
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/api$/, '');
+        const response = await fetch(`${baseUrl}/api/contact`, {
+          method: 'POST',
+          headers: {
+            // 'Content-Type': 'application/json', // REMOVED for FormData
+          },
+          body: data
+        });
 
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-        department: "",
-        agreeToTerms: false
-      });
+        const responseData = await response.json();
 
-      setTimeout(() => setIsSubmitted(false), 5000);
-    } catch (error) {
-      toast({
-        title: "Error sending message",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        if (!response.ok) {
+          const errorMessage = responseData.debug_error
+            ? `Error: ${responseData.debug_error}`
+            : (responseData.message || 'Failed to send message');
+          throw new Error(errorMessage);
+        }
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
+        toast({
+          title: "Message sent successfully! 🎉",
+          description: "We'll get back to you soon.",
+        });
+
+        setFormData({
+          name: '',
+          email: '',
+          department: 'General Support',
+          subject: '',
+          message: ''
+        });
+        setAttachment(null);
+
+      } catch (error) {
+        toast({
+          title: "Error sending message",
+          description: error instanceof Error ? error.message : "Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
       ...prev,
-      [field]: value
+  [field]: value
     }));
   };
 
-  const contactInfo = [
-    {
-      icon: Mail,
-      title: "Email Support",
-      description: "Get help via email",
-      primary: "hello@codeacademypro.com",
-      secondary: "harshadbagal145@gmail.com",
-      response: "Within 24 hours"
-    },
-    {
-      icon: Phone,
-      title: "Phone Support",
-      description: "Speak with our team",
-      primary: "+1 (555) 123-4567",
-      secondary: "Mon-Fri, 9AM-6PM PST",
-      response: "Immediate response"
-    },
-    {
-      icon: MessageSquare,
-      title: "Live Chat",
-      description: "Chat with our experts",
-      primary: "Available 24/7",
-      secondary: "In-platform chat",
-      response: "Instant response"
-    }
-  ];
+const contactInfo = [
+  {
+    icon: Mail,
+    title: "Email Support",
+    description: "Get help via email",
+    primary: "hello@codeacademypro.com",
+    secondary: "harshadbagal145@gmail.com",
+    response: "Within 24 hours"
+  },
+  {
+    icon: Phone,
+    title: "Phone Support",
+    description: "Speak with our team",
+    primary: "+1 (555) 123-4567",
+    secondary: "Mon-Fri, 9AM-6PM PST",
+    response: "Immediate response"
+  },
+  {
+    icon: MessageSquare,
+    title: "Live Chat",
+    description: "Chat with our experts",
+    primary: "Available 24/7",
+    secondary: "In-platform chat",
+    response: "Instant response"
+  }
+];
 
-  const departments = [
-    { value: "general", label: "General Inquiry" },
-    { value: "technical", label: "Technical Support" },
-    { value: "billing", label: "Billing & Payments" },
-    { value: "career", label: "Career Services" },
-    { value: "partnership", label: "Partnerships" },
-    { value: "feedback", label: "Feedback & Suggestions" }
-  ];
+const departments = [
+  { value: "general", label: "General Inquiry" },
+  { value: "technical", label: "Technical Support" },
+  { value: "billing", label: "Billing & Payments" },
+  { value: "career", label: "Career Services" },
+  { value: "partnership", label: "Partnerships" },
+  { value: "feedback", label: "Feedback & Suggestions" }
+];
 
-  const faqs = [
-    {
-      question: "How do I reset my password?",
-      answer: "You can reset your password by clicking the 'Forgot Password' link on the login page. You'll receive an email with instructions to create a new password."
-    },
-    {
-      question: "Can I get a refund?",
-      answer: "Yes, we offer a 30-day money-back guarantee for all paid plans. If you're not satisfied, contact our support team within 30 days of purchase."
-    },
-    {
-      question: "How do I access my certificates?",
-      answer: "Once you complete a course, your certificate will be available in your dashboard under the 'Certificates' section. You can download and share them from there."
-    },
-    {
-      question: "Do you offer team discounts?",
-      answer: "Yes, we offer special pricing for teams of 5 or more. Contact our sales team for custom pricing and features tailored to your organization."
-    }
-  ];
+const faqs = [
+  {
+    question: "How do I reset my password?",
+    answer: "You can reset your password by clicking the 'Forgot Password' link on the login page. You'll receive an email with instructions to create a new password."
+  },
+  {
+    question: "Can I get a refund?",
+    answer: "Yes, we offer a 30-day money-back guarantee for all paid plans. If you're not satisfied, contact our support team within 30 days of purchase."
+  },
+  {
+    question: "How do I access my certificates?",
+    answer: "Once you complete a course, your certificate will be available in your dashboard under the 'Certificates' section. You can download and share them from there."
+  },
+  {
+    question: "Do you offer team discounts?",
+    answer: "Yes, we offer special pricing for teams of 5 or more. Contact our sales team for custom pricing and features tailored to your organization."
+  }
+];
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Back Button */}
-      <div className="container mx-auto px-6 pt-6">
-        <BackButton />
-      </div>
+return (
+  <div className="min-h-screen bg-background">
+    {/* Back Button */}
+    <div className="container mx-auto px-6 pt-6">
+      <BackButton />
+    </div>
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto px-6 py-16">
-          <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-4">
-              Contact Us
-            </Badge>
-            <h1 className="text-5xl font-bold mb-6">
-              Get in Touch
-            </h1>
-            <p className="text-xl text-blue-100 mb-8">
-              Have questions? Need support? We're here to help you succeed in your learning journey.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Methods */}
+    {/* Header */}
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
       <div className="container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {contactInfo.map((info, index) => (
-            <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
-              <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <info.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{info.title}</h3>
-                <p className="text-muted-foreground mb-4">{info.description}</p>
-                <div className="space-y-2">
-                  <div className="font-semibold">{info.primary}</div>
-                  <div className="text-sm text-muted-foreground">{info.secondary}</div>
-                  <Badge variant="secondary" className="mt-2">
-                    {info.response}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="text-center max-w-4xl mx-auto">
+          <Badge variant="secondary" className="mb-4">
+            Contact Us
+          </Badge>
+          <h1 className="text-5xl font-bold mb-6">
+            Get in Touch
+          </h1>
+          <p className="text-xl text-blue-100 mb-8">
+            Have questions? Need support? We're here to help you succeed in your learning journey.
+          </p>
         </div>
       </div>
+    </div>
 
-      {/* Contact Form */}
-      <div className="bg-muted py-16">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* Form */}
-              <div>
-                <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
-                <p className="text-muted-foreground mb-8">
-                  Fill out the form below and we'll get back to you as soon as possible.
-                </p>
-
-                {isSubmitted ? (
-                  <Card className="bg-green-50 border-green-200">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center space-x-3">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                        <div>
-                          <h3 className="font-semibold text-green-800">Message Sent!</h3>
-                          <p className="text-green-700">We'll get back to you within 24 hours.</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => handleInputChange("name", e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleInputChange("email", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="department">Department</Label>
-                      <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departments.map((dept) => (
-                            <SelectItem key={dept.value} value={dept.value}>
-                              {dept.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="subject">Subject *</Label>
-                      <Input
-                        id="subject"
-                        value={formData.subject}
-                        onChange={(e) => handleInputChange("subject", e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="message">Message *</Label>
-                      <Textarea
-                        id="message"
-                        rows={6}
-                        value={formData.message}
-                        onChange={(e) => handleInputChange("message", e.target.value)}
-                        required
-                        placeholder="Tell us how we can help you..."
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="terms"
-                        checked={formData.agreeToTerms}
-                        onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
-                      />
-                      <Label htmlFor="terms" className="text-sm">
-                        I agree to the terms and conditions and privacy policy
-                      </Label>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      disabled={!formData.agreeToTerms}
-                    >
-                      Send Message
-                      <Send className="w-4 h-4 ml-2" />
-                    </Button>
-                  </form>
-                )}
+    {/* Contact Methods */}
+    <div className="container mx-auto px-6 py-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        {contactInfo.map((info, index) => (
+          <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <info.icon className="w-8 h-8 text-white" />
               </div>
+              <h3 className="text-xl font-semibold mb-2">{info.title}</h3>
+              <p className="text-muted-foreground mb-4">{info.description}</p>
+              <div className="space-y-2">
+                <div className="font-semibold">{info.primary}</div>
+                <div className="text-sm text-muted-foreground">{info.secondary}</div>
+                <Badge variant="secondary" className="mt-2">
+                  {info.response}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
 
-              {/* Contact Info */}
-              <div>
-                <h2 className="text-3xl font-bold mb-6">Contact Information</h2>
+    {/* Contact Form */}
+    <div className="bg-muted py-16">
+      <div className="container mx-auto px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Form */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
+              <p className="text-muted-foreground mb-8">
+                Fill out the form below and we'll get back to you as soon as possible.
+              </p>
 
-                <div className="space-y-6">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                          <MapPin className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-1">Office Address</h3>
-                          <p className="text-muted-foreground">
-                            123 Tech Street<br />
-                            San Francisco, CA 94105<br />
-                            United States
-                          </p>
-                        </div>
+              {isSubmitted ? (
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div>
+                        <h3 className="font-semibold text-green-800">Message Sent!</h3>
+                        <p className="text-green-700">We'll get back to you within 24 hours.</p>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
 
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                          <Clock className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-1">Business Hours</h3>
-                          <p className="text-muted-foreground">
-                            Monday - Friday: 9:00 AM - 6:00 PM PST<br />
-                            Saturday: 10:00 AM - 4:00 PM PST<br />
-                            Sunday: Closed
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div>
+                    <Label htmlFor="department">Department</Label>
+                    <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.value} value={dept.value}>
+                            {dept.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                          <Globe className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-1">Global Support</h3>
-                          <p className="text-muted-foreground">
-                            We provide support in multiple languages<br />
-                            and time zones to serve our global community.
-                          </p>
-                        </div>
+                  <div>
+                    <Label htmlFor="subject">Subject *</Label>
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) => handleInputChange("subject", e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="message">Message *</Label>
+                    <Textarea
+                      id="message"
+                      rows={6}
+                      value={formData.message}
+                      onChange={(e) => handleInputChange("message", e.target.value)}
+                      required
+                      placeholder="Tell us how we can help you..."
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="terms"
+                      checked={formData.agreeToTerms}
+                      onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
+                    />
+                    <Label htmlFor="terms" className="text-sm">
+                      I agree to the terms and conditions and privacy policy
+                    </Label>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    disabled={!formData.agreeToTerms}
+                  >
+                    Send Message
+                    <Send className="w-4 h-4 ml-2" />
+                  </Button>
+                </form>
+              )}
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h2 className="text-3xl font-bold mb-6">Contact Information</h2>
+
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-white" />
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">Office Address</h3>
+                        <p className="text-muted-foreground">
+                          123 Tech Street<br />
+                          San Francisco, CA 94105<br />
+                          United States
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">Business Hours</h3>
+                        <p className="text-muted-foreground">
+                          Monday - Friday: 9:00 AM - 6:00 PM PST<br />
+                          Saturday: 10:00 AM - 4:00 PM PST<br />
+                          Sunday: Closed
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <Globe className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">Global Support</h3>
+                        <p className="text-muted-foreground">
+                          We provide support in multiple languages<br />
+                          and time zones to serve our global community.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      {/* FAQ Section */}
-      <div className="container mx-auto px-6 py-16">
+    {/* FAQ Section */}
+    <div className="container mx-auto px-6 py-16">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold mb-4">Frequently Asked Questions</h2>
+        <p className="text-xl text-muted-foreground">
+          Quick answers to common questions
+        </p>
+      </div>
+
+      <div className="max-w-3xl mx-auto space-y-6">
+        {faqs.map((faq, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle className="text-lg">{faq.question}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{faq.answer}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+
+    {/* Support Stats */}
+    <div className="bg-muted py-16">
+      <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Frequently Asked Questions</h2>
+          <h2 className="text-4xl font-bold mb-4">Our Support Promise</h2>
           <p className="text-xl text-muted-foreground">
-            Quick answers to common questions
+            We're committed to providing exceptional support to our community
           </p>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-6">
-          {faqs.map((faq, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{faq.question}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Support Stats */}
-      <div className="bg-muted py-16">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Our Support Promise</h2>
-            <p className="text-xl text-muted-foreground">
-              We're committed to providing exceptional support to our community
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-primary mb-2">24/7</div>
-                <div className="text-muted-foreground">Live Chat Support</div>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-primary mb-2">24h</div>
-                <div className="text-muted-foreground">Email Response Time</div>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-primary mb-2">98%</div>
-                <div className="text-muted-foreground">Customer Satisfaction</div>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-primary mb-2">150+</div>
-                <div className="text-muted-foreground">Countries Supported</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of students who have transformed their careers with CodeAcademy Pro
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="bg-white text-blue-600 hover:bg-gray-100"
-            >
-              Start Free Trial
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-blue-600"
-            >
-              Browse Courses
-            </Button>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="text-3xl font-bold text-primary mb-2">24/7</div>
+              <div className="text-muted-foreground">Live Chat Support</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="text-3xl font-bold text-primary mb-2">24h</div>
+              <div className="text-muted-foreground">Email Response Time</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="text-3xl font-bold text-primary mb-2">98%</div>
+              <div className="text-muted-foreground">Customer Satisfaction</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="pt-6">
+              <div className="text-3xl font-bold text-primary mb-2">150+</div>
+              <div className="text-muted-foreground">Countries Supported</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
-  );
+
+    {/* CTA Section */}
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+      <div className="container mx-auto px-6 text-center">
+        <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
+        <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          Join thousands of students who have transformed their careers with CodeAcademy Pro
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button
+            size="lg"
+            variant="secondary"
+            className="bg-white text-blue-600 hover:bg-gray-100"
+          >
+            Start Free Trial
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-white text-white hover:bg-white hover:text-blue-600"
+          >
+            Browse Courses
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 };
 
 export default Contact; 
