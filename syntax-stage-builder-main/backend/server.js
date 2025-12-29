@@ -14,6 +14,7 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const contactRoutes = require('./routes/contact');
 const userRoutes = require('./routes/users');
 const courseRoutes = require('./routes/courses');
 const courseContentRoutes = require('./routes/courseContent');
@@ -36,10 +37,9 @@ const { authenticateToken } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/logger');
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const contactRoutes = require('./routes/contact');
-const userRoutes = require('./routes/users');
+// Import routes (already imported above)
+// contactRoutes added to primary import block instead
+
 
 // Import Supabase configuration
 const { testConnection } = require('./config/supabase');
