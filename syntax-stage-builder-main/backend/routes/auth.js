@@ -84,14 +84,16 @@ const generateToken = (user) => {
 // @access  Public
 router.post('/register', validateSignup, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, password } = req.body;
+        // Explicitly lowercase email to ensure consistency
+        const email = req.body.email.toLowerCase();
 
         // Check if user already exists
         const existingUser = await db.getUserByEmail(email);
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'User with this email already exists'
+                message: 'Account already exists with this email id, please use another one.'
             });
         }
 
@@ -118,37 +120,48 @@ router.post('/register', validateSignup, handleValidationErrors, authRateLimiter
             updated_at: new Date()
         };
 
-        const user = await db.createUser(userData);
+        try {
+            const user = await db.createUser(userData);
 
-        // Send verification email
-        const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
-        await sendEmail({
-            to: user.email,
-            subject: 'Verify your email address',
-            template: 'emailVerification',
-            data: {
-                name: user.name,
-                verificationUrl
-            }
-        });
-
-        // Generate JWT token
-        const token = generateToken(user);
-
-        res.status(201).json({
-            success: true,
-            message: 'User registered successfully. Please check your email to verify your account.',
-            data: {
-                user: {
-                    id: user.id,
+            // Send verification email
+            const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+            await sendEmail({
+                to: user.email,
+                subject: 'Verify your email address',
+                template: 'emailVerification',
+                data: {
                     name: user.name,
-                    email: user.email,
-                    emailVerified: user.email_verified,
-                    role: user.role
-                },
-                token
+                    verificationUrl
+                }
+            });
+
+            // Generate JWT token
+            const token = generateToken(user);
+
+            res.status(201).json({
+                success: true,
+                message: 'User registered successfully. Please check your email to verify your account.',
+                data: {
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        emailVerified: user.email_verified,
+                        role: user.role
+                    },
+                    token
+                }
+            });
+        } catch (dbError) {
+            // Handle unique constraint violation (code 23505 in Postgres)
+            if (dbError.code === '23505' || (dbError.message && dbError.message.includes('unique'))) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Account already exists with this email id, please use another one.'
+                });
             }
-        });
+            throw dbError;
+        }
 
     } catch (error) {
         winston.error('Registration error:', error);
@@ -164,7 +177,9 @@ router.post('/register', validateSignup, handleValidationErrors, authRateLimiter
 // @access  Public
 router.post('/login', validateLogin, handleValidationErrors, authRateLimiter, async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { password } = req.body;
+        // Explicitly lowercase email
+        const email = req.body.email.toLowerCase();
 
         // Find user by email
         const user = await db.getUserByEmail(email);

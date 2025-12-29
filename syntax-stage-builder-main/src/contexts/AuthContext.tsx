@@ -191,7 +191,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       throw new Error(response.error || 'Signup failed');
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : "Signup failed";
+
+      // CRITICAL FIX: Do NOT fall back to local mock if the backend explicitly told us the account exists.
+      // This allows the UI to properly show "Account already exists" instead of silently switching to a local user.
+      if (errorMessage.toLowerCase().includes("already exists") || errorMessage.toLowerCase().includes("duplicate")) {
+        throw error;
+      }
+
       console.warn("Falling back to local signup:", error);
       const accounts = getStoredAccounts();
       if (accounts[email.toLowerCase()]) {

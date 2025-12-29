@@ -1,0 +1,15 @@
+
+≡ƒöì TESTING DUPLICATE SIGNUP SCENARIO
+≡ƒôº Test Email: duplicate_test_1766993959025@test.com
+
+[Step 1] Creating First User...
+Γ£à User 1 Created. ID: ec92177e-ed77-4791-9ea6-4b2b6ee08f74
+
+[Step 2] Checking if User 1 is findable via .eq('email', email)...
+Γ£à Step 2 Success: Found user: ec92177e-ed77-4791-9ea6-4b2b6ee08f74
+
+[Step 3] Creating Second User (Duplicate Email)...
+Γ£à Step 3 Blocked (Good): Database prevented duplicate. duplicate key value violates unique constraint "users_email_key"
+
+[Cleanup] Deleting test users...
+Γ£à Cleanup complete.
