@@ -68,7 +68,8 @@ router.post('/', [
         winston.error('Contact form error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to send message. Please try again later.'
+            message: 'Failed to send message.',
+            debug_error: error.message // Exposed for debugging
         });
     }
 });
