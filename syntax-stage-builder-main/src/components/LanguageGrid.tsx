@@ -373,6 +373,7 @@ const LanguageGrid = memo(() => {
                 transition: { duration: 0.2 },
               }}
               whileTap={{ scale: 0.98 }}
+              layout
               style={{ willChange: "transform" }}
             >
               <Card
@@ -481,75 +482,84 @@ const LanguageGrid = memo(() => {
           ))}
         </div>
 
-        {/* Show More Actions */}
-        <div className="flex justify-center mt-12 animate-fade-in relative z-20">
-          {visibleCount < languages.length ? (
+        {/* Magic "Explore More" Button */}
+        <div className="flex justify-center mt-12 mb-8 animate-fade-in relative z-20">
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="relative p-[2px] rounded-2xl overflow-hidden group hover:scale-105 active:scale-95 transition-all duration-500"
+          >
+            {/* Animated Gradient Border Layer */}
+            <div className="absolute inset-[-1000%] animate-[spin_4s_linear_infinity] bg-[conic-gradient(from_90deg_at_50%_50%,#3B82F6_0%,#8B5CF6_25%,#EC4899_50%,#8B5CF6_75%,#3B82F6_100%)] opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
+
             <Button
-              variant="outline"
+              variant="ghost"
               size="lg"
-              className="group relative px-8 py-6 h-auto border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary-foreground transition-all duration-500 overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.1)] hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:border-primary/50"
-              onClick={() => setVisibleCount(languages.length)}
+              className="relative px-10 py-7 h-auto bg-slate-950/80 backdrop-blur-2xl rounded-[14px] border-none text-white font-black text-xl flex items-center gap-4 transition-all duration-500 hover:bg-slate-900/60"
+              onClick={() => {
+                if (visibleCount < languages.length) {
+                  setVisibleCount(languages.length);
+                } else {
+                  setVisibleCount(12);
+                }
+              }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative flex items-center gap-3 font-bold text-lg">
-                Explore More Modules
-                <motion.span
-                  animate={{ y: [0, 4, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="text-xl"
+              <div className="flex flex-col items-center">
+                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                  {visibleCount < languages.length ? "Explore Every Module" : "Show Best Picks Only"}
+                </span>
+                <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-medium group-hover:text-slate-300 transition-colors">
+                  {visibleCount < languages.length ? `Unlock ${languages.length - visibleCount} More Premium Paths` : "Simplify Your View"}
+                </span>
+              </div>
+
+              <div className="relative">
+                <motion.div
+                  animate={visibleCount < languages.length ? { y: [0, 5, 0] } : { y: [0, -5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="bg-blue-600/30 p-2 rounded-lg border border-blue-500/50 group-hover:bg-blue-600/50 transition-colors"
                 >
-                  ↓
-                </motion.span>
-              </span>
+                  {visibleCount < languages.length ? "↓" : "↑"}
+                </motion.div>
+              </div>
+
+              {/* Shimmer Swipe Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
             </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="lg"
-              className="group relative px-8 py-6 h-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all duration-500 overflow-hidden"
-              onClick={() => setVisibleCount(12)}
-            >
-              <span className="relative flex items-center gap-3 font-bold text-lg">
-                Show Less
-                <motion.span
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="text-xl"
-                >
-                  ↑
-                </motion.span>
-              </span>
-            </Button>
-          )}
+
+            {/* Glow Underlay */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 -z-10" />
+          </motion.div>
         </div>
 
-        <div className="text-center mt-16 animate-fade-in" style={{ animationDelay: '1s' }}>
+        <div className="text-center mt-12 animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <div className="mb-8">
-            <p className="text-lg text-muted-foreground mb-4">
-              🔥 Can't decide? Take our <span className="text-primary font-bold">AI-powered career quiz</span> to find your perfect match!
+            <p className="text-lg text-slate-400 mb-4 bg-white/5 inline-block px-6 py-2 rounded-full border border-white/10 backdrop-blur-sm">
+              🔥 Can't decide? Take our <span className="text-blue-400 font-black">AI Career Quiz</span> to find your perfect match!
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center px-4">
             <Button
               variant="hero"
               size="lg"
-              className="w-full sm:min-w-[300px] shadow-glow hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-500 touch-target"
+              className="w-full sm:min-w-[320px] py-8 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:shadow-[0_0_50px_rgba(59,130,246,0.4)] transform hover:scale-105 active:scale-95 transition-all duration-500 font-black text-lg gap-3"
               onClick={() => navigate('/career')}
             >
-              <span className="flex items-center justify-center space-x-2">
-                <span>🤖 Take AI Career Quiz</span>
-                <span className="animate-pulse">✨</span>
-              </span>
+              <span>🤖 Start AI Career Quiz</span>
+              <motion.span
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                ✨
+              </motion.span>
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:min-w-[250px] hover:bg-accent/10 hover:scale-105 active:scale-95 transition-all duration-500 touch-target"
+              className="w-full sm:min-w-[280px] py-8 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-500 text-lg font-bold backdrop-blur-md"
               onClick={() => navigate('/learning-paths')}
             >
-              <span className="flex items-center justify-center space-x-2">
-                <span>🎯 View All Learning Paths</span>
-              </span>
+              🎯 Full Roadmaps
             </Button>
           </div>
         </div>

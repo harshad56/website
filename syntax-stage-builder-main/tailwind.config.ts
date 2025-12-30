@@ -140,6 +140,11 @@ export default {
 						opacity: '1',
 						transform: 'scale(1)'
 					}
+				},
+				'shimmer': {
+					'100%': {
+						transform: 'translateX(200%)'
+					}
 				}
 			},
 			animation: {
@@ -147,7 +152,8 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.6s ease-out',
 				'slide-in': 'slide-in 0.6s ease-out',
-				'scale-in': 'scale-in 0.6s ease-out'
+				'scale-in': 'scale-in 0.6s ease-out',
+				'shimmer': 'shimmer 2s infinite'
 			}
 		}
 	},
