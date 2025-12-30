@@ -482,29 +482,42 @@ const LanguageGrid = memo(() => {
         </div>
 
         {/* Show More Actions */}
-        <div className="flex justify-center mt-12 animate-fade-in">
+        <div className="flex justify-center mt-12 animate-fade-in relative z-20">
           {visibleCount < languages.length ? (
             <Button
               variant="outline"
               size="lg"
-              className="min-w-[200px] border-primary/20 hover:border-primary text-primary hover:bg-primary/5 transition-all duration-300 group"
+              className="group relative px-8 py-6 h-auto border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary-foreground transition-all duration-500 overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.1)] hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:border-primary/50"
               onClick={() => setVisibleCount(languages.length)}
             >
-              <span className="flex items-center gap-2">
-                Show More Modules
-                <span className="group-hover:translate-y-1 transition-transform duration-300">↓</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <span className="relative flex items-center gap-3 font-bold text-lg">
+                Explore More Modules
+                <motion.span
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="text-xl"
+                >
+                  ↓
+                </motion.span>
               </span>
             </Button>
           ) : (
             <Button
               variant="outline"
               size="lg"
-              className="min-w-[200px] border-muted-foreground/20 hover:border-muted-foreground text-muted-foreground hover:bg-muted/5 transition-all duration-300 group"
+              className="group relative px-8 py-6 h-auto border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all duration-500 overflow-hidden"
               onClick={() => setVisibleCount(12)}
             >
-              <span className="flex items-center gap-2">
+              <span className="relative flex items-center gap-3 font-bold text-lg">
                 Show Less
-                <span className="group-hover:-translate-y-1 transition-transform duration-300">↑</span>
+                <motion.span
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="text-xl"
+                >
+                  ↑
+                </motion.span>
               </span>
             </Button>
           )}
