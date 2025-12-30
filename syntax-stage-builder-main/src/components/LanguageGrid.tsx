@@ -495,7 +495,7 @@ const LanguageGrid = memo(() => {
             <Button
               variant="ghost"
               size="lg"
-              className="relative px-6 py-4 h-auto bg-slate-950/80 backdrop-blur-2xl rounded-[12px] border-none text-white font-bold text-base flex items-center gap-3 transition-all duration-500 hover:bg-slate-900/60"
+              className="relative px-6 py-4 h-auto bg-white/40 border border-white/20 backdrop-blur-xl rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.05)] text-slate-900 font-bold text-base flex items-center gap-3 transition-all duration-500 hover:bg-white/60 hover:shadow-[0_8px_32px_rgba(59,130,246,0.1)]"
               onClick={() => {
                 if (visibleCount < languages.length) {
                   setVisibleCount(languages.length);
@@ -505,10 +505,10 @@ const LanguageGrid = memo(() => {
               }}
             >
               <div className="flex flex-col items-center">
-                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
+                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm font-extrabold">
                   {visibleCount < languages.length ? "Explore All Modules" : "Show Best Picks"}
                 </span>
-                <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] font-medium group-hover:text-slate-400 transition-colors">
+                <span className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-medium group-hover:text-blue-600 transition-colors">
                   {visibleCount < languages.length ? `${languages.length - visibleCount} More Paths` : "Simplify View"}
                 </span>
               </div>
@@ -517,14 +517,14 @@ const LanguageGrid = memo(() => {
                 <motion.div
                   animate={visibleCount < languages.length ? { y: [0, 3, 0] } : { y: [0, -3, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
-                  className="bg-blue-600/20 p-1.5 rounded-md border border-blue-500/30 group-hover:bg-blue-600/40 transition-colors"
+                  className="bg-blue-600/10 p-1.5 rounded-md border border-blue-500/20 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300"
                 >
                   {visibleCount < languages.length ? "↓" : "↑"}
                 </motion.div>
               </div>
 
               {/* Shimmer Swipe Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
             </Button>
 
             {/* Glow Underlay */}
