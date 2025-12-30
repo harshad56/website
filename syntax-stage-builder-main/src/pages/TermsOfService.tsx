@@ -51,19 +51,19 @@ const TermsOfService = () => {
           <BackButton />
         </motion.div>
 
-        <header className="text-center mb-16">
+        <header className="text-center mb-10 lg:mb-16">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="outline" className="mb-4 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 px-4 py-1">
+            <Badge variant="outline" className="mb-4 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 px-4 py-1 text-[10px] sm:text-xs">
               Effective Nov 2025
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 tracking-tight">
               Terms of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-purple-400">Service</span>
             </h1>
-            <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
+            <p className="text-slate-400 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed px-2">
               Please review our key terms. We aim to keep our legal language as clear and straightforward as possible.
             </p>
           </motion.div>
@@ -99,15 +99,15 @@ const TermsOfService = () => {
         <motion.footer
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="mt-20 text-center"
+          className="mt-16 lg:mt-20 text-center"
         >
-          <p className="text-slate-500 mb-6">
+          <p className="text-slate-500 mb-6 text-sm sm:text-base px-4">
             Looking for more details? Download the full legal document.
           </p>
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-3 px-6 py-4 rounded-2xl sm:rounded-full bg-white/5 border border-white/10 backdrop-blur-md w-full sm:w-auto">
             <Scale className="w-5 h-5 text-indigo-400" />
-            <span className="text-slate-400">Legal inquiries:</span>
-            <a href="mailto:legal@codeacademypro.com" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+            <span className="text-slate-400 text-sm sm:text-base">Legal inquiries:</span>
+            <a href="mailto:legal@codeacademypro.com" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors text-sm sm:text-base break-all">
               legal@codeacademypro.com
             </a>
           </div>

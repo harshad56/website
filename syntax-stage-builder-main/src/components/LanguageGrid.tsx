@@ -495,7 +495,7 @@ const LanguageGrid = memo(() => {
             <Button
               variant="ghost"
               size="lg"
-              className="relative px-10 py-7 h-auto bg-slate-950/80 backdrop-blur-2xl rounded-[14px] border-none text-white font-black text-xl flex items-center gap-4 transition-all duration-500 hover:bg-slate-900/60"
+              className="relative px-6 py-4 h-auto bg-slate-950/80 backdrop-blur-2xl rounded-[12px] border-none text-white font-bold text-base flex items-center gap-3 transition-all duration-500 hover:bg-slate-900/60"
               onClick={() => {
                 if (visibleCount < languages.length) {
                   setVisibleCount(languages.length);
@@ -505,19 +505,19 @@ const LanguageGrid = memo(() => {
               }}
             >
               <div className="flex flex-col items-center">
-                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                  {visibleCount < languages.length ? "Explore Every Module" : "Show Best Picks Only"}
+                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
+                  {visibleCount < languages.length ? "Explore All Modules" : "Show Best Picks"}
                 </span>
-                <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-medium group-hover:text-slate-300 transition-colors">
-                  {visibleCount < languages.length ? `Unlock ${languages.length - visibleCount} More Premium Paths` : "Simplify Your View"}
+                <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] font-medium group-hover:text-slate-400 transition-colors">
+                  {visibleCount < languages.length ? `${languages.length - visibleCount} More Paths` : "Simplify View"}
                 </span>
               </div>
 
               <div className="relative">
                 <motion.div
-                  animate={visibleCount < languages.length ? { y: [0, 5, 0] } : { y: [0, -5, 0] }}
+                  animate={visibleCount < languages.length ? { y: [0, 3, 0] } : { y: [0, -3, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
-                  className="bg-blue-600/30 p-2 rounded-lg border border-blue-500/50 group-hover:bg-blue-600/50 transition-colors"
+                  className="bg-blue-600/20 p-1.5 rounded-md border border-blue-500/30 group-hover:bg-blue-600/40 transition-colors"
                 >
                   {visibleCount < languages.length ? "↓" : "↑"}
                 </motion.div>

@@ -45,19 +45,19 @@ const CodeOfConduct = () => (
         <BackButton />
       </motion.div>
 
-      <header className="text-center mb-16">
+      <header className="text-center mb-10 lg:mb-16">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <Badge variant="outline" className="mb-4 border-rose-500/30 bg-rose-500/10 text-rose-300 px-4 py-1">
+          <Badge variant="outline" className="mb-4 border-rose-500/30 bg-rose-500/10 text-rose-300 px-4 py-1 text-[10px] sm:text-xs">
             Community First
           </Badge>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 tracking-tight">
             Code of <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-orange-400 to-amber-400">Conduct</span>
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
+          <p className="text-slate-400 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed px-2">
             We cultivate a safe, supportive space for learning. These guidelines apply across the platform, events, and social channels.
           </p>
         </motion.div>
@@ -92,17 +92,17 @@ const CodeOfConduct = () => (
       <motion.footer
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        className="mt-20 text-center"
+        className="mt-16 lg:mt-20 text-center px-4"
       >
-        <div className="inline-flex flex-col items-center gap-4 p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md max-w-2xl mx-auto">
+        <div className="inline-flex flex-col items-center gap-4 p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md max-w-2xl mx-auto w-full">
           <Handshake className="w-10 h-10 text-rose-400" />
           <h3 className="text-xl font-bold">Safe Community</h3>
-          <p className="text-slate-400">
+          <p className="text-slate-400 text-sm sm:text-base text-center">
             Violations may result in warnings, suspension, or removal. Help us keep CodeAcademy Pro a space for everyone.
           </p>
-          <div className="flex items-center gap-3 mt-2 text-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-sm">
             <span className="text-slate-500 uppercase tracking-widest">Report violations to:</span>
-            <a href="mailto:community@codeacademypro.com" className="text-rose-400 hover:text-rose-300 font-bold transition-colors">
+            <a href="mailto:community@codeacademypro.com" className="text-rose-400 hover:text-rose-300 font-bold transition-colors break-all">
               community@codeacademypro.com
             </a>
           </div>
