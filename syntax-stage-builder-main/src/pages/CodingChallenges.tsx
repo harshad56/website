@@ -1,9 +1,88 @@
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import {
+  CheckCircle2,
+  Circle,
+  Terminal,
+  Play,
+  RotateCcw,
+  Lightbulb,
+  Trophy,
+  MessageSquare,
+  ChevronRight,
+  Code2,
+  Sparkles,
+  Zap
+} from "lucide-react";
+import { BackButton } from "@/components/BackButton";
+import SEO from "@/components/SEO";
 import { apiService } from "@/services/ApiService";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Challenge Data Structure (Fallback for dev)
 const CHALLENGES_DATA = {
-  // ... existing data
+  java: {
+    basic: [
+      {
+        id: "java-fact",
+        title: "Factorial Calculator",
+        description: "Calculate the factorial of a number.",
+        problem: "Implement a method that takes an integer n and returns its factorial. Handle edge cases like 0 and negative numbers.",
+        starterCode: `public class FactorialCalculator {\n    public static int factorial(int n) {\n        // Write your code here\n        return 0;\n    }\n}`,
+        testCases: [
+          { input: "5", expected: "120", description: "Factorial of 5" },
+          { input: "0", expected: "1", description: "Factorial of 0" }
+        ],
+        hints: ["n! = n * (n-1) * ... * 1", "0! is 1"]
+      },
+      {
+        id: "java-palin",
+        title: "Palindrome Checker",
+        description: "Check if a string is a palindrome.",
+        problem: "Implement a method that returns true if a string reads the same forwards and backwards.",
+        starterCode: `public class PalindromeChecker {\n    public static boolean isPalindrome(String str) {\n        // Write your code here\n        return false;\n    }\n}`,
+        testCases: [
+          { input: "racecar", expected: "true", description: "Basic palindrome" }
+        ]
+      }
+    ],
+    intermediate: []
+  },
+  python: {
+    basic: [
+      {
+        id: "py-list",
+        title: "List Operations",
+        description: "Reverse a list and find max.",
+        problem: "Implement functions to reverse a list and find the maximum element.",
+        starterCode: `def reverse_list(lst):\n    # Write your code here\n    pass\n\ndef find_max(lst):\n    # Write your code here\n    pass`,
+        testCases: [
+          { input: "[1,2,3]", expected: "[3,2,1]", description: "Reverse list" }
+        ]
+      }
+    ],
+    intermediate: []
+  },
+  javascript: {
+    basic: [
+      {
+        id: "js-array",
+        title: "Array Transformation",
+        description: "Use map and filter.",
+        problem: "Write functions to double numbers and filter even values.",
+        starterCode: `function transform(numbers) {\n    // Write your code here\n}`,
+        testCases: [
+          { input: "[1,2,3,4]", expected: "[4,8]", description: "Double even numbers" }
+        ]
+      }
+    ],
+    intermediate: []
+  }
 };
 
 const CodingChallenges = () => {
