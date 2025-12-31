@@ -111,7 +111,13 @@ const CodingChallenges = () => {
         });
 
         if (challengesRes.success && challengesRes.data && challengesRes.data.length > 0) {
-          setDbChallenges(challengesRes.data);
+          // Map snake_case from DB to camelCase for frontend
+          const mapped = challengesRes.data.map((c: any) => ({
+            ...c,
+            starterCode: c.starter_code || c.starterCode,
+            problem: c.problem_statement || c.problem || c.description
+          }));
+          setDbChallenges(mapped);
         } else {
           // Fallback to local data
           const local = CHALLENGES_DATA[selectedLanguage as keyof typeof CHALLENGES_DATA];
