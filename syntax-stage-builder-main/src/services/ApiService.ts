@@ -1029,6 +1029,49 @@ class ApiService {
       body: JSON.stringify(payload)
     });
   }
+
+  // Challenges
+  async getChallenges(filters: { category?: string; language?: string; difficulty?: string } = {}): Promise<ApiResponse<any[]>> {
+    const queryParams = new URLSearchParams();
+    if (filters.category) queryParams.append('category', filters.category);
+    if (filters.language) queryParams.append('language', filters.language);
+    if (filters.difficulty) queryParams.append('difficulty', filters.difficulty);
+
+    return this.request<any[]>(`/challenges?${queryParams.toString()}`, { method: 'GET' });
+  }
+
+  async getChallenge(id: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/challenges/${id}`, { method: 'GET' });
+  }
+
+  async updateChallengeProgress(id: string, progress: {
+    status: string;
+    submitted_code?: string;
+    attempts_count?: number;
+    completion_time_ms?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<any>(`/challenges/${id}/progress`, {
+      method: 'POST',
+      body: JSON.stringify(progress)
+    });
+  }
+
+  async getUserChallengesProgress(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/challenges/user/progress', { method: 'GET' });
+  }
+
+  // Tutorials
+  async getTutorials(): Promise<ApiResponse<any[]>> {
+    return this.request<any[]>('/tutorials', { method: 'GET' });
+  }
+
+  async getTutorial(id: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/tutorials/${id}`, { method: 'GET' });
+  }
+
+  async completeTutorialStep(tutorialId: string, stepId: string): Promise<ApiResponse<any>> {
+    return this.request<any>(`/tutorials/${tutorialId}/steps/${stepId}/complete`, { method: 'POST' });
+  }
 }
 
 export const apiService = new ApiService(); 

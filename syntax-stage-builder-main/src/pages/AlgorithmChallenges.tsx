@@ -7,8 +7,43 @@ import { BackButton } from "@/components/BackButton";
 import { Brain, Flame, LineChart, Medal, Target, Users, Zap, Trophy, ChevronRight } from "lucide-react";
 import SEO from "@/components/SEO";
 
+import { useEffect, useState, useMemo } from "react";
+import { apiService } from "@/services/ApiService";
+import { useAuth } from "@/contexts/AuthContext";
+
 const AlgorithmChallenges = () => {
+  const { user } = useAuth();
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [userProgress, setUserProgress] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [challengesRes, progressRes] = await Promise.all([
+          apiService.getChallenges({ category: 'algorithm' }),
+          user ? apiService.getUserChallengesProgress() : Promise.resolve({ success: false, data: [] })
+        ]);
+
+        if (challengesRes.success) setChallenges(challengesRes.data || []);
+        if (progressRes.success) setUserProgress(progressRes.data || []);
+      } catch (error) {
+        console.error("Failed to fetch algorithm challenges data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  const stats = useMemo(() => {
+    const total = challenges.length || 245; // Fallback to mockup data if empty
+    const completed = userProgress.filter(p => p.status === 'completed').length;
+    return { total, completed };
+  }, [challenges, userProgress]);
+
   const tiers = [
+    // ... same tiers
     {
       name: "Daily Warmups",
       difficulty: "Beginner",

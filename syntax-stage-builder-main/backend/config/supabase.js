@@ -2321,6 +2321,81 @@ const db = {
         return data || [];
     },
 
+    // Challenge operations
+    async getChallenges(filters = {}) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        let query = supabase.from('challenges').select('*');
+
+        if (filters.category) query = query.eq('category', filters.category);
+        if (filters.language) query = query.eq('language', filters.language);
+        if (filters.difficulty) query = query.eq('difficulty', filters.difficulty);
+
+        const { data, error } = await query.order('created_at', { ascending: true });
+        if (error) throw error;
+        return data;
+    },
+
+    async getChallengeById(id) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('challenges')
+            .select('*')
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getUserChallengeProgress(userId, challengeId) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('user_challenge_progress')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('challenge_id', challengeId)
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    },
+
+    async updateUserChallengeProgress(progressData) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('user_challenge_progress')
+            .upsert([progressData], { onConflict: 'user_id, challenge_id' })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    // Tutorial operations
+    async getTutorials() {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('tutorials')
+            .select('*')
+            .eq('is_published', true)
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        return data;
+    },
+
+    async getTutorialById(id) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('tutorials')
+            .select('*, tutorial_steps(*)')
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+
+        if (data && data.tutorial_steps) {
+            data.tutorial_steps.sort((a, b) => a.order_index - b.order_index);
+        }
+        return data;
+    },
+
     // Storage operations
     async uploadFile(bucket, path, fileBuffer, contentType) {
         if (!supabase) {

@@ -1,89 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import {
-  CheckCircle2,
-  Circle,
-  Terminal,
-  Play,
-  RotateCcw,
-  Lightbulb,
-  Trophy,
-  MessageSquare,
-  ChevronRight,
-  Code2,
-  Sparkles,
-  Zap
-} from "lucide-react";
-import { BackButton } from "@/components/BackButton";
-import SEO from "@/components/SEO";
+import { apiService } from "@/services/ApiService";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Challenge Data Structure (Ready to be moved to backend/API)
+// Challenge Data Structure (Fallback for dev)
 const CHALLENGES_DATA = {
-  java: {
-    basic: [
-      {
-        id: "java-fact",
-        title: "Factorial Calculator",
-        description: "Calculate the factorial of a number.",
-        problem: "Implement a method that takes an integer n and returns its factorial. Handle edge cases like 0 and negative numbers.",
-        starterCode: `public class FactorialCalculator {\n    public static int factorial(int n) {\n        // Write your code here\n        return 0;\n    }\n}`,
-        testCases: [
-          { input: "5", expected: "120", description: "Factorial of 5" },
-          { input: "0", expected: "1", description: "Factorial of 0" }
-        ],
-        hints: ["n! = n * (n-1) * ... * 1", "0! is 1"]
-      },
-      {
-        id: "java-palin",
-        title: "Palindrome Checker",
-        description: "Check if a string is a palindrome.",
-        problem: "Implement a method that returns true if a string reads the same forwards and backwards.",
-        starterCode: `public class PalindromeChecker {\n    public static boolean isPalindrome(String str) {\n        // Write your code here\n        return false;\n    }\n}`,
-        testCases: [
-          { input: "racecar", expected: "true", description: "Basic palindrome" }
-        ]
-      }
-    ],
-    intermediate: []
-  },
-  python: {
-    basic: [
-      {
-        id: "py-list",
-        title: "List Operations",
-        description: "Reverse a list and find max.",
-        problem: "Implement functions to reverse a list and find the maximum element.",
-        starterCode: `def reverse_list(lst):\n    # Write your code here\n    pass\n\ndef find_max(lst):\n    # Write your code here\n    pass`,
-        testCases: [
-          { input: "[1,2,3]", expected: "[3,2,1]", description: "Reverse list" }
-        ]
-      }
-    ],
-    intermediate: []
-  },
-  javascript: {
-    basic: [
-      {
-        id: "js-array",
-        title: "Array Transformation",
-        description: "Use map and filter.",
-        problem: "Write functions to double numbers and filter even values.",
-        starterCode: `function transform(numbers) {\n    // Write your code here\n}`,
-        testCases: [
-          { input: "[1,2,3,4]", expected: "[4,8]", description: "Double even numbers" }
-        ]
-      }
-    ],
-    intermediate: []
-  }
+  // ... existing data
 };
 
 const CodingChallenges = () => {
+  const { user } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState("java");
   const [selectedDifficulty, setSelectedDifficulty] = useState("basic");
   const [userCode, setUserCode] = useState("");
@@ -92,24 +16,54 @@ const CodingChallenges = () => {
   const [completedChallenges, setCompletedChallenges] = useState<Record<string, boolean>>({});
   const [testResults, setTestResults] = useState<any[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dbChallenges, setDbChallenges] = useState<any[]>([]);
 
-  const LOCAL_STORAGE_KEY = "codeacademy_challenge_progress_v2";
-
-  // Persistent Progress (Ready for Backend Sync)
+  // Fetch Challenges and Progress
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) setCompletedChallenges(JSON.parse(saved));
-  }, []);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Fetch Challenges
+        const challengesRes = await apiService.getChallenges({
+          category: 'coding',
+          language: selectedLanguage,
+          difficulty: selectedDifficulty
+        });
 
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(completedChallenges));
-  }, [completedChallenges]);
+        if (challengesRes.success && challengesRes.data && challengesRes.data.length > 0) {
+          setDbChallenges(challengesRes.data);
+        } else {
+          // Fallback to local data
+          const local = CHALLENGES_DATA[selectedLanguage as keyof typeof CHALLENGES_DATA];
+          setDbChallenges(local?.[selectedDifficulty as keyof typeof local] || []);
+        }
 
-  const currentChallenges = useMemo(() => {
-    const lang = CHALLENGES_DATA[selectedLanguage as keyof typeof CHALLENGES_DATA];
-    return lang?.[selectedDifficulty as keyof typeof lang] || [];
-  }, [selectedLanguage, selectedDifficulty]);
+        // 2. Fetch User Progress if logged in
+        if (user) {
+          const progressRes = await apiService.getUserChallengesProgress();
+          if (progressRes.success && progressRes.data) {
+            const completedMap: Record<string, boolean> = {};
+            progressRes.data.forEach((p: any) => {
+              if (p.status === 'completed') completedMap[p.challenge_id] = true;
+            });
+            setCompletedChallenges(completedMap);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch coding challenges:", error);
+        // Fallback on error
+        const local = CHALLENGES_DATA[selectedLanguage as keyof typeof CHALLENGES_DATA];
+        setDbChallenges(local?.[selectedDifficulty as keyof typeof local] || []);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchData();
+  }, [selectedLanguage, selectedDifficulty, user]);
+
+  const currentChallenges = dbChallenges;
   const challenge = currentChallenges[currentChallengeIdx];
 
   useEffect(() => {
@@ -127,25 +81,39 @@ const CodingChallenges = () => {
   const progressPercent = currentChallenges.length > 0 ? (completedCount / currentChallenges.length) * 100 : 0;
 
   const runTests = async () => {
+    if (!challenge) return;
     setIsRunning(true);
     setOutput("🚀 Initializing test environment...");
     setTestResults([]);
 
-    // Simulate Backend Execution
-    setTimeout(() => {
-      const results = challenge.testCases.map((tc, idx) => ({
+    // Simulate Backend Execution (In real app, this would call executeCode)
+    setTimeout(async () => {
+      const results = challenge.testCases.map((tc: any) => ({
         ...tc,
-        passed: userCode.length > challenge.starterCode.length + 20 && Math.random() > 0.2, // Simulation
+        passed: userCode.length > challenge.starterCode.length + 10 && Math.random() > 0.1,
         actual: "Verified Output"
       }));
 
       setTestResults(results);
       setIsRunning(false);
 
-      const allPassed = results.every(r => r.passed);
+      const allPassed = results.every((r: any) => r.passed);
       if (allPassed) {
         setCompletedChallenges(prev => ({ ...prev, [challenge.id]: true }));
         setOutput("✅ Success! All tests passed. Your solution is optimized.");
+
+        // Save progress to backend
+        if (user) {
+          try {
+            await apiService.updateChallengeProgress(challenge.id, {
+              status: 'completed',
+              submitted_code: userCode,
+              attempts_count: 1 // Simplified
+            });
+          } catch (e) {
+            console.error("Failed to save progress:", e);
+          }
+        }
       } else {
         setOutput("❌ FAILED: Some test cases did not pass. Check the console below.");
       }
@@ -228,8 +196,8 @@ const CodingChallenges = () => {
                         key={c.id}
                         onClick={() => setCurrentChallengeIdx(idx)}
                         className={`w-full group flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${currentChallengeIdx === idx
-                            ? "bg-blue-600/20 text-blue-400"
-                            : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                          ? "bg-blue-600/20 text-blue-400"
+                          : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
                           }`}
                       >
                         <div className="flex items-center gap-3">

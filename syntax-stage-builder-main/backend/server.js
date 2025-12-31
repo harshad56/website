@@ -31,6 +31,8 @@ const analyticsRoutes = require('./routes/analytics');
 const fileRoutes = require('./routes/files');
 const wishlistRoutes = require('./routes/wishlist');
 const languagesRoutes = require('./routes/languages');
+const challengesRoutes = require('./routes/challenges');
+const tutorialsRoutes = require('./routes/tutorials');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -375,6 +377,8 @@ app.use('/api/analytics', authenticateToken, analyticsRoutes);
 app.use('/api/files', authenticateToken, fileRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/languages', languagesRoutes);
+app.use('/api/challenges', challengesRoutes);
+app.use('/api/tutorials', tutorialsRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

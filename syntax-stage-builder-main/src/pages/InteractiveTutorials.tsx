@@ -21,8 +21,33 @@ import {
 import SEO from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useEffect, useState, useMemo } from "react";
+import { apiService } from "@/services/ApiService";
+import { useAuth } from "@/contexts/AuthContext";
+
 const InteractiveTutorials = () => {
+  const { user } = useAuth();
+  const [dbTutorials, setDbTutorials] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTutorials = async () => {
+      try {
+        const res = await apiService.getTutorials();
+        if (res.success && res.data) {
+          setDbTutorials(res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tutorials:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTutorials();
+  }, []);
+
   const tracks = [
+    // ... existing tracks (can be merged with dbTutorials if schema matches exactly)
     {
       title: "Foundations",
       description: "Guided introductions to syntax, variables, and control flow across 12 languages.",
