@@ -2358,6 +2358,16 @@ const db = {
         return data;
     },
 
+    async getUserChallengesProgress(userId) {
+        if (!supabase) throw new Error('Supabase not configured.');
+        const { data, error } = await supabase
+            .from('user_challenge_progress')
+            .select('*')
+            .eq('user_id', userId);
+        if (error) throw error;
+        return data;
+    },
+
     async updateUserChallengeProgress(progressData) {
         if (!supabase) throw new Error('Supabase not configured.');
         const { data, error } = await supabase

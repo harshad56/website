@@ -96,16 +96,11 @@ router.post('/:id/progress', authenticateToken, async (req, res) => {
 router.get('/user/progress', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { data, error } = await db.supabase
-            .from('user_challenge_progress')
-            .select('*')
-            .eq('user_id', userId);
-
-        if (error) throw error;
+        const progress = await db.getUserChallengesProgress(userId);
 
         res.json({
             success: true,
-            data: data
+            data: progress
         });
     } catch (error) {
         winston.error('Get user challenge progress error:', error);
