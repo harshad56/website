@@ -27,7 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 // Challenge Data Structure (Fallback for dev)
 const CHALLENGES_DATA = {
   java: {
-    basic: [
+    beginner: [
       {
         id: "java-fact",
         title: "Factorial Calculator",
@@ -54,7 +54,7 @@ const CHALLENGES_DATA = {
     intermediate: []
   },
   python: {
-    basic: [
+    beginner: [
       {
         id: "py-list",
         title: "List Operations",
@@ -69,7 +69,7 @@ const CHALLENGES_DATA = {
     intermediate: []
   },
   javascript: {
-    basic: [
+    beginner: [
       {
         id: "js-array",
         title: "Array Transformation",
@@ -88,7 +88,7 @@ const CHALLENGES_DATA = {
 const CodingChallenges = () => {
   const { user } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState("java");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("basic");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("beginner");
   const [userCode, setUserCode] = useState("");
   const [output, setOutput] = useState("");
   const [currentChallengeIdx, setCurrentChallengeIdx] = useState(0);
@@ -255,7 +255,7 @@ const CodingChallenges = () => {
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-white/10">
-                    <SelectItem value="basic">Easy</SelectItem>
+                    <SelectItem value="beginner">Easy</SelectItem>
                     <SelectItem value="intermediate">Medium</SelectItem>
                   </SelectContent>
                 </Select>
