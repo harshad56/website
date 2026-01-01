@@ -195,69 +195,94 @@ const CodingChallenges = () => {
   const runTests = async () => {
     if (!challenge) return;
     setIsRunning(true);
-    setOutput("🚀 Initializing test environment...");
+    setOutput("🚀 Executing your code...");
     setTestResults([]);
 
-    // Simulate Backend Execution (In real app, this would call executeCode)
-    setTimeout(async () => {
-      const isInitialCode = userCode === challenge.starterCode.replace(/\\n/g, '\n');
+    try {
+      // Call the real backend code execution API
+      const response = await apiService.executeCode(
+        challenge.language || selectedLanguage,
+        userCode,
+        challenge.testCases
+      );
 
-      const results = challenge.testCases.map((tc: any) => ({
-        ...tc,
-        passed: !isInitialCode && Math.random() > 0.2,
-        actual: isInitialCode ? "No output (Empty solution)" : "Verified Output"
-      }));
+      if (response.success && response.data) {
+        const results = response.data.testResults || [];
+        setTestResults(results);
+        setIsRunning(false);
 
-      setTestResults(results);
-      setIsRunning(false);
+        const allPassed = results.every((r: any) => r.passed);
 
-      const allPassed = results.every((r: any) => r.passed);
-      if (allPassed) {
-        setCompletedChallenges(prev => ({ ...prev, [challenge.id]: true }));
-        setOutput("✅ Success! All tests passed. Your solution is optimized.");
+        if (allPassed) {
+          setCompletedChallenges(prev => ({ ...prev, [challenge.id]: true }));
+          setOutput("✅ Success! All tests passed. Your solution is optimized.");
 
-        // Save progress to backend
-        if (user) {
-          try {
-            await apiService.updateChallengeProgress(challenge.id, {
-              status: 'completed',
-              submitted_code: userCode,
-              attempts_count: 1 // Simplified
-            });
-
-            // Fetch updated user stats and show success modal
-            const [lbRes, progressRes] = await Promise.all([
-              apiService.getLeaderboard(),
-              apiService.getUserChallengesProgress()
-            ]);
-
-            if (lbRes.success && lbRes.data) {
-              const userRank = lbRes.data.findIndex((entry: any) => entry.user_id === user.id) + 1;
-              const userEntry = lbRes.data.find((entry: any) => entry.user_id === user.id);
-              const totalUsers = lbRes.data.length;
-              const completedCount = progressRes.success ? progressRes.data.filter((p: any) => p.status === 'completed').length : 0;
-
-              setUserStats({
-                rank: userRank || '?',
-                totalPoints: userEntry?.total_points || 0,
-                challengesCompleted: completedCount,
-                totalUsers: totalUsers,
-                pointsEarned: challenge.points || 50
+          // Save progress to backend
+          if (user) {
+            try {
+              await apiService.updateChallengeProgress(challenge.id, {
+                status: 'completed',
+                submitted_code: userCode,
+                attempts_count: 1
               });
 
-              setShowSuccessModal(true);
+              // Fetch updated user stats and REFRESH leaderboard
+              const [lbRes, progressRes] = await Promise.all([
+                apiService.getLeaderboard(),
+                apiService.getUserChallengesProgress()
+              ]);
+
+              if (lbRes.success && lbRes.data) {
+                // Update leaderboard data immediately
+                setLeaderboardData(lbRes.data);
+
+                const userRank = lbRes.data.findIndex((entry: any) => entry.user_id === user.id) + 1;
+                const userEntry = lbRes.data.find((entry: any) => entry.user_id === user.id);
+                const totalUsers = lbRes.data.length;
+                const completedCount = progressRes.success ? progressRes.data.filter((p: any) => p.status === 'completed').length : 0;
+
+                setUserStats({
+                  rank: userRank || '?',
+                  totalPoints: userEntry?.total_points || 0,
+                  challengesCompleted: completedCount,
+                  totalUsers: totalUsers,
+                  pointsEarned: challenge.points || 50
+                });
+
+                setShowSuccessModal(true);
+              }
+            } catch (error) {
+              console.error('Failed to update progress:', error);
             }
-          } catch (error) {
-            console.error('Failed to update progress:', error);
+          } else {
+            // Not logged in - just show basic success
+            setShowSuccessModal(true);
           }
         } else {
-          // Not logged in - just show basic success
-          setShowSuccessModal(true);
+          setOutput("❌ FAILED: Some test cases did not pass. Review the errors below.");
         }
       } else {
-        setOutput("❌ FAILED: Some test cases did not pass. Check the console below.");
+        setOutput("❌ ERROR: Code execution failed. Check your syntax.");
+        setIsRunning(false);
       }
-    }, 1500);
+    } catch (error) {
+      console.error('Code execution error:', error);
+      setOutput("❌ ERROR: Failed to execute code. Please try again.");
+      setIsRunning(false);
+    }
+  };
+
+  const showHints = () => {
+    if (!challenge || !challenge.hints || challenge.hints.length === 0) {
+      setOutput("💡 No hints available for this challenge.");
+      return;
+    }
+
+    const hintText = challenge.hints.map((hint: string, idx: number) =>
+      `💡 Hint ${idx + 1}: ${hint}`
+    ).join('\n\n');
+
+    setOutput(hintText);
   };
 
   return (

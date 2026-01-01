@@ -496,23 +496,14 @@ class ApiService {
 
   // Code Execution
   async executeCode(language: string, code: string, testCases?: any[]): Promise<ApiResponse<any>> {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Simulate code execution
-    const result = {
-      output: 'Code executed successfully!',
-      executionTime: Math.random() * 1000 + 100,
-      memoryUsage: Math.random() * 50 + 10,
-      testResults: testCases?.map(test => ({
-        ...test,
-        passed: Math.random() > 0.3 // 70% pass rate
-      })) || []
-    };
-
-    return {
-      success: true,
-      data: result
-    };
+    return this.request('/execute', {
+      method: 'POST',
+      body: JSON.stringify({
+        language,
+        code,
+        testCases
+      })
+    });
   }
 
   // Analytics
