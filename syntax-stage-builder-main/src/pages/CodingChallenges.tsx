@@ -143,14 +143,19 @@ const CodingChallenges = () => {
         }
 
         // 4. Fetch User Progress if logged in
-        if (user) {
-          const progressRes = await apiService.getUserChallengesProgress();
-          if (progressRes.success && progressRes.data) {
-            const completedMap: Record<string, boolean> = {};
-            progressRes.data.forEach((p: any) => {
-              if (p.status === 'completed') completedMap[p.challenge_id] = true;
-            });
-            setCompletedChallenges(completedMap);
+        if (user && localStorage.getItem('token')) {
+          try {
+            const progressRes = await apiService.getUserChallengesProgress();
+            if (progressRes.success && progressRes.data) {
+              const completedMap: Record<string, boolean> = {};
+              progressRes.data.forEach((p: any) => {
+                if (p.status === 'completed') completedMap[p.challenge_id] = true;
+              });
+              setCompletedChallenges(completedMap);
+            }
+          } catch (progressError) {
+            console.log('User progress not available (not signed in or token expired)');
+            // This is fine - user just isn't signed in
           }
         }
       } catch (error) {
