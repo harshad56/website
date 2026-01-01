@@ -2390,14 +2390,30 @@ const db = {
         // 2. If newly completed, increment user total points
         if (progressData.status === 'completed' && (!existing || existing.status !== 'completed')) {
             try {
-                // Fetch current points
-                const { data: progress } = await supabase
+                // Fetch current progress (or create if doesn't exist)
+                let { data: progress, error: progressError } = await supabase
                     .from('user_progress')
-                    .select('total_points')
+                    .select('total_points, challenges_completed')
                     .eq('user_id', progressData.user_id)
                     .single();
 
+                // If user_progress doesn't exist, initialize it
+                if (progressError && progressError.code === 'PGRST116') {
+                    const { data: newProgress } = await supabase
+                        .from('user_progress')
+                        .insert({
+                            user_id: progressData.user_id,
+                            total_points: 0,
+                            challenges_completed: 0,
+                            last_activity: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+                    progress = newProgress;
+                }
+
                 const currentPoints = progress?.total_points || 0;
+                const currentCompleted = progress?.challenges_completed || 0;
 
                 // Fetch challenge points (default to 50 if not found)
                 const { data: challenge } = await supabase
@@ -2413,10 +2429,11 @@ const db = {
                     .upsert({
                         user_id: progressData.user_id,
                         total_points: currentPoints + pointsToAdd,
+                        challenges_completed: currentCompleted + 1,
                         last_activity: new Date().toISOString()
                     }, { onConflict: 'user_id' });
 
-                winston.info(`Points updated for user ${progressData.user_id}: +${pointsToAdd}`);
+                winston.info(`Points updated for user ${progressData.user_id}: +${pointsToAdd} (Total: ${currentPoints + pointsToAdd}, Completed: ${currentCompleted + 1})`);
             } catch (err) {
                 winston.error('Failed to update user points:', err);
             }
