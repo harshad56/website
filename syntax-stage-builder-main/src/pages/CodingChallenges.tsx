@@ -51,7 +51,8 @@ const CHALLENGES_DATA = {
         ]
       }
     ],
-    intermediate: []
+    intermediate: [],
+    advanced: []
   },
   python: {
     beginner: [
@@ -66,7 +67,8 @@ const CHALLENGES_DATA = {
         ]
       }
     ],
-    intermediate: []
+    intermediate: [],
+    advanced: []
   },
   javascript: {
     beginner: [
@@ -81,7 +83,8 @@ const CHALLENGES_DATA = {
         ]
       }
     ],
-    intermediate: []
+    intermediate: [],
+    advanced: []
   }
 };
 
@@ -281,8 +284,9 @@ const CodingChallenges = () => {
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-white/10 text-white">
-                    <SelectItem value="beginner">Easy</SelectItem>
-                    <SelectItem value="intermediate">Medium</SelectItem>
+                    <SelectItem value="beginner">Beginner (Easy)</SelectItem>
+                    <SelectItem value="intermediate">Intermediate (Medium)</SelectItem>
+                    <SelectItem value="advanced">Advanced (Hard)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
