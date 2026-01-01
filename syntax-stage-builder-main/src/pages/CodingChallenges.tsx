@@ -123,7 +123,6 @@ const CodingChallenges = () => {
 
         // 3. Fetch Challenges
         const challengesRes = await apiService.getChallenges({
-          category: 'coding',
           language: selectedLanguage,
           difficulty: selectedDifficulty
         });
