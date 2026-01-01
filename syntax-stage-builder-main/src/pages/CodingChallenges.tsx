@@ -16,8 +16,8 @@ import {
   MessageSquare,
   ChevronRight,
   Code2,
-  Sparkles,
-  Zap
+  Zap,
+  XCircle
 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
@@ -169,7 +169,9 @@ const CodingChallenges = () => {
 
   useEffect(() => {
     if (challenge) {
-      setUserCode(challenge.starterCode);
+      // Replace literal \n with actual newlines
+      const formattedCode = (challenge.starterCode || "").replace(/\\n/g, '\n');
+      setUserCode(formattedCode);
       setOutput("");
       setTestResults([]);
     }
@@ -189,10 +191,12 @@ const CodingChallenges = () => {
 
     // Simulate Backend Execution (In real app, this would call executeCode)
     setTimeout(async () => {
+      const isInitialCode = userCode === challenge.starterCode.replace(/\\n/g, '\n');
+
       const results = challenge.testCases.map((tc: any) => ({
         ...tc,
-        passed: userCode.length > challenge.starterCode.length + 10 && Math.random() > 0.1,
-        actual: "Verified Output"
+        passed: !isInitialCode && Math.random() > 0.2,
+        actual: isInitialCode ? "No output (Empty solution)" : "Verified Output"
       }));
 
       setTestResults(results);
@@ -425,22 +429,41 @@ const CodingChallenges = () => {
                           </pre>
 
                           {testResults.length > 0 && (
-                            <div className="space-y-3 pt-4 border-t border-white/10">
-                              <h4 className="text-[10px] font-bold uppercase text-slate-500 tracking-tighter">Test Results</h4>
-                              {testResults.map((res, i) => (
-                                <motion.div
-                                  key={i}
-                                  initial={{ opacity: 0, x: 20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: i * 0.1 }}
-                                  className={`p-3 rounded-xl border ${res.passed ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"}`}
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Test Results</h4>
+                              {testResults.map((result, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`p-4 rounded-2xl border ${result.passed
+                                    ? "bg-green-500/5 border-green-500/20"
+                                    : "bg-red-500/5 border-red-500/20"
+                                    } transition-all duration-300`}
                                 >
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-[10px] font-bold text-slate-300">{res.description}</span>
-                                    {res.passed ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : < Zap className="w-3 h-3 text-rose-400" />}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-mono text-slate-400 capitalize">{result.description || `Case #${idx + 1}`}</span>
+                                    {result.passed ? (
+                                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 text-red-500" />
+                                    )}
                                   </div>
-                                  <div className="text-[10px] font-mono text-slate-500">Exp: {res.expected}</div>
-                                </motion.div>
+                                  <div className="grid grid-cols-2 gap-4 text-[10px] font-mono">
+                                    <div>
+                                      <div className="text-slate-500 mb-1">INPUT</div>
+                                      <div className="text-slate-300 bg-black/20 p-2 rounded-lg truncate">{result.input}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-slate-500 mb-1">EXPECTED</div>
+                                      <div className="text-blue-400 bg-black/20 p-2 rounded-lg truncate">{result.expected}</div>
+                                    </div>
+                                  </div>
+                                  {!result.passed && (
+                                    <div className="mt-3 pt-3 border-t border-white/5">
+                                      <div className="text-[10px] text-slate-500 mb-1 font-mono uppercase">ACTUAL</div>
+                                      <div className="text-red-400 font-mono text-xs">{result.actual || "No output returned"}</div>
+                                    </div>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
