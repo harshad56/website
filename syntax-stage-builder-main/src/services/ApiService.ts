@@ -1040,6 +1040,14 @@ class ApiService {
     return this.request<any[]>(`/challenges?${queryParams.toString()}`, { method: 'GET' });
   }
 
+  async getLeaderboard(): Promise<ApiResponse<any>> {
+    return this.request('/challenges/leaderboard', { method: 'GET' });
+  }
+
+  async getChallengeLanguages(): Promise<ApiResponse<any>> {
+    return this.request('/challenges/languages', { method: 'GET' });
+  }
+
   async getChallenge(id: string): Promise<ApiResponse<any>> {
     return this.request<any>(`/challenges/${id}`, { method: 'GET' });
   }

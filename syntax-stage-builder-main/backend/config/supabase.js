@@ -2370,13 +2370,94 @@ const db = {
 
     async updateUserChallengeProgress(progressData) {
         if (!supabase) throw new Error('Supabase not configured.');
+
+        // 1. Check if already completed to avoid double points
+        const { data: existing } = await supabase
+            .from('user_challenge_progress')
+            .select('status')
+            .eq('user_id', progressData.user_id)
+            .eq('challenge_id', progressData.challenge_id)
+            .single();
+
         const { data, error } = await supabase
             .from('user_challenge_progress')
             .upsert([progressData], { onConflict: 'user_id, challenge_id' })
             .select()
             .single();
+
+        if (error) throw error;
+
+        // 2. If newly completed, increment user total points
+        if (progressData.status === 'completed' && (!existing || existing.status !== 'completed')) {
+            try {
+                // Fetch current points
+                const { data: progress } = await supabase
+                    .from('user_progress')
+                    .select('total_points')
+                    .eq('user_id', progressData.user_id)
+                    .single();
+
+                const currentPoints = progress?.total_points || 0;
+
+                // Fetch challenge points (default to 50 if not found)
+                const { data: challenge } = await supabase
+                    .from('challenges')
+                    .select('points')
+                    .eq('id', progressData.challenge_id)
+                    .single();
+
+                const pointsToAdd = challenge?.points || 50;
+
+                await supabase
+                    .from('user_progress')
+                    .upsert({
+                        user_id: progressData.user_id,
+                        total_points: currentPoints + pointsToAdd,
+                        last_activity: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+
+                winston.info(`Points updated for user ${progressData.user_id}: +${pointsToAdd}`);
+            } catch (err) {
+                winston.error('Failed to update user points:', err);
+            }
+        }
+
+        return data;
+    },
+
+    async getLeaderboard(limit = 10) {
+        if (!supabase) throw new Error('Supabase not configured.');
+
+        // Join user_progress with users to get names/avatars
+        const { data, error } = await supabase
+            .from('user_progress')
+            .select(`
+                total_points,
+                user_id,
+                users (
+                    name,
+                    avatar
+                )
+            `)
+            .order('total_points', { ascending: false })
+            .limit(limit);
+
         if (error) throw error;
         return data;
+    },
+
+    async getDistinctLanguages() {
+        if (!supabase) throw new Error('Supabase not configured.');
+
+        const { data, error } = await supabase
+            .from('challenges')
+            .select('language');
+
+        if (error) throw error;
+
+        // Filter unique languages in JS to avoid complex distinct query in Supabase simple select
+        const languages = [...new Set(data.map(item => item.language))];
+        return languages;
     },
 
     // Tutorial operations

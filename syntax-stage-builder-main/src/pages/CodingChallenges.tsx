@@ -97,13 +97,28 @@ const CodingChallenges = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dbChallenges, setDbChallenges] = useState<any[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<string[]>(["javascript", "python", "java"]);
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Fetch Challenges and Progress
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch Challenges
+        // 1. Fetch available languages
+        const langRes = await apiService.getChallengeLanguages();
+        if (langRes.success && langRes.data) {
+          setAvailableLanguages(langRes.data);
+        }
+
+        // 2. Fetch Leaderboard
+        const lbRes = await apiService.getLeaderboard();
+        if (lbRes.success && lbRes.data) {
+          setLeaderboardData(lbRes.data);
+        }
+
+        // 3. Fetch Challenges
         const challengesRes = await apiService.getChallenges({
           category: 'coding',
           language: selectedLanguage,
@@ -124,7 +139,7 @@ const CodingChallenges = () => {
           setDbChallenges(local?.[selectedDifficulty as keyof typeof local] || []);
         }
 
-        // 2. Fetch User Progress if logged in
+        // 4. Fetch User Progress if logged in
         if (user) {
           const progressRes = await apiService.getUserChallengesProgress();
           if (progressRes.success && progressRes.data) {
@@ -247,20 +262,20 @@ const CodingChallenges = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                  <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12">
+                  <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12 text-white">
                     <SelectValue placeholder="Language" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10">
-                    <SelectItem value="java">Java</SelectItem>
-                    <SelectItem value="python">Python</SelectItem>
-                    <SelectItem value="javascript">JavaScript</SelectItem>
+                  <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    {availableLanguages.map((lang) => (
+                      <SelectItem key={lang} value={lang} className="capitalize">{lang}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                  <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12">
+                  <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12 text-white">
                     <SelectValue placeholder="Level" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10">
+                  <SelectContent className="bg-slate-900 border-white/10 text-white">
                     <SelectItem value="beginner">Easy</SelectItem>
                     <SelectItem value="intermediate">Medium</SelectItem>
                   </SelectContent>
@@ -302,9 +317,10 @@ const CodingChallenges = () => {
 
               <Button
                 variant="outline"
-                className="w-full border-white/10 bg-white/5 hover:bg-blue-600/10 text-slate-300 hover:text-blue-400 rounded-xl h-12"
+                className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-2xl h-14 font-bold text-lg group transition-all duration-300"
+                onClick={() => setShowLeaderboard(true)}
               >
-                <Trophy className="w-4 h-4 mr-2" />
+                <Trophy className="w-5 h-5 mr-3 text-yellow-500 group-hover:scale-120 transition-transform" />
                 View Leaderboard
               </Button>
             </div>
@@ -477,6 +493,95 @@ const CodingChallenges = () => {
           </p>
         </footer>
       </div>
+      {/* Leaderboard Modal */}
+      <AnimatePresence>
+        {showLeaderboard && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLeaderboard(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 border-b border-white/5 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center border border-yellow-500/20">
+                    <Trophy className="w-6 h-6 text-yellow-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Global Ranking</h2>
+                    <p className="text-slate-500 text-sm font-medium">Top performing syntax builders</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowLeaderboard(false)}
+                  className="rounded-full hover:bg-white/5 text-slate-400"
+                >
+                  <ChevronRight className="w-6 h-6 rotate-90" />
+                </Button>
+              </div>
+
+              <div className="p-6 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4">
+                  {leaderboardData.length > 0 ? leaderboardData.map((entry, idx) => (
+                    <div
+                      key={entry.user_id}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? "bg-yellow-500 text-slate-950" :
+                            idx === 1 ? "bg-slate-300 text-slate-950" :
+                              idx === 2 ? "bg-amber-600 text-slate-950" : "bg-slate-800 text-slate-400"
+                          }`}>
+                          {idx + 1}
+                        </div>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
+                          {entry.users?.avatar ? (
+                            <img src={entry.users.avatar} alt={entry.users.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">
+                              {entry.users?.name?.[0] || "?"}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-lg">{entry.users?.name || "Anonymous"}</div>
+                          <div className="text-slate-500 text-xs font-mono uppercase tracking-widest">{entry.total_points} EXP</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <Badge variant="outline" className="border-blue-500/30 text-blue-400 bg-blue-500/10">
+                          {idx === 0 ? "Master" : idx < 3 ? "Pro" : "Student"}
+                        </Badge>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4 border border-white/5">
+                        <Trophy className="w-8 h-8 text-slate-600" />
+                      </div>
+                      <p className="text-slate-500 font-medium">No rankings available yet.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-white/5 border-t border-white/5 text-center">
+                <p className="text-slate-500 text-sm">Keep solving challenges to climb the ranks!</p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

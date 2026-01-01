@@ -111,4 +111,42 @@ router.get('/user/progress', authenticateToken, async (req, res) => {
     }
 });
 
+// @route   GET /api/challenges/leaderboard
+// @desc    Get top users by total points
+// @access  Public
+router.get('/leaderboard', async (req, res) => {
+    try {
+        const leaderboard = await db.getLeaderboard(10);
+        res.json({
+            success: true,
+            data: leaderboard
+        });
+    } catch (error) {
+        winston.error('Get leaderboard error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch leaderboard'
+        });
+    }
+});
+
+// @route   GET /api/challenges/languages
+// @desc    Get all unique languages available in challenges
+// @access  Public
+router.get('/languages', async (req, res) => {
+    try {
+        const languages = await db.getDistinctLanguages();
+        res.json({
+            success: true,
+            data: languages
+        });
+    } catch (error) {
+        winston.error('Get languages error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch languages'
+        });
+    }
+});
+
 module.exports = router;
