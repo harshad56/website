@@ -32,64 +32,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @route   GET /api/challenges/:id
-// @desc    Get challenge details
-// @access  Public
-router.get('/:id', async (req, res) => {
-    try {
-        const challenge = await db.getChallengeById(req.params.id);
-        if (!challenge) {
-            return res.status(404).json({
-                success: false,
-                message: 'Challenge not found'
-            });
-        }
-        res.json({
-            success: true,
-            data: challenge
-        });
-    } catch (error) {
-        winston.error('Get challenge by ID error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch challenge details'
-        });
-    }
-});
-
-// @route   POST /api/challenges/:id/progress
-// @desc    Update user progress for a challenge
-// @access  Private
-router.post('/:id/progress', authenticateToken, async (req, res) => {
-    try {
-        const { status, submitted_code, attempts_count, completion_time_ms } = req.body;
-        const userId = req.user.id;
-        const challengeId = req.params.id;
-
-        const progress = await db.updateUserChallengeProgress({
-            user_id: userId,
-            challenge_id: challengeId,
-            status,
-            submitted_code,
-            attempts_count,
-            completion_time_ms,
-            last_attempt_at: new Date().toISOString()
-        });
-
-        res.json({
-            success: true,
-            data: progress,
-            message: 'Progress updated successfully'
-        });
-    } catch (error) {
-        winston.error('Update challenge progress error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update progress'
-        });
-    }
-});
-
 // @route   GET /api/challenges/user/progress
 // @desc    Get user's progress for all challenges
 // @access  Private
@@ -145,6 +87,64 @@ router.get('/languages', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch languages'
+        });
+    }
+});
+
+// @route   GET /api/challenges/:id
+// @desc    Get challenge details
+// @access  Public
+router.get('/:id', async (req, res) => {
+    try {
+        const challenge = await db.getChallengeById(req.params.id);
+        if (!challenge) {
+            return res.status(404).json({
+                success: false,
+                message: 'Challenge not found'
+            });
+        }
+        res.json({
+            success: true,
+            data: challenge
+        });
+    } catch (error) {
+        winston.error('Get challenge by ID error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch challenge details'
+        });
+    }
+});
+
+// @route   POST /api/challenges/:id/progress
+// @desc    Update user progress for a challenge
+// @access  Private
+router.post('/:id/progress', authenticateToken, async (req, res) => {
+    try {
+        const { status, submitted_code, attempts_count, completion_time_ms } = req.body;
+        const userId = req.user.id;
+        const challengeId = req.params.id;
+
+        const progress = await db.updateUserChallengeProgress({
+            user_id: userId,
+            challenge_id: challengeId,
+            status,
+            submitted_code,
+            attempts_count,
+            completion_time_ms,
+            last_attempt_at: new Date().toISOString()
+        });
+
+        res.json({
+            success: true,
+            data: progress,
+            message: 'Progress updated successfully'
+        });
+    } catch (error) {
+        winston.error('Update challenge progress error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update progress'
         });
     }
 });
