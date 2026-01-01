@@ -130,7 +130,8 @@ const CodingChallenges = () => {
           const mapped = challengesRes.data.map((c: any) => ({
             ...c,
             starterCode: c.starter_code || c.starterCode,
-            problem: c.problem_statement || c.problem || c.description
+            problem: c.problem_statement || c.problem || c.description,
+            testCases: c.test_cases || c.testCases || []
           }));
           setDbChallenges(mapped);
         } else {
@@ -539,8 +540,8 @@ const CodingChallenges = () => {
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? "bg-yellow-500 text-slate-950" :
-                            idx === 1 ? "bg-slate-300 text-slate-950" :
-                              idx === 2 ? "bg-amber-600 text-slate-950" : "bg-slate-800 text-slate-400"
+                          idx === 1 ? "bg-slate-300 text-slate-950" :
+                            idx === 2 ? "bg-amber-600 text-slate-950" : "bg-slate-800 text-slate-400"
                           }`}>
                           {idx + 1}
                         </div>
