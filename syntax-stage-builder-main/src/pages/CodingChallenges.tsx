@@ -103,6 +103,8 @@ const CodingChallenges = () => {
   const [availableLanguages, setAvailableLanguages] = useState<string[]>(["javascript", "python", "java"]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [userStats, setUserStats] = useState<any>(null);
 
   // Fetch Challenges and Progress
   useEffect(() => {
@@ -222,9 +224,35 @@ const CodingChallenges = () => {
               submitted_code: userCode,
               attempts_count: 1 // Simplified
             });
-          } catch (e) {
-            console.error("Failed to save progress:", e);
+
+            // Fetch updated user stats and show success modal
+            const [lbRes, progressRes] = await Promise.all([
+              apiService.getLeaderboard(),
+              apiService.getUserChallengesProgress()
+            ]);
+
+            if (lbRes.success && lbRes.data) {
+              const userRank = lbRes.data.findIndex((entry: any) => entry.user_id === user.id) + 1;
+              const userEntry = lbRes.data.find((entry: any) => entry.user_id === user.id);
+              const totalUsers = lbRes.data.length;
+              const completedCount = progressRes.success ? progressRes.data.filter((p: any) => p.status === 'completed').length : 0;
+
+              setUserStats({
+                rank: userRank || '?',
+                totalPoints: userEntry?.total_points || 0,
+                challengesCompleted: completedCount,
+                totalUsers: totalUsers,
+                pointsEarned: challenge.points || 50
+              });
+
+              setShowSuccessModal(true);
+            }
+          } catch (error) {
+            console.error('Failed to update progress:', error);
           }
+        } else {
+          // Not logged in - just show basic success
+          setShowSuccessModal(true);
         }
       } else {
         setOutput("❌ FAILED: Some test cases did not pass. Check the console below.");
@@ -525,6 +553,106 @@ const CodingChallenges = () => {
           </p>
         </footer>
       </div>
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/20 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              {/* Celebration Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 blur-3xl" />
+
+              <div className="relative z-10 p-8">
+                {/* Success Icon */}
+                <div className="flex justify-center mb-6">
+                  <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center border-4 border-green-500/30 animate-pulse">
+                    <CheckCircle2 className="w-10 h-10 text-green-500" />
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-black text-white text-center mb-2">Challenge Completed!</h2>
+                <p className="text-slate-400 text-center mb-8">Outstanding work! You've earned points.</p>
+
+                {user && userStats ? (
+                  <>
+                    {/* Points Earned */}
+                    <div className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
+                      <div className="text-center">
+                        <div className="text-5xl font-black text-green-500 mb-2">+{userStats.pointsEarned}</div>
+                        <div className="text-slate-400 text-sm uppercase tracking-widest">Points Earned</div>
+                      </div>
+                    </div>
+
+                    {/* User Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
+                        <div className="text-2xl font-black text-blue-400">#{userStats.rank}</div>
+                        <div className="text-slate-500 text-xs uppercase tracking-widest mt-1">Your Rank</div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
+                        <div className="text-2xl font-black text-yellow-400">{userStats.totalPoints}</div>
+                        <div className="text-slate-500 text-xs uppercase tracking-widest mt-1">Total Points</div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
+                        <div className="text-2xl font-black text-purple-400">{userStats.challengesCompleted}</div>
+                        <div className="text-slate-500 text-xs uppercase tracking-widest mt-1">Completed</div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
+                        <div className="text-2xl font-black text-pink-400">{userStats.totalUsers}</div>
+                        <div className="text-slate-500 text-xs uppercase tracking-widest mt-1">Total Users</div>
+                      </div>
+                    </div>
+
+                    {/* Leaderboard CTA */}
+                    <Button
+                      onClick={() => {
+                        setShowSuccessModal(false);
+                        setShowLeaderboard(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold h-14 rounded-2xl mb-3"
+                    >
+                      <Trophy className="w-5 h-5 mr-2" />
+                      View Full Leaderboard
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-slate-400 mb-6">Sign in to track your progress and compete on the leaderboard!</p>
+                    <Button
+                      onClick={() => setShowSuccessModal(false)}
+                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 px-8 rounded-2xl"
+                    >
+                      Continue Coding
+                    </Button>
+                  </div>
+                )}
+
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl h-12 mt-2"
+                >
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Leaderboard Modal */}
       <AnimatePresence>
         {showLeaderboard && (
@@ -564,39 +692,55 @@ const CodingChallenges = () => {
 
               <div className="p-6 max-h-[60vh] overflow-y-auto">
                 <div className="space-y-4">
-                  {leaderboardData.length > 0 ? leaderboardData.map((entry, idx) => (
-                    <div
-                      key={entry.user_id}
-                      className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? "bg-yellow-500 text-slate-950" :
-                          idx === 1 ? "bg-slate-300 text-slate-950" :
-                            idx === 2 ? "bg-amber-600 text-slate-950" : "bg-slate-800 text-slate-400"
-                          }`}>
-                          {idx + 1}
-                        </div>
-                        <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
-                          {entry.users?.avatar ? (
-                            <img src={entry.users.avatar} alt={entry.users.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">
-                              {entry.users?.name?.[0] || "?"}
+                  {leaderboardData.length > 0 ? leaderboardData.map((entry, idx) => {
+                    const isCurrentUser = user && entry.user_id === user.id;
+
+                    return (
+                      <div
+                        key={entry.user_id}
+                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${isCurrentUser
+                          ? 'bg-blue-500/20 border-blue-500/50 ring-2 ring-blue-500/30 shadow-lg shadow-blue-500/20'
+                          : 'bg-white/5 border-white/5 hover:bg-white/10'
+                          }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? "bg-yellow-500 text-slate-950" :
+                            idx === 1 ? "bg-slate-300 text-slate-950" :
+                              idx === 2 ? "bg-amber-600 text-slate-950" :
+                                isCurrentUser ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-400"
+                            }`}>
+                            {idx + 1}
+                          </div>
+                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
+                            {entry.users?.avatar ? (
+                              <img src={entry.users.avatar} alt={entry.users.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">
+                                {entry.users?.name?.[0] || "?"}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className={`font-bold text-lg flex items-center gap-2 ${isCurrentUser ? 'text-blue-400' : 'text-white'}`}>
+                              {entry.users?.name || "Anonymous"}
+                              {isCurrentUser && (
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">YOU</Badge>
+                              )}
                             </div>
-                          )}
+                            <div className="text-slate-500 text-xs font-mono uppercase tracking-widest">{entry.total_points} EXP</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-bold text-white text-lg">{entry.users?.name || "Anonymous"}</div>
-                          <div className="text-slate-500 text-xs font-mono uppercase tracking-widest">{entry.total_points} EXP</div>
+                        <div className="flex flex-col items-end">
+                          <Badge variant="outline" className={`${idx === 0 ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10' :
+                            idx < 3 ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
+                              'border-slate-500/30 text-slate-400 bg-slate-500/10'
+                            }`}>
+                            {idx === 0 ? "Master" : idx < 3 ? "Pro" : "Student"}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <Badge variant="outline" className="border-blue-500/30 text-blue-400 bg-blue-500/10">
-                          {idx === 0 ? "Master" : idx < 3 ? "Pro" : "Student"}
-                        </Badge>
-                      </div>
-                    </div>
-                  )) : (
+                    );
+                  }) : (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4 border border-white/5">
                         <Trophy className="w-8 h-8 text-slate-600" />
