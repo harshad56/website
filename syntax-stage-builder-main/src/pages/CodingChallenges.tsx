@@ -46,6 +46,7 @@ const CHALLENGES_DATA = {
         description: "Check if a string is a palindrome.",
         problem: "Implement a method that returns true if a string reads the same forwards and backwards.",
         starterCode: `public class PalindromeChecker {\n    public static boolean isPalindrome(String str) {\n        // Write your code here\n        return false;\n    }\n}`,
+        hints: ["Use a loop or split/reverse/join", "Check if the string is equal to its reverse"],
         testCases: [
           { input: "racecar", expected: "true", description: "Basic palindrome" }
         ]
@@ -62,6 +63,7 @@ const CHALLENGES_DATA = {
         description: "Reverse a list and find max.",
         problem: "Implement functions to reverse a list and find the maximum element.",
         starterCode: `def reverse_list(lst):\n    # Write your code here\n    pass\n\ndef find_max(lst):\n    # Write your code here\n    pass`,
+        hints: ["Use lst[::-1] for reverse", "Use the built-in max() function"],
         testCases: [
           { input: "[1,2,3]", expected: "[3,2,1]", description: "Reverse list" }
         ]
@@ -78,6 +80,7 @@ const CHALLENGES_DATA = {
         description: "Use map and filter.",
         problem: "Write functions to double numbers and filter even values.",
         starterCode: `function transform(numbers) {\n    // Write your code here\n}`,
+        hints: ["Use numbers.filter() for evens", "Then use .map() to double them"],
         testCases: [
           { input: "[1,2,3,4]", expected: "[4,8]", description: "Double even numbers" }
         ]
@@ -468,6 +471,7 @@ const CodingChallenges = () => {
                         </Button>
                         <Button
                           variant="outline"
+                          onClick={showHints}
                           className="px-6 border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white rounded-2xl h-14"
                         >
                           <Lightbulb className="w-5 h-5" />

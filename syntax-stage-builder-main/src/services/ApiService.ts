@@ -496,7 +496,7 @@ class ApiService {
 
   // Code Execution
   async executeCode(language: string, code: string, testCases?: any[]): Promise<ApiResponse<any>> {
-    return this.request('/execute', {
+    return this.request('/code-execution/execute', {
       method: 'POST',
       body: JSON.stringify({
         language,
