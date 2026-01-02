@@ -1,9 +1,19 @@
-const Bytez = require('bytez.js');
 const winston = require('winston');
 
-// Initialize Bytez SDK
-const bytezApiKey = process.env.BYTEZ_API_KEY || '1800a62d923ab9a5b2f420fbc8b762a0';
-const sdk = new Bytez(bytezApiKey);
+// Initialize Bytez SDK with error handling
+let sdk = null;
+let bytezAvailable = false;
+
+try {
+    const Bytez = require('bytez.js');
+    const bytezApiKey = process.env.BYTEZ_API_KEY || '1800a62d923ab9a5b2f420fbc8b762a0';
+    sdk = new Bytez(bytezApiKey);
+    bytezAvailable = true;
+    winston.info('Bytez.js initialized successfully');
+} catch (error) {
+    winston.error('Failed to initialize Bytez.js:', error.message);
+    winston.warn('AI Tutor will not be available. Install bytez.js: npm install bytez.js');
+}
 
 // Default model configuration
 const DEFAULT_MODEL = process.env.BYTEZ_MODEL || 'openai/gpt-4o-mini';
@@ -15,6 +25,14 @@ const DEFAULT_MODEL = process.env.BYTEZ_MODEL || 'openai/gpt-4o-mini';
  * @returns {Promise<Object>} - The completion response and model used
  */
 async function createChatCompletionWithRetry(messages, options = {}) {
+    // Check if Bytez is available
+    if (!bytezAvailable || !sdk) {
+        throw {
+            status: 503,
+            message: 'AI Tutor service is currently unavailable. Please contact support.'
+        };
+    }
+
     try {
         winston.info(`Creating chat completion with Bytez model: ${DEFAULT_MODEL}`);
 
