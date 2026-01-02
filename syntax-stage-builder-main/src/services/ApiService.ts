@@ -1,4 +1,6 @@
 // Real API service for backend functionality
+import { getUserFriendlyError } from '@/utils/errorHandler';
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -155,11 +157,17 @@ class ApiService {
       return data;
     } catch (error) {
       console.error('API request failed:', error);
-      // Re-throw for React Query to handle
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Request failed');
+
+      // Convert to user-friendly error
+      const friendlyError = getUserFriendlyError(error);
+      const enhancedError = new Error(friendlyError.message);
+      (enhancedError as any).title = friendlyError.title;
+      (enhancedError as any).action = friendlyError.action;
+      (enhancedError as any).variant = friendlyError.variant;
+      (enhancedError as any).status = (error as any).status;
+      (enhancedError as any).originalError = error;
+
+      throw enhancedError;
     }
   }
 

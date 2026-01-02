@@ -163,9 +163,9 @@ const AITutor = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Connection Error",
+        title: error.title || "Connection Error",
         description: error.message || "Could not connect to the AI service",
-        variant: "destructive"
+        variant: error.variant || "destructive"
       });
     } finally {
       setIsTyping(false);
