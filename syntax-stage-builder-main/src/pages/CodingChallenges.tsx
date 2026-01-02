@@ -88,12 +88,148 @@ const CHALLENGES_DATA = {
     ],
     intermediate: [],
     advanced: []
+  },
+  csharp: {
+    beginner: [
+      {
+        id: "cs-sum",
+        title: "Sum of Array",
+        description: "Calculate sum of integers.",
+        problem: "Write a method that takes an array of integers and returns their sum.",
+        starterCode: `public class Calculator {\n    public int Sum(int[] numbers) {\n        // Write your code here\n        return 0;\n    }\n}`,
+        hints: ["Use a foreach loop", "Initialize a sum variable to 0"],
+        testCases: [
+          { input: "[1,2,3]", expected: "6", description: "Sum of 1,2,3" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  swift: {
+    beginner: [
+      {
+        id: "sw-greeting",
+        title: "Personalized Greeting",
+        description: "Return a greeting string.",
+        problem: "Write a function that takes a name and returns 'Hello, [name]!'.",
+        starterCode: `func greet(name: String) -> String {\n    // Write your code here\n    return \"\"\n}`,
+        hints: ["Use string interpolation \\(name)", "Return the literal string with the name"],
+        testCases: [
+          { input: "Swift", expected: "Hello, Swift!", description: "Greet Swift" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  cpp: {
+    beginner: [
+      {
+        id: "cpp-min",
+        title: "Find Minimum",
+        description: "Find the smallest number.",
+        problem: "Write a function that takes two integers and returns the smaller one.",
+        starterCode: `int findMin(int a, int b) {\n    // Write your code here\n    return 0;\n}`,
+        hints: ["Use an if-else statement", "Or use the ternary operator ?: "],
+        testCases: [
+          { input: "10, 5", expected: "5", description: "Min of 10 and 5" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  ruby: {
+    beginner: [
+      {
+        id: "rb-len",
+        title: "String Length",
+        description: "Return string length.",
+        problem: "Write a method that takes a string and returns its length.",
+        starterCode: `def get_length(str)\n    # Write your code here\nend`,
+        hints: ["Use the .length method", "Or use .size"],
+        testCases: [
+          { input: "\"hello\"", expected: "5", description: "Length of hello" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  php: {
+    beginner: [
+      {
+        id: "php-add",
+        title: "Addition",
+        description: "Add two numbers.",
+        problem: "Write a function that returns the sum of two numbers.",
+        starterCode: `function add($a, $b) {\n    // Write your code here\n}`,
+        hints: ["Use the + operator", "Return the result"],
+        testCases: [
+          { input: "10, 20", expected: "30", description: "10 + 20" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  rust: {
+    beginner: [
+      {
+        id: "rs-print",
+        title: "Print Line",
+        description: "Print to console.",
+        problem: "Write a function that prints 'Hello, Rust!' to the standard output.",
+        starterCode: `fn main() {\n    // Write your code here\n}`,
+        hints: ["Useprintln!() macro", "Remember the semicolon"],
+        testCases: [
+          { input: "", expected: "Hello, Rust!", description: "Check output" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  go: {
+    beginner: [
+      {
+        id: "go-sum",
+        title: "Simple Sum",
+        description: "Add two integers.",
+        problem: "Write a function that takes two integers and returns their sum.",
+        starterCode: `func Sum(a, b int) int {\n    // Write your code here\n    return 0\n}`,
+        hints: ["Return a + b", "Go uses func keyword"],
+        testCases: [
+          { input: "1, 2", expected: "3", description: "1 + 2" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
+  },
+  typescript: {
+    beginner: [
+      {
+        id: "ts-greet",
+        title: "Typed Greeting",
+        description: "Greeting with types.",
+        problem: "Write a function that takes a name (string) and returns a greeting.",
+        starterCode: `function greet(name: string): string {\n    // Write your code here\n    return \"\";\n}`,
+        hints: ["Use template literals", "Type the return value"],
+        testCases: [
+          { input: "TS", expected: "Hello, TS!", description: "Greet TS" }
+        ]
+      }
+    ],
+    intermediate: [],
+    advanced: []
   }
 };
 
 const CodingChallenges = () => {
   const { user } = useAuth();
-  const [selectedLanguage, setSelectedLanguage] = useState("java");
+  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [selectedDifficulty, setSelectedDifficulty] = useState("beginner");
   const [userCode, setUserCode] = useState("");
   const [output, setOutput] = useState("");
@@ -103,7 +239,7 @@ const CodingChallenges = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dbChallenges, setDbChallenges] = useState<any[]>([]);
-  const [availableLanguages, setAvailableLanguages] = useState<string[]>(["javascript", "python", "java"]);
+  const [availableLanguages, setAvailableLanguages] = useState<string[]>(["javascript", "python", "java", "csharp", "swift", "cpp", "ruby", "php", "rust", "go", "typescript"]);
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
