@@ -102,6 +102,23 @@ const AITutor = () => {
     }
   }, [activeTab, isAuthenticated]);
 
+  // Load challenge context from sessionStorage if available
+  useEffect(() => {
+    const challengeContext = sessionStorage.getItem('aiTutorContext');
+
+    if (challengeContext && isAuthenticated && !inputMessage) {
+      // Clear the stored context
+      sessionStorage.removeItem('aiTutorContext');
+      sessionStorage.removeItem('aiTutorChallenge');
+
+      // Pre-fill the input message
+      setInputMessage(challengeContext);
+
+      // Switch to chat tab
+      setActiveTab('chat');
+    }
+  }, [isAuthenticated]);
+
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
 

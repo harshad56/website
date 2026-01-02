@@ -679,7 +679,23 @@ const CodingChallenges = () => {
                           <h4 className="font-bold">Need Help?</h4>
                         </div>
                         <p className="text-sm text-slate-400 mb-4">Stuck on this logic? Our AI Tutor can guide you without giving the answer away.</p>
-                        <Button className="w-full bg-white text-indigo-600 font-bold rounded-xl hover:bg-slate-100">
+                        <Button
+                          onClick={() => {
+                            // Navigate to AI Tutor with challenge context
+                            const challengeContext = `I'm working on: ${challenge.title}\n\nProblem: ${challenge.problem}\n\nLanguage: ${challenge.language || selectedLanguage}\n\nCan you help me understand this without giving away the answer?`;
+                            // Store context in sessionStorage so AI Tutor can use it
+                            sessionStorage.setItem('aiTutorContext', challengeContext);
+                            sessionStorage.setItem('aiTutorChallenge', JSON.stringify({
+                              title: challenge.title,
+                              problem: challenge.problem,
+                              language: challenge.language || selectedLanguage,
+                              starterCode: challenge.starterCode
+                            }));
+                            // Navigate to AI Tutor
+                            window.location.href = '/ai-tutor';
+                          }}
+                          className="w-full bg-white text-indigo-600 font-bold rounded-xl hover:bg-slate-100"
+                        >
                           Ask AI Tutor ✨
                         </Button>
                       </div>
