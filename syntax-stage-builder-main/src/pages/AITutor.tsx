@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { apiService } from "@/services/ApiService";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -383,29 +384,19 @@ const AITutor = () => {
                               {msg.type === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-indigo-400" />}
                             </div>
 
-                            <div className={`space-y-3 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                              <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border whitespace-pre-wrap ${msg.type === 'user'
+                            <div className={`space-y-3 ${msg.type === 'user' ? 'items-end' : 'items-start'} max-w-full overflow-hidden`}>
+                              <div className={`p-4 rounded-[24px] text-sm leading-relaxed shadow-lg border ${msg.type === 'user'
                                 ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none'
-                                : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md'
+                                : 'bg-slate-800/80 border-white/5 rounded-tl-none backdrop-blur-md w-full'
                                 }`}>
-                                {msg.content}
+                                {msg.type === 'user' ? (
+                                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                                ) : (
+                                  <MarkdownRenderer content={msg.content} />
+                                )}
                               </div>
 
-                              {msg.code && (
-                                <div className="bg-slate-950 rounded-2xl border border-white/10 overflow-hidden shadow-2xl w-full max-w-xl">
-                                  <div className="px-4 py-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-tighter">{msg.language || 'Code Snippet'}</span>
-                                    <button onClick={() => navigator.clipboard.writeText(msg.code || "")} className="text-slate-500 hover:text-white transition-colors">
-                                      <FileText className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                  <pre className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed selection:bg-indigo-500/30">
-                                    <code className="text-blue-300">
-                                      {msg.code}
-                                    </code>
-                                  </pre>
-                                </div>
-                              )}
+                              {/* Legacy code block removed in favor of MarkdownRenderer */}
 
                               {msg.suggestions && (
                                 <div className="flex flex-wrap gap-2 pt-2">
