@@ -192,16 +192,16 @@ const StudyGroups = () => {
   const featuredGroup = MOCK_GROUPS[0];
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-indigo-500/30 pb-20">
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-indigo-500/30 pb-20 relative overflow-x-hidden">
       <SEO
         title="Study Groups - Collaborative Learning | CodeAcademy Pro"
         description="Join elite study groups, collaborate with peers, and master programming together."
       />
 
       {/* Dynamic Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse-slow"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[120px] rounded-full animate-pulse-slow delay-1000"></div>
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[100px] rounded-full animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[100px] rounded-full animate-pulse-slow delay-1000"></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
@@ -209,18 +209,18 @@ const StudyGroups = () => {
         <div className="py-6 flex items-center justify-between">
           <BackButton />
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-slate-400 hover:text-white">
+            <Button variant="ghost" className="hidden md:flex text-slate-400 hover:text-white">
               <MessageCircle className="w-5 h-5 mr-2" /> Community Guidelines
             </Button>
-            <div className="h-4 w-px bg-white/10"></div>
-            <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-6">
+            <div className="hidden md:block h-4 w-px bg-white/10"></div>
+            <Button className="hidden md:flex bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-6 shadow-lg shadow-indigo-600/20">
               <Plus className="w-4 h-4 mr-2" /> Start A Group
             </Button>
           </div>
         </div>
 
         {/* Hero Section */}
-        <header className="mb-12 text-center max-w-3xl mx-auto pt-8">
+        <header className="mb-12 text-center max-w-3xl mx-auto pt-4 md:pt-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -233,7 +233,7 @@ const StudyGroups = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight text-white"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight text-white leading-tight"
           >
             Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-400">Squad</span>.
           </motion.h1>
@@ -241,13 +241,13 @@ const StudyGroups = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-slate-400 leading-relaxed mb-8"
+            className="text-base md:text-lg text-slate-400 leading-relaxed mb-8 px-4"
           >
             Connect with developers who share your passion. Master complex topics together, accountability, and grow your network.
           </motion.p>
         </header>
 
-        {/* Featured Group Banner */}
+        {/* Featured Group Banner - Mobile Optimized */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -255,79 +255,92 @@ const StudyGroups = () => {
           className="rounded-[32px] bg-gradient-to-r from-indigo-900/50 to-blue-900/50 border border-white/10 p-1 relative overflow-hidden mb-16 max-w-5xl mx-auto shadow-2xl"
         >
           <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:32px_32px]" />
-          <div className="relative bg-[#020617]/80 backdrop-blur-xl rounded-[28px] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
-            <div className="flex-1 space-y-6">
-              <div className="flex items-center gap-3">
-                <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-1">Featured Community</Badge>
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-                      <User className="w-4 h-4 text-slate-400" />
+          <div className="relative bg-[#020617]/80 backdrop-blur-xl rounded-[28px] overflow-hidden">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center">
+              <div className="p-8 md:p-10 flex-1 space-y-6 order-2 md:order-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-1">Featured Community</Badge>
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-bold">
+                          <User className="w-4 h-4 text-slate-400" />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    <span className="text-sm text-slate-400 font-medium">+21 active now</span>
+                  </div>
                 </div>
-                <span className="text-sm text-slate-400 font-medium">+21 active now</span>
+                <h2 className="text-3xl font-bold text-white leading-tight">{featuredGroup.name}</h2>
+                <p className="text-slate-400 text-lg">{featuredGroup.description}</p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                  <Button size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20">
+                    Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/10 hover:bg-white/5 text-slate-300">
+                    View Curriculum
+                  </Button>
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-white">{featuredGroup.name}</h2>
-              <p className="text-slate-400 text-lg">{featuredGroup.description}</p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Button size="lg" className="rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold">
-                  Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button variant="outline" size="lg" className="rounded-xl h-12 px-8 border-white/10 hover:bg-white/5 text-slate-300">
-                  View Curriculum
-                </Button>
+              <div className="w-full md:w-[320px] h-48 md:h-auto relative group order-1 md:order-2">
+                <div className={`absolute inset-0 bg-gradient-to-br ${featuredGroup.gradient} opacity-20 group-hover:opacity-30 transition-opacity`} />
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Community" className="w-full h-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#020617] to-transparent md:hidden" />
               </div>
-            </div>
-            <div className="w-full md:w-[320px] aspect-sqaure md:aspect-auto rounded-2xl overflow-hidden relative group">
-              <div className={`absolute inset-0 bg-gradient-to-br ${featuredGroup.gradient} opacity-20 group-hover:opacity-30 transition-opacity`} />
-              <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Community" className="w-full h-full object-cover" />
             </div>
           </div>
         </motion.div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/5 pb-1">
-            <TabsList className="bg-transparent h-12 p-0 space-x-6">
-              <TabsTrigger value="explore" className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-bold text-base">
-                Explore Groups
-              </TabsTrigger>
-              <TabsTrigger value="my-groups" className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-bold text-base">
-                My Squads <Badge className="ml-2 bg-indigo-500/20 text-indigo-400 border-0">{myGroups.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-0 transition-all font-bold text-base">
-                Events
-              </TabsTrigger>
-            </TabsList>
+          <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-xl border-b border-white/5 pb-1 -mx-4 px-4 md:static md:bg-transparent md:border-none md:p-0 md:mx-0">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 pt-4 md:pt-0">
+              <TabsList className="bg-transparent h-12 p-0 w-full md:w-auto flex overflow-x-auto no-scrollbar snap-x">
+                {['explore', 'my-groups', 'calendar'].map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="snap-start flex-shrink-0 data-[state=active]:bg-transparent data-[state=active]:text-white text-slate-400 border-b-2 border-transparent data-[state=active]:border-indigo-500 rounded-none h-full px-4 md:px-0 mr-6 transition-all font-bold text-base"
+                  >
+                    {tab === 'explore' && 'Explore Groups'}
+                    {tab === 'my-groups' && (
+                      <span className="flex items-center">
+                        My Squads <Badge className="ml-2 bg-indigo-500/20 text-indigo-400 border-0">{myGroups.length}</Badge>
+                      </span>
+                    )}
+                    {tab === 'calendar' && 'Events'}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            {/* Search Bar - Only visible on Explore */}
-            {activeTab === 'explore' && (
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="relative group flex-1 md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                  <Input
-                    placeholder="Search topic..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-slate-900/50 border-white/10 rounded-xl pl-9 focus-visible:ring-indigo-500/50 transition-all"
-                  />
+              {/* Search Bar - Only visible on Explore */}
+              {activeTab === 'explore' && (
+                <div className="flex items-center gap-3 w-full md:w-auto pb-4 md:pb-0">
+                  <div className="relative group flex-1 md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                    <Input
+                      placeholder="Search topic..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-slate-900/50 border-white/10 rounded-xl pl-9 focus-visible:ring-indigo-500/50 transition-all w-full"
+                    />
+                  </div>
+                  <Button variant="outline" size="icon" className="rounded-xl border-white/10 bg-slate-900/50 hover:bg-white/10 flex-shrink-0">
+                    <Filter className="w-4 h-4 text-slate-400" />
+                  </Button>
                 </div>
-                <Button variant="outline" size="icon" className="rounded-xl border-white/10 bg-slate-900/50 hover:bg-white/10">
-                  <Filter className="w-4 h-4 text-slate-400" />
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <TabsContent value="explore" className="space-y-8">
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+            {/* Filters - Mobile Scrollable */}
+            <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar snap-x -mx-4 px-4 md:mx-0 md:px-0">
               {['all', 'React', 'JavaScript', 'Python', 'AWS', 'System Design'].map(topic => (
                 <button
                   key={topic}
                   onClick={() => setSelectedTopic(topic)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedTopic === topic ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}`}
+                  className={`snap-start flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedTopic === topic ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}`}
                 >
                   {topic === 'all' ? 'All Topics' : topic}
                 </button>
@@ -342,6 +355,7 @@ const StudyGroups = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
+                    whileTap={{ scale: 0.98 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                   >
                     <Card className="bg-slate-900/40 backdrop-blur-sm border-white/10 hover:border-indigo-500/30 transition-all duration-300 group overflow-hidden rounded-[24px]">
@@ -352,7 +366,7 @@ const StudyGroups = () => {
                           {group.isPrivate ? 'Private' : 'Public'}
                         </Badge>
                         <div className="absolute -bottom-6 left-6">
-                          <div className="w-14 h-14 rounded-2xl bg-slate-900 p-1 shadow-xl">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-900 p-1 shadow-xl ring-4 ring-[#020617]/50">
                             <img src={group.avatar} alt={group.name} className="w-full h-full rounded-xl object-cover" />
                           </div>
                         </div>
@@ -388,7 +402,7 @@ const StudyGroups = () => {
                               </div>
                             ))}
                           </div>
-                          <Button size="sm" variant={group.isMember ? "secondary" : "default"} className={`rounded-xl font-bold px-6 ${!group.isMember && 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+                          <Button size="sm" variant={group.isMember ? "secondary" : "default"} className={`rounded-xl font-bold px-6 ${!group.isMember && 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'}`}>
                             {group.isMember ? 'Visit' : 'Join'}
                           </Button>
                         </div>
@@ -408,6 +422,7 @@ const StudyGroups = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Card className="bg-gradient-to-br from-indigo-900/20 to-slate-900/40 border-indigo-500/20 hover:border-indigo-500/40 transition-all group rounded-[24px]">
                     <CardHeader className="pb-3">
@@ -438,10 +453,19 @@ const StudyGroups = () => {
             </div>
           </TabsContent>
         </Tabs>
-
       </div>
+
+      {/* Mobile Floating Action Button */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-50 border border-indigo-400/20"
+      >
+        <Plus className="w-7 h-7" />
+      </motion.button>
+
     </div>
   );
 };
 
-export default StudyGroups; 
+export default StudyGroups;
