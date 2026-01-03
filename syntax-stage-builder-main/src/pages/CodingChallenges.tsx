@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -228,6 +229,7 @@ const CHALLENGES_DATA = {
 };
 
 const CodingChallenges = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [selectedDifficulty, setSelectedDifficulty] = useState("beginner");
@@ -719,13 +721,13 @@ const CodingChallenges = () => {
         <footer className="mt-20 flex flex-col items-center text-center space-y-8">
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full">
+            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full" onClick={() => navigate('/learning-paths')}>
               Explore All Paths
             </Button>
-            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full">
+            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full" onClick={() => navigate('/study-groups')}>
               Community Forum
             </Button>
-            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full">
+            <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 px-8 h-12 rounded-full" onClick={() => navigate('/success-stories')}>
               Success Stories
             </Button>
           </div>
