@@ -10,6 +10,7 @@ import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiService } from "@/services/ApiService";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import SEO from "@/components/SEO";
 import {
   Clock, Users, Sparkles, Play, CheckCircle, X,
@@ -299,11 +300,12 @@ const InterviewPractice = () => {
                             }`}>
                             {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
                           </div>
-                          <div className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-lg ${msg.role === 'user'
-                            ? 'bg-indigo-600 text-white rounded-tr-none'
-                            : 'bg-white/5 border border-white/10 text-slate-200 rounded-tl-none'
-                            }`}>
-                            <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          <div className={`max-w-[85%] rounded-2xl p-4 shadow-lg ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800/80 border border-white/5 rounded-tl-none backdrop-blur-md w-full'}`}>
+                            {msg.role === 'user' ? (
+                              <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                            ) : (
+                              <MarkdownRenderer content={msg.content} />
+                            )}
                           </div>
                         </motion.div>
                       ))}
