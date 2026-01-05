@@ -214,16 +214,7 @@ const InterviewPractice = () => {
         <div className="container mx-auto px-6 pt-8 pb-4">
           <div className="flex items-center justify-between">
             <BackButton label="Back to Home" className="text-white/80 hover:text-white transition-colors" to="/" />
-            {isAdmin && (
-              <Button
-                onClick={() => navigate('/admin/interview-practice')}
-                variant="outline"
-                className="bg-white/5 border-white/10 hover:bg-white/10 hover:border-violet-500/50 transition-all gap-2"
-              >
-                <Shield className="w-4 h-4 text-violet-400" />
-                <span className="hidden sm:inline">Admin Panel</span>
-              </Button>
-            )}
+
           </div>
         </div>
 
