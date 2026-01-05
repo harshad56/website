@@ -277,7 +277,7 @@ const StudyGroups = () => {
                   <Button size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20">
                     Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/10 hover:bg-white/5 text-slate-300">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold backdrop-blur-sm">
                     View Curriculum
                   </Button>
                 </div>
@@ -424,11 +424,11 @@ const StudyGroups = () => {
                   transition={{ delay: i * 0.1 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Card className="bg-gradient-to-br from-indigo-900/20 to-slate-900/40 border-indigo-500/20 hover:border-indigo-500/40 transition-all group rounded-[24px]">
+                  <Card className="bg-[#1e293b] border-indigo-500/20 hover:border-indigo-500/40 transition-all group rounded-[24px]">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between">
+                      <CardTitle className="flex items-center justify-between text-white">
                         <span className="text-xl font-bold">{group.name}</span>
-                        <Badge className="bg-indigo-500/20 text-indigo-300">Member</Badge>
+                        <Badge className="bg-indigo-500/20 text-indigo-300 border-0">Member</Badge>
                       </CardTitle>
                       <CardDescription className="text-slate-400">{group.topic} Chapter</CardDescription>
                     </CardHeader>
@@ -443,7 +443,7 @@ const StudyGroups = () => {
                         </div>
                         <p className="text-xs text-slate-500">Mastering Async/Await Patterns</p>
                       </div>
-                      <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl h-11">
+                      <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl h-11 transition-colors">
                         Go To Dashboard
                       </Button>
                     </CardContent>
