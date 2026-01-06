@@ -1108,6 +1108,22 @@ class ApiService {
   async completeTutorialStep(tutorialId: string, stepId: string): Promise<ApiResponse<any>> {
     return this.request<any>(`/tutorials/${tutorialId}/steps/${stepId}/complete`, { method: 'POST' });
   }
+
+  async joinStudyGroup(id: string | number): Promise<ApiResponse<any>> {
+    return this.request(`/study-groups/${id}/join`, { method: 'POST' });
+  }
+
+  async leaveStudyGroup(id: string | number): Promise<ApiResponse<any>> {
+    return this.request(`/study-groups/${id}/leave`, { method: 'POST' });
+  }
+
+  async getMyStudyGroups(): Promise<ApiResponse<any[]>> {
+    return this.request('/study-groups/my-groups', { method: 'GET' });
+  }
+
+  async getStudyGroup(id: string | number): Promise<ApiResponse<any>> {
+    return this.request(`/study-groups/${id}`, { method: 'GET' });
+  }
 }
 
 export const apiService = new ApiService(); 

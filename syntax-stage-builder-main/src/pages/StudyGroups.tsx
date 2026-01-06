@@ -38,6 +38,8 @@ import {
 
 import { apiService } from "@/services/ApiService";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // --- Interfaces for Backend Readiness ---
 interface StudyGroup {
@@ -77,6 +79,8 @@ const MOCK_GROUPS: StudyGroup[] = [];
 
 const StudyGroups = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,14 +88,41 @@ const StudyGroups = () => {
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [activeTab, setActiveTab] = useState("explore");
 
+  const joinGroup = async (groupId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast({ title: "Login Required", description: "You must be logged in to join a group.", variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await apiService.joinStudyGroup(groupId);
+      if (res.success) {
+        toast({ title: "Welcome!", description: "You have joined the group." });
+        navigate(`/study-groups/${groupId}`);
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to join group", variant: "destructive" });
+    }
+  };
+
+  const visitGroup = (groupId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/study-groups/${groupId}`);
+  };
+
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getStudyGroups();
-        if (response.success && Array.isArray(response.data)) {
-          // Map DB keys (snake_case) to Frontend keys (camelCase)
-          const mappedGroups: StudyGroup[] = response.data.map((g: any) => ({
+        const [groupsRes, myGroupsRes] = await Promise.all([
+          apiService.getStudyGroups(),
+          user ? apiService.getMyStudyGroups() : Promise.resolve({ success: true, data: [] })
+        ]);
+
+        if (groupsRes.success && Array.isArray(groupsRes.data)) {
+          const myGroupIds = new Set((myGroupsRes.data || []).map((g: any) => g.id));
+
+          const mappedGroups: StudyGroup[] = groupsRes.data.map((g: any) => ({
             id: g.id,
             name: g.name,
             topic: g.topic,
@@ -107,7 +138,7 @@ const StudyGroups = () => {
             meetingFrequency: g.meeting_frequency,
             avatar: g.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${g.name}`,
             tags: g.tags || [],
-            isMember: false, // Default for now
+            isMember: myGroupIds.has(g.id),
             isAdmin: false,
             gradient: g.gradient || 'from-indigo-600 to-violet-600'
           }));
@@ -122,7 +153,7 @@ const StudyGroups = () => {
     };
 
     fetchGroups();
-  }, [toast]);
+  }, [toast, user]);
 
   // Simulated filtering usually handled by backend
   const filteredGroups = useMemo(() => groups.filter(group => {
@@ -351,7 +382,12 @@ const StudyGroups = () => {
                               </div>
                             ))}
                           </div>
-                          <Button size="sm" variant={group.isMember ? "secondary" : "default"} className={`rounded-xl font-bold px-6 ${!group.isMember && 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'}`}>
+                          <Button
+                            size="sm"
+                            variant={group.isMember ? "secondary" : "default"}
+                            className={`rounded-xl font-bold px-6 ${!group.isMember && 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'}`}
+                            onClick={(e) => group.isMember ? visitGroup(group.id, e) : joinGroup(group.id, e)}
+                          >
                             {group.isMember ? 'Visit' : 'Join'}
                           </Button>
                         </div>
@@ -392,7 +428,10 @@ const StudyGroups = () => {
                         </div>
                         <p className="text-xs text-slate-500">Mastering Async/Await Patterns</p>
                       </div>
-                      <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl h-11 transition-colors">
+                      <Button
+                        className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl h-11 transition-colors"
+                        onClick={(e) => visitGroup(group.id, e)}
+                      >
                         Go To Dashboard
                       </Button>
                     </CardContent>

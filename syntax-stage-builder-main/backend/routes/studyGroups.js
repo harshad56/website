@@ -178,4 +178,131 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/study-groups/my-groups - Get groups joined by current user
+router.get('/my-groups', authenticateToken, async (req, res) => {
+    try {
+        if (!supabase) {
+            return res.status(503).json({ success: false, message: 'Database service unavailable' });
+        }
+
+        const { data, error } = await supabase
+            .from('study_group_members')
+            .select('group_id')
+            .eq('user_email', req.user.email);
+
+        if (error) throw error;
+
+        // Extract group IDs
+        const groupIds = data.map(m => m.group_id);
+
+        // Fetch actual group details
+        if (groupIds.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        const { data: groups, error: groupsError } = await supabase
+            .from('study_groups')
+            .select('*')
+            .in('id', groupIds)
+            .eq('is_active', true);
+
+        if (groupsError) throw groupsError;
+
+        return res.json({ success: true, data: groups });
+    } catch (error) {
+        winston.error('Error fetching my study groups:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch my study groups' });
+    }
+});
+
+// GET /api/study-groups/:id - Get Single Group Details
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!supabase) {
+            return res.status(503).json({ success: false, message: 'Database service unavailable' });
+        }
+
+        const { data, error } = await supabase
+            .from('study_groups')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return res.json({ success: true, data });
+    } catch (error) {
+        winston.error('Error fetching study group:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch study group' });
+    }
+});
+
+
+// POST /api/study-groups/:id/join - Join a group
+router.post('/:id/join', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userEmail = req.user.email;
+
+        if (!supabase) {
+            return res.status(503).json({ success: false, message: 'Database service unavailable' });
+        }
+
+        // Check if already member
+        const { data: existing, error: checkError } = await supabase
+            .from('study_group_members')
+            .select('*')
+            .eq('group_id', id)
+            .eq('user_email', userEmail)
+            .single();
+
+        // If error is "PGRST116" it means not found (good), otherwise real error
+        if (checkError && checkError.code !== 'PGRST116') throw checkError;
+
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'Already a member' });
+        }
+
+        // Insert member
+        const { error } = await supabase
+            .from('study_group_members')
+            .insert([{
+                group_id: id,
+                user_email: userEmail
+            }]);
+
+        if (error) throw error;
+
+        return res.json({ success: true, message: 'Joined successfully' });
+    } catch (error) {
+        winston.error('Error joining study group:', error);
+        return res.status(500).json({ success: false, message: 'Failed to join group' });
+    }
+});
+
+// POST /api/study-groups/:id/leave - Leave a group
+router.post('/:id/leave', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userEmail = req.user.email;
+
+        if (!supabase) {
+            return res.status(503).json({ success: false, message: 'Database service unavailable' });
+        }
+
+        const { error } = await supabase
+            .from('study_group_members')
+            .delete()
+            .eq('group_id', id)
+            .eq('user_email', userEmail);
+
+        if (error) throw error;
+
+        return res.json({ success: true, message: 'Left successfully' });
+    } catch (error) {
+        winston.error('Error leaving study group:', error);
+        return res.status(500).json({ success: false, message: 'Failed to leave group' });
+    }
+});
+
 module.exports = router;
