@@ -679,6 +679,35 @@ class ApiService {
     });
   }
 
+  // Study Groups
+  async getStudyGroups() {
+    return this.request('/study-groups');
+  }
+
+  async getAllStudyGroupsAdmin() {
+    return this.request('/study-groups/admin/all');
+  }
+
+  async createStudyGroup(data: any) {
+    return this.request('/study-groups', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateStudyGroup(id: string, data: any) {
+    return this.request(`/study-groups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteStudyGroup(id: string) {
+    return this.request(`/study-groups/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
   // File uploads
   async uploadFile(file: File): Promise<ApiResponse<{ url: string }>> {
     const formData = new FormData();

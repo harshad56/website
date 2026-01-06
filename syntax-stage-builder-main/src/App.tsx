@@ -81,6 +81,7 @@ const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
 const AdminProjects = lazy(() => import('@/pages/AdminProjects'));
 const AdminStudyMaterials = lazy(() => import('@/pages/AdminStudyMaterials'));
 const AdminJobs = lazy(() => import('@/pages/AdminJobs'));
+const AdminStudyGroups = lazy(() => import('@/pages/AdminStudyGroups'));
 const AdminCourses = lazy(() => import('@/pages/AdminCourses'));
 const AdminCourseContent = lazy(() => import('@/pages/AdminCourseContent'));
 const AdminLanguageInterview = lazy(() => import('@/pages/AdminLanguageInterview'));
@@ -163,6 +164,14 @@ const App = () => {
                 element={
                   <AdminRoute>
                     <AdminJobs />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/study-groups"
+                element={
+                  <AdminRoute>
+                    <AdminStudyGroups />
                   </AdminRoute>
                 }
               />

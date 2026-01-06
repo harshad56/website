@@ -36,6 +36,9 @@ import {
   Code2
 } from "lucide-react";
 
+import { apiService } from "@/services/ApiService";
+import { useToast } from "@/hooks/use-toast";
+
 // --- Interfaces for Backend Readiness ---
 interface StudyGroup {
   id: number;
@@ -69,117 +72,60 @@ interface Activity {
 }
 
 // --- Mock Data Service (Replace with API calls later) ---
-const MOCK_GROUPS: StudyGroup[] = [
-  {
-    id: 1,
-    name: "React Masters",
-    topic: "React",
-    level: "Intermediate",
-    description: "Deep dive into React patterns, hooks, and advanced concepts. Perfect for developers looking to master React ecosystem.",
-    members: 24,
-    maxMembers: 30,
-    isPrivate: false,
-    isActive: true,
-    createdBy: "Sarah Johnson",
-    createdDate: "2024-01-10",
-    nextMeeting: "2024-01-20T14:00:00",
-    meetingFrequency: "Weekly",
-    avatar: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=100&h=100&fit=crop",
-    tags: ["React", "JavaScript", "Frontend"],
-    isMember: true,
-    isAdmin: false,
-    gradient: "from-cyan-500 to-blue-500"
-  },
-  {
-    id: 2,
-    name: "Python Data Science",
-    topic: "Python",
-    level: "Advanced",
-    description: "Advanced Python programming for data science and machine learning. Focus on pandas, numpy, and scikit-learn.",
-    members: 18,
-    maxMembers: 25,
-    isPrivate: true,
-    isActive: true,
-    createdBy: "Michael Chen",
-    createdDate: "2024-01-05",
-    nextMeeting: "2024-01-18T19:00:00",
-    meetingFrequency: "Bi-weekly",
-    avatar: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=100&h=100&fit=crop",
-    tags: ["Python", "Data Science", "ML"],
-    isMember: false,
-    isAdmin: false,
-    gradient: "from-yellow-400 to-orange-500"
-  },
-  {
-    id: 3,
-    name: "JavaScript Fundamentals",
-    topic: "JavaScript",
-    level: "Beginner",
-    description: "Learn JavaScript from scratch. Perfect for beginners who want to build a strong foundation in web development.",
-    members: 35,
-    maxMembers: 40,
-    isPrivate: false,
-    isActive: true,
-    createdBy: "Emily Rodriguez",
-    createdDate: "2024-01-08",
-    nextMeeting: "2024-01-19T18:00:00",
-    meetingFrequency: "Weekly",
-    avatar: "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=100&h=100&fit=crop",
-    tags: ["JavaScript", "ES6", "DOM"],
-    isMember: true,
-    isAdmin: true,
-    gradient: "from-yellow-300 to-yellow-500"
-  },
-  {
-    id: 4,
-    name: "AWS Cloud Architects",
-    topic: "AWS",
-    level: "Intermediate",
-    description: "Master AWS services and cloud architecture. Hands-on projects and real-world scenarios for certification prep.",
-    members: 15,
-    maxMembers: 20,
-    isPrivate: false,
-    isActive: true,
-    createdBy: "David Kim",
-    createdDate: "2024-01-12",
-    nextMeeting: "2024-01-21T20:00:00",
-    meetingFrequency: "Weekly",
-    avatar: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100&h=100&fit=crop",
-    tags: ["AWS", "Cloud", "DevOps"],
-    isMember: false,
-    isAdmin: false,
-    gradient: "from-orange-400 to-pink-500"
-  },
-  {
-    id: 5,
-    name: "System Design Pros",
-    topic: "System Design",
-    level: "Advanced",
-    description: "Advanced system design and architecture patterns. Prepare for technical interviews and real-world scale challenges.",
-    members: 12,
-    maxMembers: 15,
-    isPrivate: true,
-    isActive: true,
-    createdBy: "Lisa Wang",
-    createdDate: "2024-01-15",
-    nextMeeting: "2024-01-22T21:00:00",
-    meetingFrequency: "Weekly",
-    avatar: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100&h=100&fit=crop",
-    tags: ["System Design", "Architecture"],
-    isMember: true,
-    isAdmin: false,
-    gradient: "from-purple-500 to-indigo-500"
-  }
-];
+// Kept as fallback or initial state type definition aid
+const MOCK_GROUPS: StudyGroup[] = [];
 
 const StudyGroups = () => {
+  const { toast } = useToast();
+  const [groups, setGroups] = useState<StudyGroup[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [activeTab, setActiveTab] = useState("explore");
 
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getStudyGroups();
+        if (response.success && Array.isArray(response.data)) {
+          // Map DB keys (snake_case) to Frontend keys (camelCase)
+          const mappedGroups: StudyGroup[] = response.data.map((g: any) => ({
+            id: g.id,
+            name: g.name,
+            topic: g.topic,
+            level: g.level,
+            description: g.description,
+            members: g.members || 0,
+            maxMembers: g.max_members || 10,
+            isPrivate: g.is_private || false,
+            isActive: g.is_active,
+            createdBy: g.created_by,
+            createdDate: g.created_at,
+            nextMeeting: g.next_meeting,
+            meetingFrequency: g.meeting_frequency,
+            avatar: g.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${g.name}`,
+            tags: g.tags || [],
+            isMember: false, // Default for now
+            isAdmin: false,
+            gradient: g.gradient || 'from-indigo-600 to-violet-600'
+          }));
+          setGroups(mappedGroups);
+        }
+      } catch (error) {
+        console.error("Failed to fetch study groups", error);
+        toast({ title: "Error", description: "Failed to load study groups", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, [toast]);
+
   // Simulated filtering usually handled by backend
-  const filteredGroups = useMemo(() => MOCK_GROUPS.filter(group => {
+  const filteredGroups = useMemo(() => groups.filter(group => {
     const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       group.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTopic = selectedTopic === "all" || group.topic === selectedTopic;
@@ -188,8 +134,8 @@ const StudyGroups = () => {
     return matchesSearch && matchesTopic && matchesLevel;
   }), [searchQuery, selectedTopic, selectedLevel]);
 
-  const myGroups = MOCK_GROUPS.filter(g => g.isMember);
-  const featuredGroup = MOCK_GROUPS[0];
+  const myGroups = groups.filter(g => g.isMember);
+  const featuredGroup = groups.length > 0 ? groups[0] : null;
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-indigo-500/30 pb-20 relative overflow-x-hidden">
@@ -248,48 +194,50 @@ const StudyGroups = () => {
         </header>
 
         {/* Featured Group Banner - Mobile Optimized */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-[32px] bg-gradient-to-r from-indigo-900/50 to-blue-900/50 border border-white/10 p-1 relative overflow-hidden mb-16 max-w-5xl mx-auto shadow-2xl"
-        >
-          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:32px_32px]" />
-          <div className="relative bg-[#020617]/80 backdrop-blur-xl rounded-[28px] overflow-hidden">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center">
-              <div className="p-8 md:p-10 flex-1 space-y-6 order-2 md:order-1">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-1">Featured Community</Badge>
-                  <div className="flex items-center gap-2">
-                    <div className="flex -space-x-2">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-bold">
-                          <User className="w-4 h-4 text-slate-400" />
-                        </div>
-                      ))}
+        {featuredGroup && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-[32px] bg-gradient-to-r from-indigo-900/50 to-blue-900/50 border border-white/10 p-1 relative overflow-hidden mb-16 max-w-5xl mx-auto shadow-2xl"
+          >
+            <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:32px_32px]" />
+            <div className="relative bg-[#020617]/80 backdrop-blur-xl rounded-[28px] overflow-hidden">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center">
+                <div className="p-8 md:p-10 flex-1 space-y-6 order-2 md:order-1">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-1">Featured Community</Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-bold">
+                            <User className="w-4 h-4 text-slate-400" />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-sm text-slate-400 font-medium">+21 active now</span>
                     </div>
-                    <span className="text-sm text-slate-400 font-medium">+21 active now</span>
+                  </div>
+                  <h2 className="text-3xl font-bold text-white leading-tight">{featuredGroup.name}</h2>
+                  <p className="text-slate-400 text-lg">{featuredGroup.description}</p>
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <Button size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20">
+                      Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold backdrop-blur-sm">
+                      View Curriculum
+                    </Button>
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-white leading-tight">{featuredGroup.name}</h2>
-                <p className="text-slate-400 text-lg">{featuredGroup.description}</p>
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                  <Button size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20">
-                    Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold backdrop-blur-sm">
-                    View Curriculum
-                  </Button>
+                <div className="w-full md:w-[320px] h-48 md:h-auto relative group order-1 md:order-2">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${featuredGroup.gradient} opacity-20 group-hover:opacity-30 transition-opacity`} />
+                  <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Community" className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#020617] to-transparent md:hidden" />
                 </div>
               </div>
-              <div className="w-full md:w-[320px] h-48 md:h-auto relative group order-1 md:order-2">
-                <div className={`absolute inset-0 bg-gradient-to-br ${featuredGroup.gradient} opacity-20 group-hover:opacity-30 transition-opacity`} />
-                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Community" className="w-full h-full object-cover" />
-                <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#020617] to-transparent md:hidden" />
-              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
