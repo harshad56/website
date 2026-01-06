@@ -169,11 +169,44 @@ const StudyGroups = () => {
   const myGroups = groups.filter(g => g.isMember);
   const featuredGroup = groups.length > 0 ? groups[0] : null;
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Join Coding Study Groups | CodeAcademy Pro",
+    "description": "Collaborate with developers in focused study groups for Python, JavaScript, React, and more. Master programming together.",
+    "url": window.location.href,
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": groups.slice(0, 5).map((group, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "Event",
+          "name": group.name,
+          "description": group.description,
+          "startDate": group.nextMeeting || new Date().toISOString(),
+          "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
+          "location": {
+            "@type": "VirtualLocation",
+            "url": window.location.href // Should replace with actual meeting link if public
+          },
+          "organizer": {
+            "@type": "Organization",
+            "name": "CodeAcademy Pro Community"
+          }
+        }
+      }))
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-indigo-500/30 pb-20 relative overflow-x-hidden">
       <SEO
-        title="Study Groups - Collaborative Learning | CodeAcademy Pro"
-        description="Join elite study groups, collaborate with peers, and master programming together."
+        title="Study Groups - Collaborative Coding Communities | CodeAcademy Pro"
+        description="Join elite study groups, collaborate with peers, and master programming together. Find your squad for Python, React, Java, and more."
+        keywords="coding study groups, programming community, learn to code together, developer squads, python study group, javascript learning community, pair programming"
+        image="https://codeacademy.vercel.app/og-study-groups.jpg"
+        structuredData={structuredData}
       />
 
       {/* Dynamic Background */}

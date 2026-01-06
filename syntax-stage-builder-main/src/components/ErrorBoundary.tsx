@@ -33,10 +33,12 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
     // Auto-reload on chunk load failure (commonly happens after deployment)
-    if (error.message && (
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Importing a module script failed')
-    )) {
+    const errorMsg = error.message ? error.message.toLowerCase() : '';
+    if (
+      errorMsg.includes('failed to fetch dynamically imported module') ||
+      errorMsg.includes('importing a module script failed') ||
+      errorMsg.includes('error loading dynamically imported module')
+    ) {
       console.log('Chunk load error detected, reloading...');
       // Check if we already reloaded recently to avoid infinite loops
       const lastReload = sessionStorage.getItem('chunk_reload');
