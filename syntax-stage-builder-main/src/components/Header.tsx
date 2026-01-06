@@ -10,17 +10,23 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp, LogOut, Lock } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { MoreVertical, BookOpen, Blocks, GraduationCap, CircleUser, LogIn, ChevronDown, ChevronUp, LogOut, Lock, Globe } from "lucide-react";
 
 const Header = memo(() => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileExpandedSection, setMobileExpandedSection] = useState<string | null>(null);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
 
   const toggleSection = (section: string) => {
     setMobileExpandedSection(prev => prev === section ? null : section);
@@ -42,7 +48,7 @@ const Header = memo(() => {
 
     // Show welcome message
     setTimeout(() => {
-      alert('🎉 Welcome to CodeAcademy Pro! Choose your programming language to start your free trial.');
+      setShowWelcomeDialog(true);
     }, 1000);
   }, [scrollToSection]);
 
@@ -410,7 +416,27 @@ const Header = memo(() => {
         </nav>
       </div>
 
-      {/* Auth Modal - Removed duplicate, using the one from App.tsx */}
+      {/* Welcome Dialog */}
+      <Dialog open={showWelcomeDialog} onOpenChange={setShowWelcomeDialog}>
+        <DialogContent className="bg-slate-900 border border-white/10 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Globe className="w-5 h-5 text-indigo-400" />
+              Welcome to CodeAcademy Pro!
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 pt-2 text-base leading-relaxed">
+              Choose your programming language to start your <strong>free trial</strong>.
+              Unlock unlimited access to all courses, projects, and mentorship.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setShowWelcomeDialog(false)} className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold">
+              Let's Start 🚀
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </header>
   );
 });
