@@ -71,8 +71,12 @@ const StudyGroupDetail = () => {
             {/* Header Banner */}
             <div className={`h-64 relative bg-gradient-to-br ${group.gradient || 'from-indigo-600 to-violet-600'}`}>
                 <div className="absolute inset-0 bg-black/20" />
+                {/* Back Button - Fixed Position relative to banner */}
+                <div className="absolute top-6 left-4 md:left-8 z-20">
+                    <BackButton className="bg-black/20 hover:bg-black/40 border-0 text-white backdrop-blur-sm" />
+                </div>
+
                 <div className="container mx-auto px-4 h-full flex flex-col justify-end pb-8 relative z-10">
-                    <BackButton className="absolute top-6 left-4 text-white bg-black/20 hover:bg-black/40 border-0" />
 
                     <div className="flex flex-col md:flex-row md:items-end gap-6">
                         <div className="w-24 h-24 rounded-2xl bg-slate-900 p-1 shadow-2xl ring-4 ring-[#020617]/50">
@@ -87,7 +91,7 @@ const StudyGroupDetail = () => {
                                 <Badge className="bg-white/10 hover:bg-white/20 ml-2">{group.topic}</Badge>
                             </div>
                         </div>
-                        <Button variant="destructive" onClick={handleLeave} className="mb-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20">
+                        <Button variant="destructive" onClick={handleLeave} className="mb-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 md:ml-auto">
                             <LogOut className="w-4 h-4 mr-2" /> Leave Group
                         </Button>
                     </div>
