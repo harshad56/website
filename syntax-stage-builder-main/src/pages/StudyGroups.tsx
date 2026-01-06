@@ -285,7 +285,7 @@ const StudyGroups = () => {
           <TabsContent value="explore" className="space-y-8">
             {/* Filters - Mobile Scrollable */}
             <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar snap-x -mx-4 px-4 md:mx-0 md:px-0">
-              {['all', 'React', 'JavaScript', 'Python', 'AWS', 'System Design'].map(topic => (
+              {['all', ...Array.from(new Set(groups.map(g => g.topic))).sort()].map(topic => (
                 <button
                   key={topic}
                   onClick={() => setSelectedTopic(topic)}
