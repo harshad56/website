@@ -131,8 +131,9 @@ const StudyGroups = () => {
     const matchesTopic = selectedTopic === "all" || group.topic === selectedTopic;
     const matchesLevel = selectedLevel === "all" || group.level === selectedLevel;
 
+
     return matchesSearch && matchesTopic && matchesLevel;
-  }), [searchQuery, selectedTopic, selectedLevel]);
+  }), [groups, searchQuery, selectedTopic, selectedLevel]);
 
   const myGroups = groups.filter(g => g.isMember);
   const featuredGroup = groups.length > 0 ? groups[0] : null;
