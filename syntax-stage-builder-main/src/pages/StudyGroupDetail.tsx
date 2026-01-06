@@ -91,7 +91,7 @@ const StudyGroupDetail = () => {
                                 <Badge className="bg-white/10 hover:bg-white/20 ml-2">{group.topic}</Badge>
                             </div>
                         </div>
-                        <Button variant="destructive" onClick={handleLeave} className="mb-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 md:ml-auto">
+                        <Button variant="destructive" onClick={handleLeave} className="mb-2 bg-white/90 hover:bg-white text-red-600 border-0 md:ml-auto font-bold shadow-lg backdrop-blur-md">
                             <LogOut className="w-4 h-4 mr-2" /> Leave Group
                         </Button>
                     </div>
