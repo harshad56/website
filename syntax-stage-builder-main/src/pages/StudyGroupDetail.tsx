@@ -9,6 +9,17 @@ import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/services/ApiService";
 import { Users, Clock, MessageCircle, FileText, Video, ArrowLeft, LogOut } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const StudyGroupDetail = () => {
     const { id } = useParams();
@@ -43,7 +54,7 @@ const StudyGroupDetail = () => {
     }, [id, navigate, toast]);
 
     const handleLeave = async () => {
-        if (!confirm("Are you sure you want to leave this group?")) return;
+        // Dialog handles confirmation now
         try {
             if (!id) return;
             const res = await apiService.leaveStudyGroup(id);
@@ -91,9 +102,27 @@ const StudyGroupDetail = () => {
                                 <Badge className="bg-white/10 hover:bg-white/20 ml-2">{group.topic}</Badge>
                             </div>
                         </div>
-                        <Button variant="destructive" onClick={handleLeave} className="mb-2 bg-white/90 hover:bg-white text-red-600 border-0 md:ml-auto font-bold shadow-lg backdrop-blur-md">
-                            <LogOut className="w-4 h-4 mr-2" /> Leave Group
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" className="mb-2 bg-white/90 hover:bg-white text-red-600 border-0 md:ml-auto font-bold shadow-lg backdrop-blur-md">
+                                    <LogOut className="w-4 h-4 mr-2" /> Leave Group
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-slate-900 border border-white/10 text-white">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription className="text-slate-400">
+                                        This will remove you from the <strong>{group.name}</strong> study group. You will lose access to the discussion and resources until you join again.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleLeave} className="bg-red-600 hover:bg-red-700 text-white border-0">
+                                        Yes, leave group
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </div>
             </div>
