@@ -299,9 +299,129 @@ router.post('/:id/leave', authenticateToken, async (req, res) => {
         if (error) throw error;
 
         return res.json({ success: true, message: 'Left successfully' });
-    } catch (error) {
-        winston.error('Error leaving study group:', error);
         return res.status(500).json({ success: false, message: 'Failed to leave group' });
+    }
+});
+
+// GET /api/study-groups/:id/members - Get members of a group
+router.get('/:id/members', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!supabase) return res.status(503).json({ success: false, message: 'Database service unavailable' });
+
+        // Simple fetch for now. In a real app we'd join with a 'users' table or fetch profiles from Auth
+        // For now we just return the member records which contain user_email
+        const { data, error } = await supabase
+            .from('study_group_members')
+            .select('*')
+            .eq('group_id', id);
+
+        if (error) throw error;
+        return res.json({ success: true, data });
+    } catch (error) {
+        winston.error('Error fetching members:', error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch members' });
+    }
+});
+
+// GET /api/study-groups/:id/messages - Get discussion messages
+router.get('/:id/messages', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!supabase) return res.status(503).json({ success: false, message: 'Database service unavailable' });
+
+        const { data, error } = await supabase
+            .from('group_messages')
+            .select('*')
+            .eq('group_id', id)
+            .order('created_at', { ascending: true });
+
+        // If table doesn't exist yet, it will throw. We should ideally handle that visually in frontend or here.
+        if (error) throw error;
+        return res.json({ success: true, data });
+    } catch (error) {
+        winston.error('Error fetching messages:', error);
+        // Return empty array on error (e.g. table missing) to prevent UI crash
+        return res.json({ success: true, data: [] });
+    }
+});
+
+// POST /api/study-groups/:id/messages - Send a message
+router.post('/:id/messages', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { content, userName, userAvatar } = req.body;
+
+        if (!content) return res.status(400).json({ success: false, message: 'Content required' });
+        if (!supabase) return res.status(503).json({ success: false, message: 'Database service unavailable' });
+
+        const { data, error } = await supabase
+            .from('group_messages')
+            .insert([{
+                group_id: id,
+                user_email: req.user.email,
+                user_name: userName || req.user.email.split('@')[0],
+                user_avatar: userAvatar,
+                content
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return res.status(201).json({ success: true, data });
+    } catch (error) {
+        winston.error('Error sending message:', error);
+        return res.status(500).json({ success: false, message: 'Failed to send message' });
+    }
+});
+
+// GET /api/study-groups/:id/resources - Get resources
+router.get('/:id/resources', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!supabase) return res.status(503).json({ success: false, message: 'Database service unavailable' });
+
+        const { data, error } = await supabase
+            .from('group_resources')
+            .select('*')
+            .eq('group_id', id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return res.json({ success: true, data });
+    } catch (error) {
+        winston.error('Error fetching resources:', error);
+        return res.json({ success: true, data: [] });
+    }
+});
+
+// POST /api/study-groups/:id/resources - Add a resource
+router.post('/:id/resources', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, url, type, userName } = req.body;
+
+        if (!title || !url) return res.status(400).json({ success: false, message: 'Title and URL required' });
+        if (!supabase) return res.status(503).json({ success: false, message: 'Database service unavailable' });
+
+        const { data, error } = await supabase
+            .from('group_resources')
+            .insert([{
+                group_id: id,
+                title,
+                url,
+                type: type || 'link',
+                added_by: req.user.email,
+                added_by_name: userName || req.user.email.split('@')[0]
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return res.status(201).json({ success: true, data });
+    } catch (error) {
+        winston.error('Error adding resource:', error);
+        return res.status(500).json({ success: false, message: 'Failed to add resource' });
     }
 });
 

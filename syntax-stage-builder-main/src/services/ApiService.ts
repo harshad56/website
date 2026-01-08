@@ -1124,6 +1124,36 @@ class ApiService {
   async getStudyGroup(id: string | number): Promise<ApiResponse<any>> {
     return this.request(`/study-groups/${id}`, { method: 'GET' });
   }
+  // Study Group Detail Features
+  async getGroupMembers(groupId: string) {
+    return this.request(`/study-groups/${groupId}/members`);
+  }
+
+  async getGroupMessages(groupId: string) {
+    return this.request(`/study-groups/${groupId}/messages`);
+  }
+
+  async sendGroupMessage(groupId: string, content: string, user?: any) {
+    return this.request(`/study-groups/${groupId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        content,
+        userName: user?.name,
+        userAvatar: user?.avatar
+      })
+    });
+  }
+
+  async getGroupResources(groupId: string) {
+    return this.request(`/study-groups/${groupId}/resources`);
+  }
+
+  async addGroupResource(groupId: string, data: any, user?: any) {
+    return this.request(`/study-groups/${groupId}/resources`, {
+      method: 'POST',
+      body: JSON.stringify({ ...data, userName: user?.name })
+    });
+  }
 }
 
-export const apiService = new ApiService(); 
+export const apiService = new ApiService();
