@@ -37,6 +37,7 @@ const AdminStudyGroups = () => {
         avatar: '',
         tags: '',
         gradient: 'from-indigo-500 to-purple-500',
+        meeting_link: '',
         is_active: true
     });
 
@@ -81,6 +82,7 @@ const AdminStudyGroups = () => {
             avatar: '',
             tags: '',
             gradient: 'from-indigo-500 to-purple-500',
+            meeting_link: '',
             is_active: true
         });
 
@@ -103,6 +105,7 @@ const AdminStudyGroups = () => {
             avatar: group.avatar || '',
             tags: group.tags ? group.tags.join(', ') : '',
             gradient: group.gradient || 'from-indigo-500 to-purple-500',
+            meeting_link: group.meeting_link || '',
             is_active: group.is_active ?? true
         });
         setShowModal(true);
@@ -333,6 +336,16 @@ const AdminStudyGroups = () => {
                                         onChange={(e) => setFormData({ ...formData, gradient: e.target.value })}
                                         className="bg-slate-900 border-white/10"
                                         placeholder="e.g., from-blue-500 to-cyan-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Meeting Link</Label>
+                                    <Input
+                                        value={formData.meeting_link}
+                                        onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
+                                        className="bg-slate-900 border-white/10"
+                                        placeholder="e.g., https://zoom.us/j/..."
                                     />
                                 </div>
 

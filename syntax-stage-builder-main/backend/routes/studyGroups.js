@@ -88,7 +88,8 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
             meeting_frequency = 'Weekly',
             avatar,
             tags = [],
-            gradient
+            gradient,
+            meeting_link
         } = req.body;
 
         if (!name || !topic || !description) {
@@ -111,6 +112,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
                 avatar,
                 tags,
                 gradient,
+                meeting_link,
                 created_at: new Date().toISOString()
             }])
             .select()

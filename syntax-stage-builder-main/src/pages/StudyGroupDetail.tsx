@@ -235,9 +235,14 @@ const StudyGroupDetail = () => {
                             <CardContent>
                                 <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center">
                                     <p className="text-indigo-300 font-bold mb-1">Saturday, 8:00 PM</p>
-                                    <p className="text-xs text-indigo-400/60 mb-3">Zoom Call</p>
-                                    <Button size="sm" className="w-full bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20">
-                                        <Video className="w-4 h-4 mr-2" /> Join Call
+                                    <p className="text-xs text-indigo-400/60 mb-3">{group.meeting_link ? 'Zoom Call' : 'Location TBD'}</p>
+                                    <Button
+                                        size="sm"
+                                        className="w-full bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => group.meeting_link && window.open(group.meeting_link, '_blank')}
+                                        disabled={!group.meeting_link}
+                                    >
+                                        <Video className="w-4 h-4 mr-2" /> {group.meeting_link ? 'Join Call' : 'No Link Yet'}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -288,8 +293,8 @@ const StudyGroupDetail = () => {
                                                                 </span>
                                                             </div>
                                                             <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe
-                                                                    ? 'bg-indigo-600 text-white rounded-tr-sm shadow-lg shadow-indigo-900/20'
-                                                                    : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5'
+                                                                ? 'bg-indigo-600 text-white rounded-tr-sm shadow-lg shadow-indigo-900/20'
+                                                                : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5'
                                                                 }`}>
                                                                 {msg.content}
                                                             </div>

@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS group_resources (
 -- Enable Row Level Security (RLS) if needed, but for now assuming public/authenticated access control via API
 -- ALTER TABLE group_messages ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE group_resources ENABLE ROW LEVEL SECURITY;
+
+-- Add meeting_link column to study_groups table if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'study_groups' AND column_name = 'meeting_link') THEN
+        ALTER TABLE study_groups ADD COLUMN meeting_link TEXT;
+    END IF;
+END $$;
