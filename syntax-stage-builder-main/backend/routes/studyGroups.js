@@ -299,6 +299,8 @@ router.post('/:id/leave', authenticateToken, async (req, res) => {
         if (error) throw error;
 
         return res.json({ success: true, message: 'Left successfully' });
+    } catch (error) {
+        winston.error('Error leaving study group:', error);
         return res.status(500).json({ success: false, message: 'Failed to leave group' });
     }
 });
