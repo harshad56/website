@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
 import {
@@ -220,13 +228,62 @@ const StudyGroups = () => {
         <div className="py-6 flex items-center justify-between">
           <BackButton />
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="hidden md:flex text-slate-400 hover:text-white">
-              <MessageCircle className="w-5 h-5 mr-2" /> Community Guidelines
-            </Button>
-            <div className="hidden md:block h-4 w-px bg-white/10"></div>
-            <Button className="hidden md:flex bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-6 shadow-lg shadow-indigo-600/20">
-              <Plus className="w-4 h-4 mr-2" /> Start A Group
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="hidden md:flex text-slate-400 hover:text-white transition-colors">
+                  <MessageCircle className="w-5 h-5 mr-2" /> Community Guidelines
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-slate-950 border-white/10 text-white max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-indigo-400" /> Community Guidelines
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-400 text-base">
+                    To keep this community a safe and helpful place for everyone, we ask that you follow these simple rules.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 pt-4">
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-white mb-1">Be Respectful</h3>
+                      <p className="text-slate-400 leading-relaxed">
+                        Treat everyone with respect and kindness. We are all here to learn. Harassment, hate speech, and bullying will not be tolerated.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-white mb-1">Keep it Relevant</h3>
+                      <p className="text-slate-400 leading-relaxed">
+                        Keep discussions focused on coding, learning, and the group topic. Avoid spam or self-promotion unless explicitly allowed.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-white mb-1">Help Each Other</h3>
+                      <p className="text-slate-400 leading-relaxed">
+                        Collaborate and share knowledge. If you see someone struggling, offer a helping hand. We grow faster together.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            {/* <div className="hidden md:block h-4 w-px bg-white/10"></div> */}
+            {/* Start Group Button Removed as per request */}
           </div>
         </div>
 
@@ -286,11 +343,20 @@ const StudyGroups = () => {
                   <h2 className="text-3xl font-bold text-white leading-tight">{featuredGroup.name}</h2>
                   <p className="text-slate-400 text-lg">{featuredGroup.description}</p>
                   <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <Button size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20">
-                      Join Discussion <ArrowRight className="w-4 h-4 ml-2" />
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-500 font-bold shadow-lg shadow-indigo-600/20"
+                      onClick={(e) => featuredGroup.isMember ? visitGroup(featuredGroup.id, e) : joinGroup(featuredGroup.id, e)}
+                    >
+                      {featuredGroup.isMember ? 'Join Discussion' : 'Join Group'} <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold backdrop-blur-sm">
-                      View Curriculum
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto rounded-xl h-12 px-8 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold backdrop-blur-sm"
+                      onClick={(e) => visitGroup(featuredGroup.id, e)}
+                    >
+                      View Details
                     </Button>
                   </div>
                 </div>
