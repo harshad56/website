@@ -923,7 +923,8 @@ const CourseCatalog = () => {
           </TabsContent>
         </Tabs>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default CourseCatalog;
+export default CourseCatalog;
