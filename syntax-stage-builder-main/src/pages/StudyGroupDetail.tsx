@@ -190,28 +190,32 @@ const StudyGroupDetail = () => {
                             </div>
                         </div>
 
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="mb-2 bg-white/90 hover:bg-white text-red-600 border-0 md:ml-auto font-bold shadow-lg backdrop-blur-md transition-all hover:scale-105">
-                                    <LogOut className="w-4 h-4 mr-2" /> Leave Group
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-slate-900 border border-white/10 text-white">
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription className="text-slate-400">
-                                        This will remove you from the <strong>{group.name}</strong> study group.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleLeave} className="bg-red-600 hover:bg-red-700 text-white border-0">
-                                        Yes, leave group
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
                     </div>
+                </div>
+
+                {/* Leave Group Button - Top Right */}
+                <div className="absolute top-6 right-4 md:right-8 z-20">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="bg-red-500/20 hover:bg-red-500/40 text-red-100 border border-red-500/30 backdrop-blur-md shadow-lg transition-all hover:scale-105">
+                                <LogOut className="w-4 h-4 mr-2" /> Leave Group
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-slate-900 border border-white/10 text-white">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-slate-400">
+                                    This will remove you from the <strong>{group.name}</strong> study group.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleLeave} className="bg-red-600 hover:bg-red-700 text-white border-0">
+                                    Yes, leave group
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
 
@@ -441,7 +445,7 @@ const StudyGroupDetail = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
