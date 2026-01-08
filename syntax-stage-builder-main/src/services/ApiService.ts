@@ -477,6 +477,12 @@ class ApiService {
     });
   }
 
+  async getMyCourses(): Promise<ApiResponse<CourseContent[]>> {
+    return this.request<CourseContent[]>('/courses/my-courses', {
+      method: 'GET',
+    });
+  }
+
   async getCourse(courseId: string): Promise<ApiResponse<CourseContent>> {
     return this.request<CourseContent>(`/courses/${courseId}`, {
       method: 'GET',

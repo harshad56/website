@@ -62,6 +62,22 @@ export const useCourses = () => {
   });
 };
 
+// Hook for fetching user's enrolled courses
+export const useMyCourses = () => {
+  return useQuery({
+    queryKey: ['courses', 'my'], // Simple key for now, ideally tied to userId
+    queryFn: async () => {
+      const response = await apiService.getMyCourses();
+      if (!response.success || !response.data) {
+        // Return empty array instead of throwing if just no courses
+        return [];
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 // Hook for fetching all projects
 export const useProjects = () => {
   return useQuery({

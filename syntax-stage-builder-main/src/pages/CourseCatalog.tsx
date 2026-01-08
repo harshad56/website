@@ -8,19 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
-import { useCourses } from "@/hooks/useApi";
+import { useCourses, useMyCourses } from "@/hooks/useApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiService } from "@/services/ApiService";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  Clock, 
-  Users, 
-  BookOpen, 
+import {
+  Search,
+  Filter,
+  Star,
+  Clock,
+  Users,
+  BookOpen,
   Play,
   Code,
   Database,
@@ -57,8 +58,10 @@ const CourseCatalog = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const [languageSearchQuery, setLanguageSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("browse");
 
   const { data: coursesData, isLoading, isError } = useCourses();
+  const { data: myCoursesData, isLoading: isLoadingMyCourses } = useMyCourses();
 
   // Fetch categories and languages from database on mount
   useEffect(() => {
@@ -112,11 +115,11 @@ const CourseCatalog = () => {
     if (user) {
       const fetchWishlist = async () => {
         try {
-      const response = await apiService.getWishlist();
-      if (response.success && response.data) {
-        const courseWishlistIds = response.data.map((item: any) => item.course_id);
-        setLikedIds(new Set(courseWishlistIds));
-      }
+          const response = await apiService.getWishlist();
+          if (response.success && response.data) {
+            const courseWishlistIds = response.data.map((item: any) => item.course_id);
+            setLikedIds(new Set(courseWishlistIds));
+          }
         } catch (error: any) {
           // Silently handle rate limit errors - don't show error to user
           if (error.message && error.message.includes('Too many requests')) {
@@ -174,16 +177,16 @@ const CourseCatalog = () => {
       // Use course.category directly if it exists
       const rawCategory = course.category || "general";
       const categorySlug = typeof rawCategory === 'string' ? rawCategory.toLowerCase().trim() : "general";
-      
+
       // Check if category exists in database categories, otherwise use as-is or default to general
-      const category = dbCategories.find(c => c.slug === categorySlug) 
-        ? categorySlug 
+      const category = dbCategories.find(c => c.slug === categorySlug)
+        ? categorySlug
         : (categories.find(c => c.id === categorySlug) ? categorySlug : "general");
-      
+
       // Get language from course
       const courseLanguage = course.language || "";
       const languageSlug = typeof courseLanguage === 'string' ? courseLanguage.toLowerCase().trim() : "";
-      
+
       // Duration parsing: accept numeric minutes, or strings like "20+ hours", "5 hours", "90 min"
       const durationMinutes = (() => {
         const raw = course.estimated_duration ?? course.estimatedDuration;
@@ -202,7 +205,7 @@ const CourseCatalog = () => {
             if (!isNaN(mins)) return Math.round(mins);
           }
           // If plain number string, assume minutes
-          const num = parseFloat(lower.replace('+',''));
+          const num = parseFloat(lower.replace('+', ''));
           if (!isNaN(num)) return num;
         }
         return null;
@@ -225,46 +228,89 @@ const CourseCatalog = () => {
         level: course.difficulty || "beginner",
         duration: durationLabel,
         durationMinutes,
-      students: course.students_count || 0,
-      rating: course.rating || 4.8,
-      reviews: course.reviews_count || 0,
-      price: course.price || 0,
-      originalPrice: course.original_price || course.price || 0,
-      instructor: course.instructor || "CodeAcademy Pro Instructor",
-      instructorAvatar:
-        course.instructor_avatar ||
-        "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=50&h=50&fit=crop&crop=face",
-      image:
-        course.image_url ||
-        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=250&fit=crop",
-      tags: (course.tags as string[]) || [course.language || "Programming"],
-      features: ["Certificate", "Lifetime Access"],
-      isBestseller: !!course.is_bestseller,
-      isNew: !!course.is_new,
-      lessonCount: course.lesson_count || 0,
-      lessons: course.lessons || [],
+        students: course.students_count || 0,
+        rating: course.rating || 4.8,
+        reviews: course.reviews_count || 0,
+        price: course.price || 0,
+        originalPrice: course.original_price || course.price || 0,
+        instructor: course.instructor || "CodeAcademy Pro Instructor",
+        instructorAvatar:
+          course.instructor_avatar ||
+          "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=50&h=50&fit=crop&crop=face",
+        image:
+          course.image_url ||
+          "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=250&fit=crop",
+        tags: (course.tags as string[]) || [course.language || "Programming"],
+        features: ["Certificate", "Lifetime Access"],
+        isBestseller: !!course.is_bestseller,
+        isNew: !!course.is_new,
+        lessonCount: course.lesson_count || 0,
+        lessons: course.lessons || [],
       };
     });
   }, [coursesData, dbCategories, categories]);
 
+  const myCourses = useMemo(() => {
+    if (!myCoursesData) return [];
+    // Map Supabase course rows into catalog view model
+    return myCoursesData.map((course: any) => {
+      // Reuse logic or simplify for My Courses view
+      const rawCategory = course.category || "general";
+      const categorySlug = typeof rawCategory === 'string' ? rawCategory.toLowerCase().trim() : "general";
+      const category = dbCategories.find(c => c.slug === categorySlug)
+        ? categorySlug
+        : (categories.find(c => c.id === categorySlug) ? categorySlug : "general");
+
+      const courseLanguage = course.language || "";
+      const languageSlug = typeof courseLanguage === 'string' ? courseLanguage.toLowerCase().trim() : "";
+
+      // Simplified duration logic or same as above
+      const durationLabel = course.estimatedDuration || "Self-paced";
+
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description || null,
+        category,
+        language: languageSlug,
+        level: course.difficulty || "beginner",
+        duration: durationLabel,
+        students: course.students_count || 0,
+        rating: course.rating || 4.8,
+        reviews: course.reviews_count || 0,
+        price: course.price || 0,
+        originalPrice: course.original_price || course.price || 0,
+        instructor: course.instructor || "CodeAcademy Pro Instructor",
+        instructorAvatar: course.instructor_avatar || "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=50&h=50&fit=crop&crop=face",
+        image: course.image_url || "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=250&fit=crop",
+        tags: (course.tags as string[]) || [course.language || "Programming"],
+        features: ["Certificate", "Lifetime Access"],
+        isBestseller: !!course.is_bestseller,
+        isNew: !!course.is_new,
+        lessonCount: course.lesson_count || 0,
+        lessons: course.lessons || [],
+      };
+    });
+  }, [myCoursesData, dbCategories, categories]);
+
   const filteredCourses = courses.filter(course => {
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = searchQuery === "" || 
-                         course.title.toLowerCase().includes(searchLower) ||
-                         course.description.toLowerCase().includes(searchLower) ||
-                         course.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-                         (course.category?.toLowerCase() || "").includes(searchLower) ||
-                         (course.language?.toLowerCase() || "").includes(searchLower);
+    const matchesSearch = searchQuery === "" ||
+      course.title.toLowerCase().includes(searchLower) ||
+      course.description.toLowerCase().includes(searchLower) ||
+      course.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
+      (course.category?.toLowerCase() || "").includes(searchLower) ||
+      (course.language?.toLowerCase() || "").includes(searchLower);
     // Category matching - compare slugs (case-insensitive)
-    const matchesCategory = selectedCategory === "all" || 
-                           course.category?.toLowerCase() === selectedCategory?.toLowerCase() ||
-                           course.category === selectedCategory;
-    
+    const matchesCategory = selectedCategory === "all" ||
+      course.category?.toLowerCase() === selectedCategory?.toLowerCase() ||
+      course.category === selectedCategory;
+
     // Language matching - compare slugs (case-insensitive)
-    const matchesLanguage = selectedLanguage === "all" || 
-                           course.language?.toLowerCase() === selectedLanguage?.toLowerCase() ||
-                           course.language === selectedLanguage ||
-                           (!course.language && selectedLanguage === "all");
+    const matchesLanguage = selectedLanguage === "all" ||
+      course.language?.toLowerCase() === selectedLanguage?.toLowerCase() ||
+      course.language === selectedLanguage ||
+      (!course.language && selectedLanguage === "all");
     const matchesLevel = selectedLevel === "all" || course.level === selectedLevel;
     const matchesDuration = (() => {
       if (selectedDuration === "all") return true;
@@ -278,7 +324,7 @@ const CourseCatalog = () => {
       return true;
     })();
     const matchesPrice = !showFreeOnly || course.price === 0;
-    
+
     return matchesSearch && matchesCategory && matchesLanguage && matchesLevel && matchesDuration && matchesPrice;
   });
 
@@ -428,378 +474,456 @@ const CourseCatalog = () => {
       </div>
 
       <div className="container mx-auto px-4 py-10">
-        {/* Filters and Search */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search courses, instructors, or topics..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-900/80 border-white/10 text-white placeholder:text-white/40"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full lg:w-48 bg-slate-900/80 border-white/10 text-white">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="popularity">Most Popular</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <Tabs defaultValue="browse" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="bg-slate-900/50 p-1 rounded-xl border border-white/10 mb-8 w-fit h-auto">
+            <TabsTrigger value="browse" className="rounded-lg px-6 py-2.5 text-slate-400 data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">
+              Browse Catalog
+            </TabsTrigger>
+            <TabsTrigger value="my-courses" className="rounded-lg px-6 py-2.5 text-slate-400 data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all">
+              My Enrolled Courses
+            </TabsTrigger>
+          </TabsList>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <div className="px-2 py-1.5 sticky top-0 bg-slate-900 border-b border-white/10">
+          <TabsContent value="browse" className="space-y-8">
+            {/* Filters and Search */}
+            <div className="mb-8">
+              <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search categories..."
-                    value={categorySearchQuery}
-                    onChange={(e) => setCategorySearchQuery(e.target.value)}
-                    className="h-8 bg-black/40 border-white/10 text-white text-sm"
-                    onClick={(e) => e.stopPropagation()}
+                    placeholder="Search courses, instructors, or topics..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-slate-900/80 border-white/10 text-white placeholder:text-white/40"
                   />
                 </div>
-                {categories
-                  .filter(cat => cat.id === "all" || cat.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
-                  .map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <div className="px-2 py-1.5 sticky top-0 bg-slate-900 border-b border-white/10">
-                  <Input
-                    placeholder="Search languages..."
-                    value={languageSearchQuery}
-                    onChange={(e) => setLanguageSearchQuery(e.target.value)}
-                    className="h-8 bg-black/40 border-white/10 text-white text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-                <SelectItem value="all">All Languages</SelectItem>
-                {dbLanguages
-                  .filter(lang => lang.name.toLowerCase().includes(languageSearchQuery.toLowerCase()))
-                  .map((language) => (
-                    <SelectItem key={language.id} value={language.slug}>
-                      {language.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-              <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
-                <SelectValue placeholder="Level" />
-              </SelectTrigger>
-              <SelectContent>
-                {levels.map((level) => (
-                  <SelectItem key={level.id} value={level.id}>
-                    {level.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedDuration} onValueChange={setSelectedDuration}>
-              <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
-                <SelectValue placeholder="Duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {durations.map((duration) => (
-                  <SelectItem key={duration.id} value={duration.id}>
-                    {duration.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center space-x-2 bg-slate-900/80 border border-white/10 rounded-lg px-3 py-2">
-              <Checkbox
-                id="free-only"
-                checked={showFreeOnly}
-                onCheckedChange={(checked) => setShowFreeOnly(checked as boolean)}
-              />
-              <label htmlFor="free-only" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Free courses only
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-white/60">
-            {sortedCourses.length} course{sortedCourses.length !== 1 ? 's' : ''} found
-          </p>
-          <div className="hidden md:flex items-center gap-2 text-xs text-white/50">
-            <Eye className="w-3 h-3" />
-            <span>Tip: Combine search + filters to find the perfect course faster.</span>
-          </div>
-        </div>
-
-        {/* Course Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedCourses.map((course, index) => (
-            <motion.div
-              key={course.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: index * 0.03,
-                duration: 0.4,
-                ease: "easeOut",
-              }}
-              whileHover={{
-                y: -5,
-                scale: 1.02,
-                transition: { duration: 0.2 },
-              }}
-              whileTap={{ scale: 0.98 }}
-              style={{ willChange: "transform" }}
-            >
-              <Card
-                className="group overflow-hidden border-white/10 bg-slate-900/70 backdrop-blur-xl hover:bg-slate-900 hover:border-indigo-500/60 transition-all duration-300 h-full"
-              >
-              <div className="relative overflow-hidden rounded-t-lg">
-                <img
-                  src={course.image}
-                  alt={course.title}
-                  className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
-                />
-                <div className="absolute top-4 left-4 flex gap-2">
-                  {course.isBestseller && (
-                    <Badge className="bg-yellow-500 text-yellow-900">Bestseller</Badge>
-                  )}
-                  {course.isNew && (
-                    <Badge className="bg-green-500 text-green-900">New</Badge>
-                  )}
-                </div>
-                <div className="absolute top-4 right-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`bg-black/40 hover:bg-black/60 border border-white/20 rounded-full ${likedIds.has(course.id) ? 'text-pink-400' : ''}`}
-                    disabled={loadingWishlist || !user}
-                    onClick={async () => {
-                      if (!user) {
-                        toast({
-                          title: "Sign in required",
-                          description: "Please sign in to add courses to your wishlist",
-                          variant: "default"
-                        });
-                        return;
-                      }
-
-                      const isLiked = likedIds.has(course.id);
-                      setLoadingWishlist(true);
-
-                      try {
-                        if (isLiked) {
-                          const response = await apiService.removeFromWishlist(course.id);
-                          if (response.success) {
-                            setLikedIds((prev) => {
-                              const next = new Set(prev);
-                              next.delete(course.id);
-                              return next;
-                            });
-                            toast({
-                              title: "Removed from wishlist",
-                              description: "Course removed from your wishlist",
-                              variant: "default"
-                            });
-                          }
-                        } else {
-                          const response = await apiService.addToWishlist(course.id);
-                          if (response.success) {
-                            setLikedIds((prev) => new Set(prev).add(course.id));
-                            toast({
-                              title: "Added to wishlist",
-                              description: "Course added to your wishlist",
-                              variant: "default"
-                            });
-                          }
-                        }
-                      } catch (error) {
-                        console.error('Wishlist error:', error);
-                        toast({
-                          title: "Error",
-                          description: "Failed to update wishlist",
-                          variant: "destructive"
-                        });
-                      } finally {
-                        setLoadingWishlist(false);
-                      }
-                    }}
-                  >
-                    <Heart className="w-4 h-4" fill={likedIds.has(course.id) ? 'currentColor' : 'none'} />
-                  </Button>
-                </div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full lg:w-48 bg-slate-900/80 border-white/10 text-white">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popularity">Most Popular</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-medium">
-                    {categories.find(c => c.id === course.category)?.name}
-                  </Badge>
-                  <Badge variant="outline" className="border-white/30 text-white/90 bg-white/5 font-medium">
-                    {levels.find(l => l.id === course.level)?.name}
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-2">
-                  {course.title}
-                </CardTitle>
-                {course.description && (
-                  <CardDescription className="line-clamp-2 text-gray-300">
-                    {course.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                <div className="flex items-center gap-3 mb-3">
-                  <img
-                    src={course.instructorAvatar}
-                    alt={course.instructor}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span className="text-sm font-medium text-white/90">{course.instructor}</span>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-white/90 mb-4 flex-wrap">
-                  <span className="flex items-center gap-1 font-medium">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    {course.rating} ({course.reviews.toLocaleString()})
-                  </span>
-                  <span className="flex items-center gap-1 font-medium">
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    {course.duration}
-                  </span>
-                  <span className="flex items-center gap-1 font-medium">
-                    <Users className="w-4 h-4 text-green-400" />
-                    {course.students.toLocaleString()}
-                  </span>
-                  {course.lessonCount > 0 && (
-                    <span className="flex items-center gap-1 font-medium">
-                      <BookOpen className="w-4 h-4 text-purple-400" />
-                      {course.lessonCount} {course.lessonCount === 1 ? 'lesson' : 'lessons'}
-                    </span>
-                  )}
-                </div>
-                
-                {course.lessons && course.lessons.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-white/70 mb-2 font-medium">Lessons:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {course.lessons.slice(0, 5).map((lesson: any) => (
-                        <Badge key={lesson.id} variant="outline" className="text-xs border-purple-500/50 text-purple-300 bg-purple-500/10">
-                          {lesson.title}
-                        </Badge>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <div className="px-2 py-1.5 sticky top-0 bg-slate-900 border-b border-white/10">
+                      <Input
+                        placeholder="Search categories..."
+                        value={categorySearchQuery}
+                        onChange={(e) => setCategorySearchQuery(e.target.value)}
+                        className="h-8 bg-black/40 border-white/10 text-white text-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    {categories
+                      .filter(cat => cat.id === "all" || cat.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
                       ))}
-                      {course.lessons.length > 5 && (
-                        <Badge variant="outline" className="text-xs border-gray-500/50 text-gray-400 bg-gray-500/10">
-                          +{course.lessons.length - 5} more
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <div className="px-2 py-1.5 sticky top-0 bg-slate-900 border-b border-white/10">
+                      <Input
+                        placeholder="Search languages..."
+                        value={languageSearchQuery}
+                        onChange={(e) => setLanguageSearchQuery(e.target.value)}
+                        className="h-8 bg-black/40 border-white/10 text-white text-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <SelectItem value="all">All Languages</SelectItem>
+                    {dbLanguages
+                      .filter(lang => lang.name.toLowerCase().includes(languageSearchQuery.toLowerCase()))
+                      .map((language) => (
+                        <SelectItem key={language.id} value={language.slug}>
+                          {language.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                  <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
+                    <SelectValue placeholder="Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {levels.map((level) => (
+                      <SelectItem key={level.id} value={level.id}>
+                        {level.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedDuration} onValueChange={setSelectedDuration}>
+                  <SelectTrigger className="bg-slate-900/80 border-white/10 text-white">
+                    <SelectValue placeholder="Duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durations.map((duration) => (
+                      <SelectItem key={duration.id} value={duration.id}>
+                        {duration.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center space-x-2 bg-slate-900/80 border border-white/10 rounded-lg px-3 py-2">
+                  <Checkbox
+                    id="free-only"
+                    checked={showFreeOnly}
+                    onCheckedChange={(checked) => setShowFreeOnly(checked as boolean)}
+                  />
+                  <label htmlFor="free-only" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Free courses only
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-sm text-white/60">
+                {sortedCourses.length} course{sortedCourses.length !== 1 ? 's' : ''} found
+              </p>
+              <div className="hidden md:flex items-center gap-2 text-xs text-white/50">
+                <Eye className="w-3 h-3" />
+                <span>Tip: Combine search + filters to find the perfect course faster.</span>
+              </div>
+            </div>
+
+            {/* Course Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sortedCourses.map((course, index) => (
+                <motion.div
+                  key={course.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: index * 0.03,
+                    duration: 0.4,
+                    ease: "easeOut",
+                  }}
+                  whileHover={{
+                    y: -5,
+                    scale: 1.02,
+                    transition: { duration: 0.2 },
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ willChange: "transform" }}
+                >
+                  <Card
+                    className="group overflow-hidden border-white/10 bg-slate-900/70 backdrop-blur-xl hover:bg-slate-900 hover:border-indigo-500/60 transition-all duration-300 h-full"
+                  >
+                    <div className="relative overflow-hidden rounded-t-lg">
+                      <img
+                        src={course.image}
+                        alt={course.title}
+                        className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        {course.isBestseller && (
+                          <Badge className="bg-yellow-500 text-yellow-900">Bestseller</Badge>
+                        )}
+                        {course.isNew && (
+                          <Badge className="bg-green-500 text-green-900">New</Badge>
+                        )}
+                      </div>
+                      <div className="absolute top-4 right-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`bg-black/40 hover:bg-black/60 border border-white/20 rounded-full ${likedIds.has(course.id) ? 'text-pink-400' : ''}`}
+                          disabled={loadingWishlist || !user}
+                          onClick={async () => {
+                            if (!user) {
+                              toast({
+                                title: "Sign in required",
+                                description: "Please sign in to add courses to your wishlist",
+                                variant: "default"
+                              });
+                              return;
+                            }
+
+                            const isLiked = likedIds.has(course.id);
+                            setLoadingWishlist(true);
+
+                            try {
+                              if (isLiked) {
+                                const response = await apiService.removeFromWishlist(course.id);
+                                if (response.success) {
+                                  setLikedIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(course.id);
+                                    return next;
+                                  });
+                                  toast({
+                                    title: "Removed from wishlist",
+                                    description: "Course removed from your wishlist",
+                                    variant: "default"
+                                  });
+                                }
+                              } else {
+                                const response = await apiService.addToWishlist(course.id);
+                                if (response.success) {
+                                  setLikedIds((prev) => new Set(prev).add(course.id));
+                                  toast({
+                                    title: "Added to wishlist",
+                                    description: "Course added to your wishlist",
+                                    variant: "default"
+                                  });
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Wishlist error:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to update wishlist",
+                                variant: "destructive"
+                              });
+                            } finally {
+                              setLoadingWishlist(false);
+                            }
+                          }}
+                        >
+                          <Heart className="w-4 h-4" fill={likedIds.has(course.id) ? 'currentColor' : 'none'} />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="secondary" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-medium">
+                          {categories.find(c => c.id === course.category)?.name}
                         </Badge>
+                        <Badge variant="outline" className="border-white/30 text-white/90 bg-white/5 font-medium">
+                          {levels.find(l => l.id === course.level)?.name}
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-2">
+                        {course.title}
+                      </CardTitle>
+                      {course.description && (
+                        <CardDescription className="line-clamp-2 text-gray-300">
+                          {course.description}
+                        </CardDescription>
                       )}
-                    </div>
-                  </div>
-                )}
+                    </CardHeader>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {course.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs border-gray-500/50 text-gray-300 bg-gray-500/10">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <img
+                          src={course.instructorAvatar}
+                          alt={course.instructor}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <span className="text-sm font-medium text-white/90">{course.instructor}</span>
+                      </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-white">
-                        {course.price === 0 ? 'Free' : `₹${course.price}`}
-                      </span>
-                      {course.originalPrice > course.price && (
-                        <span className="text-sm text-gray-400 line-through">
-                          ₹{course.originalPrice}
+                      <div className="flex items-center gap-4 text-sm text-white/90 mb-4 flex-wrap">
+                        <span className="flex items-center gap-1 font-medium">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          {course.rating} ({course.reviews.toLocaleString()})
                         </span>
+                        <span className="flex items-center gap-1 font-medium">
+                          <Clock className="w-4 h-4 text-blue-400" />
+                          {course.duration}
+                        </span>
+                        <span className="flex items-center gap-1 font-medium">
+                          <Users className="w-4 h-4 text-green-400" />
+                          {course.students.toLocaleString()}
+                        </span>
+                        {course.lessonCount > 0 && (
+                          <span className="flex items-center gap-1 font-medium">
+                            <BookOpen className="w-4 h-4 text-purple-400" />
+                            {course.lessonCount} {course.lessonCount === 1 ? 'lesson' : 'lessons'}
+                          </span>
+                        )}
+                      </div>
+
+                      {course.lessons && course.lessons.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-xs text-white/70 mb-2 font-medium">Lessons:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {course.lessons.slice(0, 5).map((lesson: any) => (
+                              <Badge key={lesson.id} variant="outline" className="text-xs border-purple-500/50 text-purple-300 bg-purple-500/10">
+                                {lesson.title}
+                              </Badge>
+                            ))}
+                            {course.lessons.length > 5 && (
+                              <Badge variant="outline" className="text-xs border-gray-500/50 text-gray-400 bg-gray-500/10">
+                                +{course.lessons.length - 5} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Button 
-                        variant="outline"
-                        className="w-full border-white/30 bg-white/5 text-white font-medium hover:bg-white/15 hover:border-white/40 hover:text-white transition-all duration-200"
-                        onClick={() => navigate(`/course/${course.id}`, { state: { from: '/courses' } })}
-                      >
-                        View Details
-                      </Button>
-                    </div>
-                    <div className="flex-1">
-                      <Button 
-                        className="w-full group-hover:bg-primary group-hover:text-primary-foreground bg-indigo-500 text-white shadow-md shadow-indigo-500/40 transition-all duration-200"
-                        onClick={() => navigate(`/course/${course.id}`, { state: { from: '/courses' } })}
-                      >
-                        Enroll Now
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {course.tags.slice(0, 3).map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs border-gray-500/50 text-gray-300 bg-gray-500/10">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold text-white">
+                              {course.price === 0 ? 'Free' : `₹${course.price}`}
+                            </span>
+                            {course.originalPrice > course.price && (
+                              <span className="text-sm text-gray-400 line-through">
+                                ₹{course.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Button
+                              variant="outline"
+                              className="w-full border-white/30 bg-white/5 text-white font-medium hover:bg-white/15 hover:border-white/40 hover:text-white transition-all duration-200"
+                              onClick={() => navigate(`/course/${course.id}`, { state: { from: '/courses' } })}
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                          <div className="flex-1">
+                            <Button
+                              className="w-full group-hover:bg-primary group-hover:text-primary-foreground bg-indigo-500 text-white shadow-md shadow-indigo-500/40 transition-all duration-200"
+                              onClick={() => navigate(`/course/${course.id}`, { state: { from: '/courses' } })}
+                            >
+                              Enroll Now
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Load More */}
+            {sortedCourses.length > 0 && (
+              <div className="text-center mt-12">
+                <Button variant="outline" size="lg">
+                  Load More Courses
+                </Button>
+              </div>
+            )}
+
+            {/* No Results */}
+            {sortedCourses.length === 0 && (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No courses found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search criteria or browse all categories.
+                </p>
+                <Button onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("all");
+                  setSelectedLevel("all");
+                  setSelectedDuration("all");
+                  setShowFreeOnly(false);
+                }}>
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="my-courses" className="space-y-8">
+            {!user ? (
+              <div className="text-center py-20 bg-slate-900/40 rounded-3xl border border-white/5">
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Users className="w-8 h-8 text-indigo-400" />
                 </div>
-              </CardContent>
-            </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Load More */}
-        {sortedCourses.length > 0 && (
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg">
-              Load More Courses
-            </Button>
-          </div>
-        )}
-
-        {/* No Results */}
-        {sortedCourses.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No courses found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search criteria or browse all categories.
-            </p>
-            <Button onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("all");
-              setSelectedLevel("all");
-              setSelectedDuration("all");
-              setShowFreeOnly(false);
-            }}>
-              Clear Filters
-            </Button>
-          </div>
-        )}
+                <h3 className="text-2xl font-bold mb-3">Sign in to view your courses</h3>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto">Track your progress, access your certificates, and continue learning where you left off.</p>
+                <Button onClick={() => navigate('/login')} size="lg" className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-8">
+                  Sign In Now
+                </Button>
+              </div>
+            ) : myCourses.length === 0 ? (
+              <div className="text-center py-20 bg-slate-900/40 rounded-3xl border border-white/5">
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">You haven't enrolled in any courses yet</h3>
+                <p className="text-slate-400 mb-8 max-w-md mx-auto">Explore our catalog to find courses that match your career goals.</p>
+                <Button onClick={() => setActiveTab('browse')} size="lg" className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-8">
+                  Browse Courses
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myCourses.map((course, index) => (
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="group overflow-hidden border-white/10 bg-slate-900/70 backdrop-blur-xl hover:bg-slate-900 hover:border-indigo-500/60 transition-all duration-300 h-full flex flex-col">
+                      <div className="relative h-40 overflow-hidden">
+                        <img src={course.image} alt={course.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+                        <Badge className="absolute top-3 right-3 bg-emerald-500 text-white border-0">Enrolled</Badge>
+                      </div>
+                      <CardHeader className="pb-3 flex-grow">
+                        <CardTitle className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-2">{course.title}</CardTitle>
+                        <p className="text-sm text-slate-400">Instructor: {course.instructor}</p>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="mb-4 space-y-2">
+                          <div className="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Progress</span>
+                            <span className="text-indigo-300">0%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 w-[0%]" />
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
+                          onClick={() => navigate(`/course/${course.id}`)}
+                        >
+                          Continue Learning
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
-  );
+      );
 };
 
-export default CourseCatalog; 
+      export default CourseCatalog;
