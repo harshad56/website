@@ -532,11 +532,11 @@ const CodePlayground = () => {
                 
                 <Button
                   onClick={handleRunCode}
-                  disabled={isExecuting || isRunning}
+                  disabled={isExecuting}
                   size="lg"
                   className="gap-2"
                 >
-                  {isExecuting || isRunning ? (
+                  {isExecuting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Running...
@@ -666,7 +666,7 @@ const CodePlayground = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleRunCode}
-                  disabled={isExecuting || isRunning}
+                  disabled={isExecuting}
                   className="gap-2"
                 >
                   <Zap className="h-4 w-4" />
