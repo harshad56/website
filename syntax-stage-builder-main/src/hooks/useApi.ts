@@ -52,13 +52,31 @@ export const useCourses = () => {
   return useQuery({
     queryKey: queryKeys.courses.all,
     queryFn: async () => {
-      const response = await apiService.getCourses();
-      if (!response.success || !response.data) {
-        throw new Error(response.error || 'Failed to fetch courses');
+      try {
+        const response = await apiService.getCourses();
+        if (!response.success || !response.data) {
+          // Return empty array instead of throwing to prevent UI breakage
+          console.warn('Failed to fetch courses, returning empty array');
+          return [];
+        }
+        return response.data;
+      } catch (error: any) {
+        // If it's a 500 error, return empty array instead of throwing
+        if (error?.status >= 500) {
+          console.warn('Server error fetching courses, returning empty array:', error);
+          return [];
+        }
+        throw error;
       }
-      return response.data;
     },
     staleTime: 5 * 60 * 1000,
+    // Don't retry on server errors
+    retry: (failureCount, error: any) => {
+      if (error?.status >= 500) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };
 
@@ -67,14 +85,31 @@ export const useMyCourses = () => {
   return useQuery({
     queryKey: ['courses', 'my'], // Simple key for now, ideally tied to userId
     queryFn: async () => {
-      const response = await apiService.getMyCourses();
-      if (!response.success || !response.data) {
-        // Return empty array instead of throwing if just no courses
-        return [];
+      try {
+        const response = await apiService.getMyCourses();
+        if (!response.success || !response.data) {
+          // Return empty array instead of throwing if just no courses
+          return [];
+        }
+        return response.data;
+      } catch (error: any) {
+        // If it's a 500 error, return empty array instead of throwing
+        // This prevents excessive retries
+        if (error?.status >= 500) {
+          console.warn('Server error fetching my courses, returning empty array:', error);
+          return [];
+        }
+        throw error;
       }
-      return response.data;
     },
     staleTime: 5 * 60 * 1000,
+    // Don't retry on server errors
+    retry: (failureCount, error: any) => {
+      if (error?.status >= 500) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };
 

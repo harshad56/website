@@ -480,6 +480,48 @@ const db = {
         }
     },
 
+    async getUserEnrollments(userId) {
+        if (!supabase) {
+            winston.warn('Supabase not configured. Returning empty enrollments.');
+            return [];
+        }
+
+        try {
+            // Get all enrollments for user
+            const { data: enrollments, error: enrollmentsError } = await supabase
+                .from('user_course_enrollments')
+                .select('course_id')
+                .eq('user_id', userId);
+
+            if (enrollmentsError) {
+                winston.error('getUserEnrollments error:', enrollmentsError);
+                return [];
+            }
+
+            if (!enrollments || enrollments.length === 0) {
+                return [];
+            }
+
+            // Get course details for each enrollment
+            const courseIds = enrollments.map(e => e.course_id);
+            const { data: courses, error: coursesError } = await supabase
+                .from('courses')
+                .select('*')
+                .in('id', courseIds)
+                .order('created_at', { ascending: false });
+
+            if (coursesError) {
+                winston.error('getUserEnrollments courses error:', coursesError);
+                return [];
+            }
+
+            return courses || [];
+        } catch (error) {
+            winston.error('getUserEnrollments failed:', error);
+            return [];
+        }
+    },
+
     async getCourseContent(courseId, userId) {
         if (!supabase) {
             throw new Error('Supabase not configured.');

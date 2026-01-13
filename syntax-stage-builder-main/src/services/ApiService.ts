@@ -106,12 +106,22 @@ class ApiService {
       const headers = this.getHeaders();
 
       const hasToken = this.token || localStorage.getItem('auth_token');
-      console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!hasToken });
+      // Only log in development to reduce console noise
+      if (import.meta.env.DEV) {
+        console.log('API Request:', { url, method: options.method || 'GET', hasToken: !!hasToken });
+      }
+
+      // Add timeout to prevent hanging requests (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(url, {
         ...options,
         headers,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       // Get response text first to handle both JSON and non-JSON responses
       const responseText = await response.text();
@@ -155,8 +165,19 @@ class ApiService {
       }
 
       return data;
-    } catch (error) {
-      console.error('API request failed:', error);
+    } catch (error: any) {
+      // Handle abort/timeout errors
+      if (error.name === 'AbortError') {
+        const timeoutError = new Error('Request timeout. Please try again.');
+        (timeoutError as any).status = 408;
+        (timeoutError as any).isTimeout = true;
+        throw timeoutError;
+      }
+
+      // Only log errors in development to reduce console noise
+      if (import.meta.env.DEV) {
+        console.error('API request failed:', error);
+      }
 
       // Convert to user-friendly error
       const friendlyError = getUserFriendlyError(error);
@@ -164,7 +185,7 @@ class ApiService {
       (enhancedError as any).title = friendlyError.title;
       (enhancedError as any).action = friendlyError.action;
       (enhancedError as any).variant = friendlyError.variant;
-      (enhancedError as any).status = (error as any).status;
+      (enhancedError as any).status = error?.status || (error as any).status;
       (enhancedError as any).originalError = error;
 
       throw enhancedError;

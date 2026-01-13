@@ -13,12 +13,14 @@ export const queryClient = new QueryClient({
         // Don't retry on 4xx errors (client errors)
         if (error instanceof Error && 'status' in error) {
           const status = (error as any).status;
-          if (status >= 400 && status < 500) {
+          // Don't retry client errors (4xx) or server errors (5xx)
+          // Only retry network errors (no status code)
+          if (status >= 400) {
             return false;
           }
         }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+        // Retry up to 2 times for network errors only
+        return failureCount < 2;
       },
       // Retry delay increases exponentially with jitter
       retryDelay: (attemptIndex) => {
