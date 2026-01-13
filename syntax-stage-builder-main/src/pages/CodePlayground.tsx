@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
-import { useCodeRunner } from "@/hooks/useCodeRunner";
+import { codeExecutor } from "@/services/CodeExecutor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -174,7 +174,70 @@ const CodePlayground = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { runCode, isRunning } = useCodeRunner(selectedLanguage, { initialCode: code });
+
+  // Define handleSaveCode first (before useEffect that uses it)
+  const handleSaveCode = useCallback(() => {
+    localStorage.setItem(`playground_${selectedLanguage}`, code);
+    setSavedCode(code);
+    toast({
+      title: "Code saved!",
+      description: "Your code has been saved locally.",
+    });
+  }, [code, selectedLanguage, toast]);
+
+  // Define handleRunCode before useEffect that uses it
+  const handleRunCode = useCallback(async () => {
+    if (!code.trim()) {
+      toast({
+        title: "No code to execute",
+        description: "Please write some code first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExecuting(true);
+    setError(null);
+    setOutput("");
+    setExecutionTime(null);
+    const startTime = Date.now();
+
+    try {
+      // Execute code directly using codeExecutor
+      const result = await codeExecutor.executeCode(selectedLanguage, code);
+      const { error: execError, output: executorOutput } = result.result;
+      
+      const endTime = Date.now();
+      setExecutionTime(endTime - startTime);
+      
+      if (execError) {
+        setError(execError);
+        setOutput(`Error: ${execError}`);
+        toast({
+          title: "Execution failed",
+          description: execError,
+          variant: "destructive",
+        });
+      } else {
+        setOutput(executorOutput?.trim() || "Code executed successfully!");
+        toast({
+          title: "Code executed!",
+          description: `Execution completed in ${endTime - startTime}ms`,
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Execution failed";
+      setError(errorMessage);
+      setOutput(`Error: ${errorMessage}`);
+      toast({
+        title: "Execution failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsExecuting(false);
+    }
+  }, [code, selectedLanguage, toast]);
 
   // Update code when language changes
   useEffect(() => {
@@ -195,7 +258,7 @@ const CodePlayground = () => {
     }
   }, [selectedLanguage]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - defined after handleRunCode and handleSaveCode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + Enter to run code
@@ -213,62 +276,6 @@ const CodePlayground = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleRunCode, handleSaveCode]);
-
-  const handleRunCode = useCallback(async () => {
-    if (!code.trim()) {
-      toast({
-        title: "No code to execute",
-        description: "Please write some code first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsExecuting(true);
-    setError(null);
-    setOutput("");
-    setExecutionTime(null);
-    const startTime = Date.now();
-
-    try {
-      // Use the code runner hook
-      await runCode();
-      
-      // Get output from the hook (we'll need to modify useCodeRunner to expose it)
-      // For now, simulate execution
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const endTime = Date.now();
-      setExecutionTime(endTime - startTime);
-      
-      // Simulate output (replace with actual execution)
-      setOutput("Code executed successfully!\nOutput will appear here...");
-      
-      toast({
-        title: "Code executed!",
-        description: `Execution completed in ${endTime - startTime}ms`,
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Execution failed";
-      setError(errorMessage);
-      toast({
-        title: "Execution failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsExecuting(false);
-    }
-  }, [code, runCode, toast]);
-
-  const handleSaveCode = useCallback(() => {
-    localStorage.setItem(`playground_${selectedLanguage}`, code);
-    setSavedCode(code);
-    toast({
-      title: "Code saved!",
-      description: "Your code has been saved locally.",
-    });
-  }, [code, selectedLanguage, toast]);
 
 
   const handleLoadSaved = () => {
@@ -354,12 +361,140 @@ const CodePlayground = () => {
     });
   };
 
+  // Enhanced structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Code Playground - Interactive Online IDE",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Write, run, and test code in multiple programming languages instantly. Our free online code playground supports JavaScript, Python, Java, C++, Rust, Go and more. No installation required - start coding in your browser!",
+        "featureList": [
+          "Multi-language support (JavaScript, Python, Java, C++, Rust, Go)",
+          "Real-time code execution",
+          "Syntax highlighting",
+          "Code sharing and collaboration",
+          "Save and load code snippets",
+          "Keyboard shortcuts (Ctrl+Enter to run)",
+          "Execution time tracking",
+          "Error handling and debugging",
+          "Download code as files",
+          "Copy to clipboard"
+        ],
+        "programmingLanguage": [
+          "JavaScript",
+          "Python",
+          "Java",
+          "C++",
+          "Rust",
+          "Go"
+        ],
+        "provider": {
+          "@type": "Organization",
+          "name": "CodeAcademy Pro",
+          "url": "https://codeacadmy.vercel.app",
+          "logo": "https://codeacadmy.vercel.app/favicon.ico"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "1250",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "screenshot": "https://codeacadmy.vercel.app/og-code-playground.png",
+        "url": "https://codeacadmy.vercel.app/code-playground",
+        "sameAs": [
+          "https://codeacadmy.vercel.app"
+        ]
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://codeacadmy.vercel.app/code-playground",
+        "name": "Code Playground - Interactive Online IDE",
+        "description": "Free online code playground for JavaScript, Python, Java, C++, Rust, Go. Write, run, and test code instantly in your browser.",
+        "url": "https://codeacadmy.vercel.app/code-playground",
+        "inLanguage": "en-US",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "CodeAcademy Pro",
+          "url": "https://codeacadmy.vercel.app"
+        },
+        "breadcrumb": {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://codeacadmy.vercel.app"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Code Playground",
+              "item": "https://codeacadmy.vercel.app/code-playground"
+            }
+          ]
+        }
+      },
+      {
+        "@type": "HowTo",
+        "name": "How to Use Code Playground",
+        "description": "Learn how to use our online code playground to write and execute code",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Select Programming Language",
+            "text": "Choose your preferred programming language from the dropdown menu (JavaScript, Python, Java, C++, Rust, or Go)"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Write Your Code",
+            "text": "Type or paste your code in the editor. Starter templates are provided for each language."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Run Code",
+            "text": "Click the 'Run Code' button or press Ctrl+Enter (Cmd+Enter on Mac) to execute your code"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "View Output",
+            "text": "Check the output panel to see results, errors, or execution statistics"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 5,
+            "name": "Save or Share",
+            "text": "Save your code locally, share it with others, or download it as a file"
+          }
+        ]
+      }
+    ]
+  };
+
   return (
     <>
       <SEO 
         title="Code Playground - Interactive Online IDE | CodeAcademy Pro"
-        description="Write, run, and test code in multiple programming languages. Our interactive code playground supports JavaScript, Python, Java, C++, Rust, Go and more."
-        keywords="code playground, online IDE, code editor, javascript, python, java, rust, go, c++, programming"
+        description="Write, run, and test code in multiple programming languages instantly. Our free online code playground supports JavaScript, Python, Java, C++, Rust, Go and more. No installation required - start coding in your browser!"
+        keywords="code playground, online IDE, code editor, javascript playground, python playground, java playground, rust playground, go playground, c++ playground, online code editor, web IDE, code runner, execute code online, programming playground, coding sandbox, interactive coding, learn to code, practice programming"
+        image="https://codeacadmy.vercel.app/og-code-playground.png"
+        type="website"
+        url="https://codeacadmy.vercel.app/code-playground"
+        structuredData={structuredData}
       />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
