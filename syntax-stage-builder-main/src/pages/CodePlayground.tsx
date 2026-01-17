@@ -11,6 +11,7 @@ import { BackButton } from "@/components/BackButton";
 import { codeExecutor } from "@/services/CodeExecutor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -178,6 +179,7 @@ const CodePlayground = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleSaveCode = useCallback(() => {
     localStorage.setItem(`playground_${selectedLanguage}`, code);
@@ -202,7 +204,9 @@ const CodePlayground = () => {
     setError(null);
     setOutput("");
     setExecutionTime(null);
-    setActiveTab("output");
+    if (isMobile) {
+      setActiveTab("output"); // Switch to output tab on mobile run
+    }
     const startTime = Date.now();
 
     try {
@@ -239,7 +243,7 @@ const CodePlayground = () => {
     } finally {
       setIsExecuting(false);
     }
-  }, [code, selectedLanguage, toast]);
+  }, [code, selectedLanguage, toast, isMobile]);
 
   // Update code when language changes
   useEffect(() => {
@@ -346,9 +350,9 @@ const CodePlayground = () => {
       />
 
       {/* Header Toolbar */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 flex items-center justify-between z-10">
-        <div className="flex items-center gap-4">
-          <BackButton label="Home" className="mr-2" />
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 flex flex-wrap gap-2 items-center justify-between z-10">
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+          <BackButton label="Home" className="mr-0 md:mr-2" />
           <div className="hidden md:flex items-center gap-2">
             <Code2 className="h-5 w-5 text-primary" />
             <h1 className="font-semibold text-lg">Playground</h1>
@@ -356,7 +360,7 @@ const CodePlayground = () => {
           <div className="h-6 w-px bg-border hidden md:block" />
 
           <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
-            <SelectTrigger className="w-[180px] h-9">
+            <SelectTrigger className="w-[140px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -375,52 +379,55 @@ const CodePlayground = () => {
             onClick={handleRunCode}
             disabled={isExecuting}
             size="sm"
-            className="gap-2 font-semibold shadow-sm"
+            className="gap-1 md:gap-2 font-semibold shadow-sm h-8 md:h-9 px-3 text-xs md:text-sm ml-auto md:ml-0"
           >
             {isExecuting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Running...
+                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
+                <span className="hidden xs:inline">Running...</span>
               </>
             ) : (
               <>
-                <Play className="h-4 w-4" />
-                Run Code
+                <Play className="h-3 w-3 md:h-4 md:w-4" />
+                Run <span className="hidden xs:inline">Code</span>
               </>
             )}
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => {
+        <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide py-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
             const lang = LANGUAGES[selectedLanguage];
             setCode(lang.starter);
           }} title="Reset Code">
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
           {savedCode && (
-            <Button variant="ghost" size="icon" onClick={handleLoadSaved} title="Load Saved">
-              <FileCode className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLoadSaved} title="Load Saved">
+              <FileCode className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={handleSaveCode} title="Save">
-            <Save className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveCode} title="Save">
+            <Save className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleShareCode} title="Share">
-            {copied ? <CheckCircle className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleShareCode} title="Share">
+            {copied ? <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleDownload} title="Download">
-            <Download className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDownload} title="Download">
+            <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full rounded-none border-0">
+        <ResizablePanelGroup
+          direction={isMobile ? "vertical" : "horizontal"}
+          className="h-full rounded-none border-0"
+        >
 
           {/* Editor Panel */}
-          <ResizablePanel defaultSize={60} minSize={30}>
+          <ResizablePanel defaultSize={isMobile ? 60 : 60} minSize={30}>
             <div className="h-full flex flex-col bg-slate-950">
               <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800">
                 <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
@@ -445,17 +452,17 @@ const CodePlayground = () => {
           <ResizableHandle withHandle />
 
           {/* Tools Panel */}
-          <ResizablePanel defaultSize={40} minSize={20}>
+          <ResizablePanel defaultSize={isMobile ? 40 : 40} minSize={20}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               <div className="border-b px-2 bg-muted/30">
-                <TabsList className="h-9">
-                  <TabsTrigger value="output" className="text-xs gap-2">
+                <TabsList className="h-9 w-full justify-start overflow-x-auto scrollbar-hide">
+                  <TabsTrigger value="output" className="text-xs gap-2 flex-1 md:flex-none">
                     <Terminal className="h-3 w-3" /> Output
                   </TabsTrigger>
-                  <TabsTrigger value="stats" className="text-xs gap-2">
+                  <TabsTrigger value="stats" className="text-xs gap-2 flex-1 md:flex-none">
                     <Cpu className="h-3 w-3" /> Stats
                   </TabsTrigger>
-                  <TabsTrigger value="tips" className="text-xs gap-2">
+                  <TabsTrigger value="tips" className="text-xs gap-2 flex-1 md:flex-none">
                     <Lightbulb className="h-3 w-3" /> Tips
                   </TabsTrigger>
                 </TabsList>
@@ -489,7 +496,7 @@ const CodePlayground = () => {
                   </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="stats" className="h-full m-0 p-4">
+                <TabsContent value="stats" className="h-full m-0 p-4 overflow-y-auto">
                   <div className="grid gap-4">
                     <Card>
                       <CardHeader className="py-3">
@@ -533,7 +540,7 @@ const CodePlayground = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="tips" className="h-full m-0 p-4">
+                <TabsContent value="tips" className="h-full m-0 p-4 overflow-y-auto">
                   <div className="space-y-4">
                     <div className="p-4 rounded-lg border bg-muted/50">
                       <h4 className="font-medium mb-2 flex items-center gap-2">
