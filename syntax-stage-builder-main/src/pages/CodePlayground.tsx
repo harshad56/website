@@ -376,24 +376,31 @@ const CodePlayground = () => {
 
   const setCode = (content: string) => {
     setActiveFile(prev => ({ ...prev, content }));
-    // Update content in VFS
-    const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      return items.map(item => {
-        if (item.path === activeFile.path) {
-          return { ...item, content };
-        }
-        if ('children' in item) {
-          return { ...item, children: updateVFS(item.children) };
-        }
-        return item;
-      });
-    };
-    setVfs(prev => {
-      const next = updateVFS(prev);
-      localStorage.setItem('playground_vfs', JSON.stringify(next));
-      return next;
-    });
   };
+
+  // Debounced Sync activeFile back to VFS
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!activeFile) return;
+      setVfs(prev => {
+        const updateNode = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+          return items.map(item => {
+            if (item.path === activeFile.path) {
+              return { ...item, content: activeFile.content, language: activeFile.language };
+            }
+            if ('children' in item) {
+              return { ...item, children: updateNode(item.children) };
+            }
+            return item;
+          });
+        };
+        const next = updateNode(prev);
+        localStorage.setItem('playground_vfs', JSON.stringify(next));
+        return next;
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [activeFile.content, activeFile.language]);
 
   const handleMessage = useCallback((e: MessageEvent) => {
     if (e.data.type === 'console') {
@@ -433,34 +440,34 @@ const CodePlayground = () => {
   const handleCreateFolder = () => {
     const name = prompt("Enter folder name:");
     if (!name) return;
+
+    const parentPath = activeFile.path.split('/').slice(0, -1).join('/') || "";
+    const newPath = `${parentPath}/${name}`.replace(/\/+/g, '/');
+
     const newFolder: VFSFolder = {
       name,
-      path: `/src/${name}`,
+      path: newPath,
       children: [],
       isOpen: true
     };
 
-    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      let srcFound = false;
-      const next = items.map(item => {
-        if (item.name === "src" && 'children' in item) {
-          srcFound = true;
+    const addItemToVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      if (parentPath === "" || parentPath === "/") {
+        return [...items, newFolder];
+      }
+      return items.map(item => {
+        if (item.path === parentPath && 'children' in item) {
           return { ...item, children: [...item.children, newFolder], isOpen: true };
         }
-        if (item.path === activeFile.path.split('/').slice(0, -1).join('/')) {
-          // Special case: create in current folder
-          return { ...item, children: [...(item as VFSFolder).children, newFolder], isOpen: true };
+        if ('children' in item) {
+          return { ...item, children: addItemToVFS(item.children) };
         }
         return item;
       });
-      if (!srcFound && items.length > 0 && !('children' in items[0])) {
-        return [...items, newFolder];
-      }
-      return next;
     };
 
     setVfs(prev => {
-      const next = addToSrc(prev);
+      const next = addItemToVFS(prev);
       localStorage.setItem('playground_vfs', JSON.stringify(next));
       return next;
     });
@@ -613,31 +620,33 @@ const CodePlayground = () => {
         break;
       }
     }
+    const parentPath = activeFile.path.split('/').slice(0, -1).join('/') || "";
+    const newPath = `${parentPath}/${name}`.replace(/\/+/g, '/');
+
     const newFile: VFSFile = {
       name,
-      path: `/src/${name}`,
+      path: newPath,
       content: "",
       language
     };
 
-    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      let srcFound = false;
-      const next = items.map(item => {
-        if (item.name === "src" && 'children' in item) {
-          srcFound = true;
+    const addItemToVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      if (parentPath === "" || parentPath === "/") {
+        return [...items, newFile];
+      }
+      return items.map(item => {
+        if (item.path === parentPath && 'children' in item) {
           return { ...item, children: [...item.children, newFile], isOpen: true };
+        }
+        if ('children' in item) {
+          return { ...item, children: addItemToVFS(item.children) };
         }
         return item;
       });
-      if (!srcFound) {
-        // Fallback: Add to root if src doesn't exist
-        return [...items, newFile];
-      }
-      return next;
     };
 
     setVfs(prev => {
-      const next = addToSrc(prev);
+      const next = addItemToVFS(prev);
       localStorage.setItem('playground_vfs', JSON.stringify(next));
       return next;
     });
@@ -673,7 +682,8 @@ const CodePlayground = () => {
     const startTime = Date.now();
 
     try {
-      if (selectedLanguage === 'html' || selectedLanguage === 'css' || selectedLanguage === 'javascript') {
+      const langKey = selectedLanguage as string;
+      if (langKey === 'html' || langKey === 'css' || langKey === 'javascript' || langKey === 'typescript') {
         const getAllFiles = (items: (VFSFile | VFSFolder)[]): VFSFile[] => {
           let files: VFSFile[] = [];
           for (const item of items) {
@@ -686,11 +696,42 @@ const CodePlayground = () => {
         const htmlFile = allFiles.find(f => f.name === 'index.html') || allFiles.find(f => f.name.endsWith('.html')) || activeFile;
         const cssFiles = allFiles.filter(f => f.name.endsWith('.css'));
 
-        // Generate Import Map for ES Modules
+        // Load Babel on demand if needed
+        if (!((window as any).Babel)) {
+          setOutput("Loading transpiler (Babel)...");
+          const script = document.createElement('script');
+          script.src = "https://unpkg.com/@babel/standalone/babel.min.js";
+          document.head.appendChild(script);
+          for (let i = 0; i < 20; i++) {
+            if ((window as any).Babel) break;
+            await new Promise(r => setTimeout(r, 200));
+          }
+        }
+
+        const transpile = (code: string, fileName: string) => {
+          if (!((window as any).Babel)) return code;
+          try {
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            const isJSX = ext === 'jsx' || ext === 'tsx' || code.includes('React.') || code.includes('</');
+            const isTS = ext === 'ts' || ext === 'tsx';
+            if (!isJSX && !isTS) return code;
+
+            return (window as any).Babel.transform(code, {
+              presets: ['react', ['typescript', { isTSX: true }], ['env', { modules: false }]],
+              filename: fileName
+            }).code;
+          } catch (err) {
+            console.error("Transpilation error for", fileName, err);
+            return code;
+          }
+        };
+
+        // Generate Import Map for ES Modules with Transpiled Blobs
         const imports: Record<string, string> = {};
         allFiles.forEach(f => {
           if (f.name.endsWith('.js') || f.name.endsWith('.jsx') || f.name.endsWith('.ts') || f.name.endsWith('.tsx')) {
-            const blob = new Blob([f.content], { type: 'text/javascript' });
+            const transpiledContent = transpile(f.content, f.name);
+            const blob = new Blob([transpiledContent], { type: 'text/javascript' });
             const url = URL.createObjectURL(blob);
             const relPath = f.path.startsWith('/') ? f.path.substring(1) : f.path;
             const nameNoExt = f.name.replace(/\.[^/.]+$/, "");
@@ -712,8 +753,6 @@ const CodePlayground = () => {
         });
 
         const importMap = `<script type="importmap">${JSON.stringify({ imports })}</script>`;
-
-        const babelScript = `<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>`;
 
         const consoleBridge = `
           <script>
@@ -746,15 +785,9 @@ const CodePlayground = () => {
         `;
 
         let combinedContent = "";
-        const isJSXOrTS = allFiles.some(f =>
-          f.name.endsWith('.jsx') || f.name.endsWith('.tsx') || f.name.endsWith('.ts') ||
-          (f.name.endsWith('.js') && (f.content.includes('React') || f.content.includes('React.') || f.content.includes('</')))
-        );
-        const scriptType = isJSXOrTS ? 'type="text/babel" data-type="module"' : 'type="module"';
-
         if (htmlFile.name.endsWith('.html')) {
           combinedContent = htmlFile.content;
-          const injection = `${consoleBridge}${babelScript}${importMap}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`;
+          const injection = `${consoleBridge}${importMap}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`;
 
           if (combinedContent.includes('<head>')) {
             combinedContent = combinedContent.replace('<head>', `<head>${injection}`);
@@ -762,21 +795,16 @@ const CodePlayground = () => {
             combinedContent = injection + combinedContent;
           }
 
-          if (isJSXOrTS) {
-            // Convert native module imports to Babel-ready scripts inside the HTML
-            combinedContent = combinedContent.replace(/<script\s+([^>]*?)type="module"([^>]*?)>/g, '<script $1 type="text/babel" data-type="module" $2>');
-            // Also handle scripts that don't have a type but need transpilation if they are local
-            combinedContent = combinedContent.replace(/<script\s+([^>]*?)src="\.\/([^"]+?)"([^>]*?)>/g, '<script $1 type="text/babel" data-type="module" src="./$2" $3>');
-          }
-
-          // If no scripts are present, or we want to force-run active JS
-          if (selectedLanguage === 'javascript' && !combinedContent.includes(activeFile.name)) {
-            combinedContent = combinedContent.replace('</body>', `<script ${scriptType}>${activeFile.content}</script></body>`);
+          // Force active file to run as module if JS/TS and not in HTML
+          if ((selectedLanguage === 'javascript' || (selectedLanguage as string) === 'typescript') && !combinedContent.includes(activeFile.name)) {
+            const transpiledCode = transpile(activeFile.content, activeFile.name);
+            combinedContent = combinedContent.replace('</body>', `<script type="module">${transpiledCode}</script></body>`);
           }
         } else if (selectedLanguage === 'css') {
-          combinedContent = `<html><head>${consoleBridge}<style>${code}</style></head><body><div style="padding: 2rem; color: white; font-family: sans-serif;">CSS Preview Mode</div></body></html>`;
-        } else if (selectedLanguage === 'javascript' || selectedLanguage === 'typescript') {
-          combinedContent = `<html><head>${consoleBridge}${babelScript}${importMap}</head><body><div id="root"></div><script ${scriptType}>${code}</script></body></html>`;
+          combinedContent = `<html><head>${consoleBridge}<style>${activeFile.content}</style></head><body><div style="padding: 2rem; color: white; font-family: sans-serif;">CSS Preview Mode</div></body></html>`;
+        } else if (selectedLanguage === 'javascript' || (selectedLanguage as string) === 'typescript') {
+          const transpiledCode = transpile(activeFile.content, activeFile.name);
+          combinedContent = `<html><head>${consoleBridge}${importMap}</head><body><div id="root"></div><script type="module">${transpiledCode}</script></body></html>`;
         }
 
         if (combinedContent) {
@@ -1065,43 +1093,26 @@ const CodePlayground = () => {
           </Select>
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center gap-1 text-[10px] text-slate-500 px-3 py-0.5 bg-slate-900/50 border-b border-white/5">
-            {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
-              <React.Fragment key={i}>
-                <span>{part}</span>
-                {i < arr.length - 1 && <ChevronRight className="h-2 w-2" />}
-              </React.Fragment>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 px-3 h-10">
-            <h2 className="text-xs md:text-sm font-medium flex items-center gap-2 text-slate-200">
-              {getFileIcon(activeFile.name)}
-              {activeFile.name}
-              <span className="text-slate-500 font-normal px-2 py-0.5 rounded bg-white/5 text-[10px] uppercase">{activeFile.language}</span>
-            </h2>
-            <div className="flex items-center gap-1 md:gap-2 ml-auto">
-              <Button
-                variant="default"
-                onClick={handleRunCode}
-                disabled={isExecuting}
-                size="sm"
-                className="gap-1 md:gap-2 font-semibold shadow-sm h-7 md:h-8 px-3 text-[10px] md:text-sm bg-primary hover:bg-primary/90"
-              >
-                {isExecuting ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Running...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-3 w-3 fill-current" />
-                    <span>Run</span>
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+        <div className="flex items-center gap-1 md:gap-2 ml-auto">
+          <Button
+            variant="default"
+            onClick={handleRunCode}
+            disabled={isExecuting}
+            size="sm"
+            className="gap-1 md:gap-2 font-semibold shadow-sm h-8 md:h-9 px-3 text-xs md:text-sm bg-primary hover:bg-primary/90"
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
+                <span className="hidden sm:inline">Running...</span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3 w-3 md:h-4 md:w-4 fill-current" />
+                <span className="sm:inline">Run</span>
+              </>
+            )}
+          </Button>
         </div>
 
         <div className="flex items-center gap-1 md:gap-2 ml-2">
@@ -1196,13 +1207,18 @@ const CodePlayground = () => {
             >
 
               {/* Editor Panel */}
-              <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30}>
-                <div className="h-full flex flex-col bg-[#1e1e1e]">
-                  <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/5">
-                    <span className="text-[10px] md:text-xs text-slate-400 font-mono flex items-center gap-2">
-                      <FileCode className="h-3 w-3" />
-                      main.{LANGUAGES[selectedLanguage].extension}
-                    </span>
+              <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30} className="flex flex-col bg-slate-950">
+                {/* Editor Header with Breadcrumbs */}
+                <div className="flex flex-col border-b border-white/5 bg-slate-900/40">
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400 px-4 py-1.5 border-b border-white/5 bg-slate-900/60">
+                    {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
+                      <React.Fragment key={i}>
+                        <span className={i === arr.length - 1 ? "text-primary/90 font-semibold" : "hover:text-slate-200 cursor-default"}>{part}</span>
+                        {i < arr.length - 1 && <ChevronRight className="h-2.5 w-2.5 mx-0.5 text-slate-600" />}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between px-4 h-10">
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
