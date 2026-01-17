@@ -331,6 +331,9 @@ const CodePlayground = () => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("output");
   const [previewCode, setPreviewCode] = useState("");
+  const [editorViewMode, setEditorViewMode] = useState<'practice' | 'project'>(() => {
+    return (localStorage.getItem('playground_view_mode') as 'practice' | 'project') || 'project';
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -441,7 +444,40 @@ const CodePlayground = () => {
   const code = activeFile.content;
   const selectedLanguage = activeFile.language as keyof typeof LANGUAGES;
 
+  const handleModeSwitch = (mode: 'practice' | 'project') => {
+    setEditorViewMode(mode);
+    localStorage.setItem('playground_view_mode', mode);
+    if (mode === 'practice') {
+      const lang = (selectedLanguage in LANGUAGES) ? selectedLanguage : 'javascript';
+      const practiceFile: VFSFile = {
+        name: `practice.${LANGUAGES[lang].extension}`,
+        path: `/practice.${LANGUAGES[lang].extension}`,
+        content: LANGUAGES[lang].starter,
+        language: lang
+      };
+      setVfs([practiceFile]);
+      setActiveFilePath(practiceFile.path);
+      setIsExplorerVisible(false);
+      localStorage.setItem('playground_vfs', JSON.stringify([practiceFile]));
+    } else {
+      setIsExplorerVisible(!isMobile);
+    }
+  };
+
   const setSelectedLanguage = (lang: keyof typeof LANGUAGES) => {
+    if (editorViewMode === 'practice') {
+      const practiceFile: VFSFile = {
+        name: `practice.${LANGUAGES[lang].extension}`,
+        path: `/practice.${LANGUAGES[lang].extension}`,
+        content: LANGUAGES[lang].starter,
+        language: lang
+      };
+      setVfs([practiceFile]);
+      setActiveFilePath(practiceFile.path);
+      localStorage.setItem('playground_vfs', JSON.stringify([practiceFile]));
+      return;
+    }
+
     setVfs(prev => {
       const updateNode = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
         return items.map(item => {
@@ -498,6 +534,9 @@ const CodePlayground = () => {
   };
 
   const handleNewProject = (type: 'react' | 'html' | 'standard') => {
+    setEditorViewMode('project');
+    localStorage.setItem('playground_view_mode', 'project');
+    setIsExplorerVisible(!isMobile);
     let newVfs: (VFSFile | VFSFolder)[] = [];
     if (type === 'react') {
       newVfs = [
@@ -862,6 +901,11 @@ const CodePlayground = () => {
         }
       }
 
+      // Ensure proper tab focus in Practice mode or for console-based languages
+      if (editorViewMode === 'practice' || !(langKey === 'html' || langKey === 'css' || langKey === 'javascript' || langKey === 'typescript')) {
+        setActiveTab("output");
+      }
+
       const result = await codeExecutor.executeCode(selectedLanguage, code);
       const { error: execError, output: executorOutput } = result.result;
 
@@ -1101,6 +1145,27 @@ const CodePlayground = () => {
 
           <div className="h-6 w-px bg-white/10 hidden md:block" />
 
+          <div className="flex bg-slate-800/80 p-1 rounded-lg border border-white/5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleModeSwitch('practice')}
+              className={`h-7 px-3 text-[10px] items-center gap-1 font-bold uppercase tracking-wider transition-all ${editorViewMode === 'practice' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <Lightbulb className="h-3 w-3" /> Practice
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleModeSwitch('project')}
+              className={`h-7 px-3 text-[10px] items-center gap-1 font-bold uppercase tracking-wider transition-all ${editorViewMode === 'project' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <Cpu className="h-3 w-3" /> Professional
+            </Button>
+          </div>
+
+          <div className="h-6 w-px bg-white/10 hidden lg:block" />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="default" size="sm" className="gap-2 h-9 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
@@ -1122,8 +1187,11 @@ const CodePlayground = () => {
           </DropdownMenu>
 
           <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
-            <SelectTrigger className="w-[110px] md:w-[140px] h-9 bg-slate-800/50 border-white/5 hover:border-white/20 transition-all text-xs">
-              <SelectValue />
+            <SelectTrigger className="w-[120px] md:w-[160px] h-9 bg-slate-800/50 border-white/5 hover:border-white/20 transition-all text-xs">
+              <div className="flex items-center gap-2 truncate">
+                <span className="text-base">{LANGUAGES[selectedLanguage].icon}</span>
+                <span className="truncate">{LANGUAGES[selectedLanguage].name}</span>
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800">
               {Object.entries(LANGUAGES).map(([key, lang]) => (
@@ -1189,10 +1257,10 @@ const CodePlayground = () => {
       {/* Main Workbench */}
       <div className="flex-1 flex overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* File Explorer */}
-          {isExplorerVisible && (
+          {/* Sidebar / Explorer */}
+          {isExplorerVisible && editorViewMode === 'project' && (
             <>
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-slate-900/50 border-r border-white/5 flex flex-col">
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="border-r border-white/5 bg-slate-900/30 flex flex-col">
                 <div className="h-10 px-4 border-b border-white/5 flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Explorer</span>
                   <div className="flex items-center gap-0.5">
@@ -1226,23 +1294,33 @@ const CodePlayground = () => {
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Breadcrumbs & File Header */}
                   <div className="flex flex-col border-b border-white/5 bg-slate-900/30">
-                    <div className="h-8 flex items-center gap-1 px-4 text-[10px] text-slate-500 bg-slate-950/40 border-b border-white/5">
-                      {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
-                        <React.Fragment key={i}>
-                          <span className={i === arr.length - 1 ? "text-primary/80 font-semibold" : ""}>{part}</span>
-                          {i < arr.length - 1 && <ChevronRight className="h-3 w-3 mx-0.5 opacity-50" />}
-                        </React.Fragment>
-                      ))}
-                    </div>
+                    {editorViewMode === 'project' && (
+                      <div className="h-8 flex items-center gap-1 px-4 text-[10px] text-slate-500 bg-slate-950/40 border-b border-white/5">
+                        {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
+                          <React.Fragment key={i}>
+                            <span className={i === arr.length - 1 ? "text-primary/80 font-semibold" : ""}>{part}</span>
+                            {i < arr.length - 1 && <ChevronRight className="h-3 w-3 mx-0.5 opacity-50" />}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
+                    {/* Editor Header */}
                     <div className="h-11 flex items-center justify-between px-4">
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          {getFileIcon(activeFile.name)}
-                          <span className="text-sm font-semibold text-slate-200 tracking-tight">{activeFile.name}</span>
-                        </div>
+                        {editorViewMode === 'project' ? (
+                          <div className="flex items-center gap-2">
+                            {getFileIcon(activeFile.name)}
+                            <span className="text-sm font-semibold text-slate-200 tracking-tight">{activeFile.name}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary text-[10px] font-bold px-2 py-0">PRACTICE MODE</Badge>
+                            <span className="text-sm font-semibold text-slate-200 tracking-tight">{LANGUAGES[selectedLanguage].name} Playground</span>
+                          </div>
+                        )}
                         <div className="h-4 w-px bg-white/10" />
                         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                          {activeFile.content.split('\n').length} lines
+                          {code.split('\n').length} lines
                         </span>
                       </div>
                       <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2 border border-white/5 text-slate-400 hover:text-white"
