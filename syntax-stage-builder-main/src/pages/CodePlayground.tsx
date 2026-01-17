@@ -411,11 +411,11 @@ const CodePlayground = () => {
   const selectedLanguage = activeFile.language as keyof typeof LANGUAGES;
 
   const setSelectedLanguage = (lang: keyof typeof LANGUAGES) => {
-    setActiveFile(prev => ({ ...prev, language: lang }));
+    setActiveFile(prev => ({ ...prev, language: lang, content: LANGUAGES[lang].starter }));
     const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
       return items.map(item => {
         if (item.path === activeFile.path) {
-          return { ...item, language: lang };
+          return { ...item, language: lang, content: LANGUAGES[lang].starter };
         }
         if ('children' in item) {
           return { ...item, children: updateVFS(item.children) };
@@ -425,6 +425,42 @@ const CodePlayground = () => {
     };
     setVfs(prev => {
       const next = updateVFS(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleCreateFolder = () => {
+    const name = prompt("Enter folder name:");
+    if (!name) return;
+    const newFolder: VFSFolder = {
+      name,
+      path: `/src/${name}`,
+      children: [],
+      isOpen: true
+    };
+
+    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      let srcFound = false;
+      const next = items.map(item => {
+        if (item.name === "src" && 'children' in item) {
+          srcFound = true;
+          return { ...item, children: [...item.children, newFolder], isOpen: true };
+        }
+        if (item.path === activeFile.path.split('/').slice(0, -1).join('/')) {
+          // Special case: create in current folder
+          return { ...item, children: [...(item as VFSFolder).children, newFolder], isOpen: true };
+        }
+        return item;
+      });
+      if (!srcFound && items.length > 0 && !('children' in items[0])) {
+        return [...items, newFolder];
+      }
+      return next;
+    };
+
+    setVfs(prev => {
+      const next = addToSrc(prev);
       localStorage.setItem('playground_vfs', JSON.stringify(next));
       return next;
     });
@@ -469,6 +505,103 @@ const CodePlayground = () => {
     toast({ title: "Project Created", description: `New ${type} project started.` });
   };
 
+  const loadJSZip = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).JSZip) return resolve((window as any).JSZip);
+      const script = document.createElement('script');
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+      script.onload = () => resolve((window as any).JSZip);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  };
+
+  const handleDownloadZip = async () => {
+    try {
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+
+      const addToZip = (items: (VFSFile | VFSFolder)[], path = "") => {
+        for (const item of items) {
+          if ('content' in item) {
+            zip.file(path + item.name, item.content);
+          } else {
+            addToZip(item.children, path + item.name + "/");
+          }
+        }
+      };
+
+      addToZip(vfs);
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "project.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Project Exported", description: "Your project has been downloaded as project.zip" });
+    } catch (err) {
+      toast({ title: "Export Failed", description: "Could not generate ZIP file.", variant: "destructive" });
+    }
+  };
+
+  const handleImportZip = async (file: File) => {
+    try {
+      const JSZip = await loadJSZip();
+      const zip = await JSZip.loadAsync(file);
+      const newVfs: (VFSFile | VFSFolder)[] = [];
+      const folders: Record<string, VFSFolder> = {};
+
+      for (const [path, zipEntry] of Object.entries(zip.files)) {
+        if (zipEntry.dir) {
+          const parts = path.split('/').filter(Boolean);
+          let currentPath = "";
+          for (const part of parts) {
+            const parentPath = currentPath;
+            currentPath += (currentPath ? "/" : "") + part;
+            if (!folders[currentPath]) {
+              const folder: VFSFolder = { name: part, path: "/" + currentPath, children: [], isOpen: true };
+              folders[currentPath] = folder;
+              if (parentPath) folders[parentPath].children.push(folder);
+              else newVfs.push(folder);
+            }
+          }
+        } else {
+          const content = await zipEntry.async("string");
+          const extension = path.split('.').pop();
+          let language = "javascript";
+          for (const [key, lang] of Object.entries(LANGUAGES)) {
+            if (lang.extension === extension) { language = key; break; }
+          }
+          const name = path.split('/').pop() || "file";
+          const fileObj: VFSFile = { name, path: "/" + path, content, language };
+
+          const dirPath = path.split('/').slice(0, -1).join('/');
+          if (dirPath && folders[dirPath]) {
+            folders[dirPath].children.push(fileObj);
+          } else {
+            newVfs.push(fileObj);
+          }
+        }
+      }
+
+      setVfs(newVfs);
+      localStorage.setItem('playground_vfs', JSON.stringify(newVfs));
+      const first = (function findFirst(items: (VFSFile | VFSFolder)[]): VFSFile | null {
+        for (const i of items) {
+          if ('content' in i) return i;
+          const f = findFirst(i.children);
+          if (f) return f;
+        }
+        return null;
+      })(newVfs);
+      if (first) setActiveFile(first);
+      toast({ title: "Project Imported", description: "Project state restored from ZIP." });
+    } catch (err) {
+      toast({ title: "Import Failed", description: "Could not read ZIP file.", variant: "destructive" });
+    }
+  };
+
   const handleCreateFile = () => {
     const name = prompt("Enter file name (e.g., main.js):");
     if (!name) return;
@@ -488,12 +621,19 @@ const CodePlayground = () => {
     };
 
     const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      return items.map(item => {
+      let srcFound = false;
+      const next = items.map(item => {
         if (item.name === "src" && 'children' in item) {
+          srcFound = true;
           return { ...item, children: [...item.children, newFile], isOpen: true };
         }
         return item;
       });
+      if (!srcFound) {
+        // Fallback: Add to root if src doesn't exist
+        return [...items, newFile];
+      }
+      return next;
     };
 
     setVfs(prev => {
@@ -844,7 +984,7 @@ const CodePlayground = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 h-8 md:h-9 bg-slate-800 border-slate-700">
+              <Button variant="default" size="sm" className="gap-2 h-8 md:h-9 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
                 <Plus className="h-4 w-4" />
                 <span>New Project</span>
               </Button>
@@ -921,9 +1061,24 @@ const CodePlayground = () => {
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleShareCode} title="Share">
             {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleDownload} title="Download">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleDownloadZip} title="Download Project (ZIP)">
             <Download className="h-4 w-4" />
           </Button>
+          <div className="relative">
+            <input
+              type="file"
+              accept=".zip"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImportZip(file);
+              }}
+              title="Open Local Project (.zip)"
+            />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <FileCode className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -945,14 +1100,14 @@ const CodePlayground = () => {
                 <div className="p-3 border-b border-white/5 flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Explorer</span>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/10" title="New File" onClick={handleCreateFile}>
-                      <FilePlus className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="New File" onClick={handleCreateFile}>
+                      <FilePlus className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/10" title="New Folder" onClick={handleCreateFolder}>
-                      <FolderPlus className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="New Folder" onClick={handleCreateFolder}>
+                      <FolderPlus className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="w-6 h-6 md:hidden" onClick={() => setIsExplorerVisible(false)}>
-                      <X className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="icon" className="w-7 h-7 md:hidden text-slate-400 hover:text-white" onClick={() => setIsExplorerVisible(false)}>
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
