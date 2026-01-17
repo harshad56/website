@@ -8,6 +8,7 @@ import { apiService } from '@/services/ApiService';
 import { useAuth } from '@/contexts/AuthContext';
 import { Download, FileCode, Loader2, Star, FileText, BookOpen, File } from 'lucide-react';
 import SEO from '@/components/SEO';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 const StudyMaterialDetail = () => {
   const { materialId } = useParams<{ materialId: string }>();
@@ -20,11 +21,11 @@ const StudyMaterialDetail = () => {
   const getBackPath = () => {
     // Check if we came from a specific page via location state
     if (location.state?.from) return location.state.from;
-    
+
     // Check referrer
     const referrer = document.referrer;
     if (referrer.includes('/study-materials')) return '/study-materials';
-    
+
     // Default to study materials page
     return '/study-materials';
   };
@@ -98,18 +99,18 @@ const StudyMaterialDetail = () => {
   const handleDownload = async (materialToDownload: any) => {
     try {
       setProcessing(true);
-      
+
       // Wait a bit to ensure purchase is fully saved
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       console.log('Requesting download for study material:', materialToDownload.id);
       const response = await apiService.downloadStudyMaterial(materialToDownload.id);
       console.log('Download response:', response);
       setProcessing(false);
-      
+
       if (response.success && response.data) {
         const data = response.data as any;
-        
+
         // Function to trigger download
         const triggerDownload = (url: string, filename: string) => {
           const link = document.createElement('a');
@@ -120,7 +121,7 @@ const StudyMaterialDetail = () => {
           link.click();
           document.body.removeChild(link);
         };
-        
+
         // Download main file
         if (data.download_url) {
           setTimeout(() => {
@@ -137,7 +138,7 @@ const StudyMaterialDetail = () => {
             }
           }, 200);
         }
-        
+
         // Download setup PDF
         if (data.setup_pdf_url) {
           setTimeout(() => {
@@ -154,18 +155,18 @@ const StudyMaterialDetail = () => {
             }
           }, 600);
         }
-        
+
         if (data.download_url || data.setup_pdf_url) {
-          toast({ 
-            title: 'Download started', 
+          toast({
+            title: 'Download started',
             description: 'Your download should start shortly.',
             variant: 'default'
           });
         } else {
-          toast({ 
-            title: 'No download available', 
+          toast({
+            title: 'No download available',
             description: 'Download URLs are not configured for this material.',
-            variant: 'destructive' 
+            variant: 'destructive'
           });
         }
       } else {
@@ -220,8 +221,8 @@ const StudyMaterialDetail = () => {
 
             setProcessing(false);
             if (verifyResponse.success) {
-              toast({ 
-                title: 'Payment Successful', 
+              toast({
+                title: 'Payment Successful',
                 description: 'Your payment has been verified. Download starting...',
                 variant: 'default'
               });
@@ -254,7 +255,7 @@ const StudyMaterialDetail = () => {
       };
 
       const razorpay = new (window as any).Razorpay(options);
-      
+
       razorpay.on('payment.failed', (response: any) => {
         setProcessing(false);
         toast({
@@ -345,7 +346,7 @@ const StudyMaterialDetail = () => {
     image: material.thumbnail_url || `${window.location.origin}/og-study-material.jpg`,
   };
 
-  const seoDescription = material.description 
+  const seoDescription = material.description
     ? `${material.description.substring(0, 150)}... Download ${material.type || 'study material'} for ${material.language || 'programming'}.`
     : `Download ${material.title} - ${material.type || 'Study material'} for ${material.language || 'programming'}. ${material.category ? `Perfect for ${material.category} learners.` : 'Enhance your programming skills with this comprehensive resource.'}`;
 
@@ -371,17 +372,13 @@ const StudyMaterialDetail = () => {
           <div className="lg:col-span-2">
             {material.thumbnail_url && (
               <div className="relative w-full h-64 md:h-96 bg-slate-800 rounded-lg overflow-hidden mb-6">
-                <img
+                <OptimizedImage
                   src={material.thumbnail_url}
                   alt={material.title || 'Study material thumbnail'}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    const parent = (e.target as HTMLImageElement).parentElement;
-                    if (parent) {
-                      parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-lg bg-slate-800">No Image Available</div>';
-                    }
-                  }}
+                  width={800}
+                  height={400}
+                  priority={true} // Priority as it's the main image
                 />
               </div>
             )}
@@ -390,8 +387,8 @@ const StudyMaterialDetail = () => {
                 <CardTitle className="text-white text-2xl">{material.title}</CardTitle>
                 <div className="flex gap-2 mt-2">
                   {material.type && (
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={`text-xs border font-medium flex items-center gap-1 ${getTypeColor(material.type)}`}
                     >
                       {getTypeIcon(material.type)}

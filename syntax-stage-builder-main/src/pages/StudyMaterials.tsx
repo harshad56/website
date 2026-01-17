@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Download, FileText, BookOpen, File, Star, Loader2, Shield, FileCode } from 'lucide-react';
 import SEO from '@/components/SEO';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { apiService } from '@/services/ApiService';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -420,8 +421,8 @@ const StudyMaterials = () => {
               <SelectContent className="bg-gray-900 border-white/20">
                 <SelectItem value="all" className="text-white hover:bg-white/10">All Categories</SelectItem>
                 {[...new Set(materials.map((m) => m.category).filter(Boolean))].map((cat) => (
-                  <SelectItem key={cat} value={cat as string} className="text-white hover:bg-white/10">
-                    {cat}
+                  <SelectItem key={cat as string} value={cat as string} className="text-white hover:bg-white/10">
+                    {cat as string}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -433,8 +434,8 @@ const StudyMaterials = () => {
               <SelectContent className="bg-gray-900 border-white/20">
                 <SelectItem value="all" className="text-white hover:bg-white/10">All Languages</SelectItem>
                 {[...new Set(materials.map((m) => m.language).filter(Boolean))].map((lang) => (
-                  <SelectItem key={lang} value={lang as string} className="text-white hover:bg-white/10">
-                    {lang}
+                  <SelectItem key={lang as string} value={lang as string} className="text-white hover:bg-white/10">
+                    {lang as string}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -455,8 +456,8 @@ const StudyMaterials = () => {
                 {[...new Set(materials.map((m) => m.type).filter(Boolean))].filter(
                   (type) => !['PDF', 'Notes', 'Ebook', 'Video', 'Document', 'Tutorial'].includes(type as string)
                 ).map((type) => (
-                  <SelectItem key={type} value={type as string} className="text-white hover:bg-white/10">
-                    {type}
+                  <SelectItem key={type as string} value={type as string} className="text-white hover:bg-white/10">
+                    {type as string}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -479,18 +480,13 @@ const StudyMaterials = () => {
               <Card className="bg-slate-900/70 border-white/20 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 overflow-hidden group h-full flex flex-col">
                 {material.thumbnail_url && (
                   <div className="relative w-full h-48 bg-slate-800 overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={material.thumbnail_url}
                       alt={material.title || 'Study material thumbnail'}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        const parent = (e.target as HTMLImageElement).parentElement;
-                        if (parent) {
-                          parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm bg-slate-800">No Image</div>';
-                        }
-                      }}
+                      width={400}
+                      height={300}
+                      priority={index < 6} // Load first 6 images immediately
                     />
                   </div>
                 )}
