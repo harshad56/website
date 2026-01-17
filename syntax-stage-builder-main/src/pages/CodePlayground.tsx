@@ -1186,24 +1186,26 @@ const CodePlayground = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
-            <SelectTrigger className="w-[120px] md:w-[160px] h-9 bg-slate-800/50 border-white/5 hover:border-white/20 transition-all text-xs">
-              <div className="flex items-center gap-2 truncate">
-                <span className="text-base">{LANGUAGES[selectedLanguage].icon}</span>
-                <span className="truncate">{LANGUAGES[selectedLanguage].name}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800">
-              {Object.entries(LANGUAGES).map(([key, lang]) => (
-                <SelectItem key={key} value={key} className="focus:bg-primary/20 focus:text-primary">
-                  <span className="flex items-center gap-2">
-                    <span className="text-base">{lang.icon}</span>
-                    <span className="truncate font-medium">{lang.name}</span>
-                  </span >
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {editorViewMode === 'practice' && (
+            <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
+              <SelectTrigger className="w-[120px] md:w-[160px] h-9 bg-slate-800/50 border-white/5 hover:border-white/20 transition-all text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="text-base">{LANGUAGES[selectedLanguage].icon}</span>
+                  <span className="truncate">{LANGUAGES[selectedLanguage].name}</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-800">
+                {Object.entries(LANGUAGES).map(([key, lang]) => (
+                  <SelectItem key={key} value={key} className="focus:bg-primary/20 focus:text-primary">
+                    <span className="flex items-center gap-2">
+                      <span className="text-base">{lang.icon}</span>
+                      <span className="truncate font-medium">{lang.name}</span>
+                    </span >
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
