@@ -32,8 +32,12 @@ import {
   Lightbulb,
   Maximize2,
   Trash2,
-  FileCode
+  FileCode,
+  Copy,
+  Languages
 } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import SEO from "@/components/SEO";
 
 // Language configurations
@@ -163,6 +167,128 @@ func main() {
     fmt.Printf("Sum of numbers: %d\\n", sum)
 }`,
     icon: "🐹"
+  },
+  csharp: {
+    name: "C#",
+    extension: "cs",
+    starter: `// Welcome to C# Playground!
+using System;
+
+public class Program {
+    public static void Main() {
+        Console.WriteLine("Hello from C#!");
+        
+        int[] numbers = {1, 2, 3, 4, 5};
+        int sum = 0;
+        foreach (int n in numbers) sum += n;
+        
+        Console.WriteLine($"Sum: {sum}");
+    }
+}`,
+    icon: "🎯"
+  },
+  php: {
+    name: "PHP",
+    extension: "php",
+    starter: `<?php
+echo "Hello from PHP!\\n";
+
+$numbers = [1, 2, 3, 4, 5];
+$sum = array_sum($numbers);
+
+echo "Sum: " . $sum . "\\n";
+?>`,
+    icon: "🐘"
+  },
+  ruby: {
+    name: "Ruby",
+    extension: "rb",
+    starter: `# Welcome to Ruby Playground!
+puts "Hello from Ruby!"
+
+numbers = [1, 2, 3, 4, 5]
+sum = numbers.sum
+
+puts "Sum: #{sum}"`,
+    icon: "💎"
+  },
+  swift: {
+    name: "Swift",
+    extension: "swift",
+    starter: `// Welcome to Swift Playground!
+print("Hello from Swift!")
+
+let numbers = [1, 2, 3, 4, 5]
+let sum = numbers.reduce(0, +)
+
+print("Sum: \\(sum)")`,
+    icon: "🍎"
+  },
+  kotlin: {
+    name: "Kotlin",
+    extension: "kt",
+    starter: `// Welcome to Kotlin Playground!
+fun main() {
+    println("Hello from Kotlin!")
+    
+    val numbers = listOf(1, 2, 3, 4, 5)
+    val sum = numbers.sum()
+    
+    println("Sum: $sum")
+}`,
+    icon: "🏝️"
+  },
+  typescript: {
+    name: "TypeScript",
+    extension: "ts",
+    starter: `// Welcome to TypeScript Playground!
+interface User {
+  id: number;
+  name: string;
+}
+
+const user: User = { id: 1, name: "Antigravity" };
+console.log(\`Hello from TypeScript, \${user.name}!\`);`,
+    icon: "🟦"
+  },
+  html: {
+    name: "HTML",
+    extension: "html",
+    starter: `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #0f172a; color: white; padding: 2rem; }
+        .box { background: #6366f1; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Hello from HTML!</h1>
+        <p>This is a live preview.</p>
+        <button onclick="greet()">Click Me</button>
+    </div>
+    <script>
+        function greet() {
+            alert("Hello from the component!");
+        }
+    </script>
+</body>
+</html>`,
+    icon: "🌐"
+  },
+  css: {
+    name: "CSS",
+    extension: "css",
+    starter: `/* Test your CSS here */
+body {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}`,
+    icon: "🎨"
   }
 };
 
@@ -176,10 +302,31 @@ const CodePlayground = () => {
   const [savedCode, setSavedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("output");
+  const [previewCode, setPreviewCode] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const highlighterRef = useRef<HTMLDivElement>(null);
+
+  const syncScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (highlighterRef.current) {
+      highlighterRef.current.scrollTop = e.currentTarget.scrollTop;
+      highlighterRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
+  const handleMessage = useCallback((e: MessageEvent) => {
+    if (e.data.type === 'console') {
+      const { args } = e.data;
+      setOutput(prev => prev + (prev ? '\n' : '') + args.join(' '));
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleMessage]);
 
   const handleSaveCode = useCallback(() => {
     localStorage.setItem(`playground_${selectedLanguage}`, code);
@@ -210,6 +357,40 @@ const CodePlayground = () => {
     const startTime = Date.now();
 
     try {
+      if (selectedLanguage === 'html' || selectedLanguage === 'css') {
+        const consoleBridge = `
+          <script>
+            (function() {
+              const originalLog = console.log;
+              const originalError = console.error;
+              const originalWarn = console.warn;
+              
+              const sendToParent = (method, args) => {
+                window.parent.postMessage({ type: 'console', method, args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)) }, '*');
+              };
+
+              console.log = (...args) => { sendToParent('log', args); originalLog.apply(console, args); };
+              console.error = (...args) => { sendToParent('error', args); originalError.apply(console, args); };
+              console.warn = (...args) => { sendToParent('warn', args); originalWarn.apply(console, args); };
+              
+              window.onerror = (msg, url, line, col, error) => {
+                sendToParent('error', [msg + ' (line ' + line + ')']);
+              };
+            })();
+          </script>
+        `;
+
+        const fullPreview = selectedLanguage === 'html'
+          ? code.replace('<head>', '<head>' + consoleBridge)
+          : `<html><head>${consoleBridge}<style>${code}</style></head><body><div class="p-8 text-white">CSS Preview Mode</div></body></html>`;
+
+        setPreviewCode(fullPreview);
+        setActiveTab("preview");
+        setOutput("Rendering preview...");
+        setIsExecuting(false);
+        return;
+      }
+
       const result = await codeExecutor.executeCode(selectedLanguage, code);
       const { error: execError, output: executorOutput } = result.result;
 
@@ -263,6 +444,19 @@ const CodePlayground = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && textareaRef.current === document.activeElement) {
+        e.preventDefault();
+        const start = textareaRef.current?.selectionStart || 0;
+        const end = textareaRef.current?.selectionEnd || 0;
+        const newCode = code.substring(0, start) + "    " + code.substring(end);
+        setCode(newCode);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
+          }
+        }, 0);
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         handleRunCode();
@@ -431,22 +625,77 @@ const CodePlayground = () => {
 
           {/* Editor Panel */}
           <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30}>
-            <div className="h-full flex flex-col bg-slate-950">
-              <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-white/5">
+            <div className="h-full flex flex-col bg-[#1e1e1e]">
+              <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/5">
                 <span className="text-[10px] md:text-xs text-slate-400 font-mono flex items-center gap-2">
                   <FileCode className="h-3 w-3" />
                   main.{LANGUAGES[selectedLanguage].extension}
                 </span>
-                <span className="text-[10px] md:text-xs text-slate-500 font-mono">
-                  {code.split('\n').length} L | {code.length} C
-                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[10px] text-slate-400 hover:text-white hover:bg-white/5 gap-1"
+                    onClick={() => {
+                      navigator.clipboard.writeText(code);
+                      toast({ title: "Copied!", description: "Code copied to clipboard." });
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy
+                  </Button>
+                  <span className="text-[10px] md:text-xs text-slate-500 font-mono">
+                    {code.split('\n').length} L | {code.length} C
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 relative group">
-                <Textarea
+              <div className="flex-1 relative overflow-hidden font-mono text-sm md:text-base">
+                {/* Syntax Highlighting Layer */}
+                <div
+                  ref={highlighterRef}
+                  className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto"
+                >
+                  <SyntaxHighlighter
+                    language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'csharp' ? 'csharp' : selectedLanguage}
+                    style={vscDarkPlus}
+                    showLineNumbers={true}
+                    lineNumberStyle={{ minWidth: '3.5em', paddingRight: '1em', color: '#858585', textAlign: 'right', userSelect: 'none' }}
+                    customStyle={{
+                      margin: 0,
+                      padding: '1rem',
+                      paddingLeft: '0',
+                      background: 'transparent',
+                      fontSize: 'inherit',
+                      fontFamily: 'inherit',
+                      lineHeight: '1.5',
+                      overflow: 'visible',
+                      minHeight: '100%',
+                    }}
+                  >
+                    {code + (code.endsWith('\n') ? ' ' : '')}
+                  </SyntaxHighlighter>
+                </div>
+
+                {/* Invisible Editable Layer */}
+                <textarea
                   ref={textareaRef}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="absolute inset-0 p-4 md:p-6 font-mono text-sm md:text-base leading-relaxed resize-none border-0 bg-transparent text-slate-200 focus-visible:ring-0 rounded-none focus-visible:ring-offset-0 scrollbar-thin scrollbar-thumb-white/10"
+                  onScroll={syncScroll}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Tab') {
+                      e.preventDefault();
+                      const start = e.currentTarget.selectionStart;
+                      const end = e.currentTarget.selectionEnd;
+                      const newCode = code.substring(0, start) + "    " + code.substring(end);
+                      setCode(newCode);
+                      setTimeout(() => {
+                        e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
+                      }, 0);
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-white outline-none resize-none font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-white/10"
+                  style={{ lineHeight: '1.5', whiteSpace: 'pre', overflowX: 'auto' }}
                   placeholder="Write your code here..."
                   spellCheck={false}
                 />
@@ -464,6 +713,11 @@ const CodePlayground = () => {
                   <TabsTrigger value="output" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
                     <Terminal className="h-3.5 w-3.5" /> Output
                   </TabsTrigger>
+                  {(selectedLanguage === 'html' || selectedLanguage === 'css' || previewCode) && (
+                    <TabsTrigger value="preview" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                      <Code2 className="h-3.5 w-3.5" /> Preview
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="stats" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
                     <Cpu className="h-3.5 w-3.5" /> Stats
                   </TabsTrigger>
@@ -502,6 +756,22 @@ const CodePlayground = () => {
                       </div>
                     )}
                   </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="preview" className="h-full m-0 p-0 overflow-hidden bg-white">
+                  {previewCode ? (
+                    <iframe
+                      srcDoc={previewCode}
+                      title="Preview"
+                      className="w-full h-full border-0 bg-white"
+                      sandbox="allow-scripts allow-modals"
+                    />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-950/30">
+                      <Code2 className="h-10 w-10 mb-3 opacity-10" />
+                      <p className="text-xs">Click Run to see preview</p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="stats" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">

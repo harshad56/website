@@ -38,21 +38,39 @@ class UniversalRunner {
                     .replace(/if\s+(.*?):/g, 'if ($1) {')
                     .replace(/else:/g, '} else {')
                     .replace(/for\s+(\w+)\s+in\s+range\((.*?)\):/g, 'for (let $1 = 0; $1 < $2; $1++) {')
+                    // Handle f-strings: f"hello {name}" -> `hello ${name}`
+                    .replace(/f(["'])(.*?)\1/g, (m, q, content) => '`' + content.replace(/{(.*?)}/g, '${$1}') + '`')
                     .replace(/True/g, 'true')
                     .replace(/False/g, 'false')
-                    .replace(/None/g, 'null');
+                    .replace(/None/g, 'null')
+                    // Strip comments and imports
+                    .replace(/^\s*(?:import|from)\s+.*$/gm, '')
+                    .replace(/#.*$/gm, '');
             } else {
                 b = b.replace(/System\.out\.println\s*\(/g, 'print_to_output(')
                     .replace(/Console\.WriteLine\s*\(/g, 'print_to_output(')
                     .replace(/fmt\.Println\s*\(/g, 'print_to_output(')
                     .replace(/println!\s*\(/g, 'print_to_output(')
                     .replace(/cout\s*<<\s*/g, 'print_to_output(').replace(/<<\s*endl\s*;/g, ');').replace(/<<\s*"/g, ' + "')
+                    // PHP/Ruby/Swift
+                    .replace(/echo\s+(.*);/g, 'print_to_output($1);')
+                    .replace(/puts\s+(.*)/g, 'print_to_output($1)')
                     // Keywords to ignore or convert
-                    .replace(/\bfinal\b|\bpublic\b|\bprivate\b|\bprotected\b|\bstatic\b/g, '')
+                    .replace(/\bfinal\b|\bpublic\b|\bprivate\b|\bprotected\b|\bstatic\b|\bextern\b|\bvirtual\b|\boverride\b/g, '')
+                    // Rust/Go/Swift specific boilerplate stripping
+                    .replace(/\bmut\b|\blet\s+mut\b|\bpub\b|\bpackage\b|\bfunc\b|\bfun\b/g, '')
                     // Types to let
-                    .replace(/(?:\bint\b|\bdouble\b|\bfloat\b|\bString\b|\bboolean\b|\bchar\b|\blong\b|\bshort\b|\bbyte\b|\bvar\b|\bauto\b)\s+(\w+)\s*(?=[=;]|\s+[,:])/g, 'let $1 ')
+                    .replace(/(?:\bint\b|\bdouble\b|\bfloat\b|\bString\b|\bboolean\b|\bchar\b|\blong\b|\bshort\b|\bbyte\b|\bvar\b|\bauto\b|\bi32\b|\bi64\b|\bu32\b|\bu64\b|\bf32\b|\bf64\b)\s+(\w+)\s*(?=[=;]|\s+[,:])/g, 'let $1 ')
                     // for loops
-                    .replace(/for\s*\(\s*(?:int|double|float|auto)\s+(\w+)/g, 'for (let $1');
+                    .replace(/for\s*\(\s*(?:int|double|float|auto)\s+(\w+)/g, 'for (let $1')
+                    // Strip imports and comments
+                    .replace(/^\s*import\s+.*$/gm, '')
+                    .replace(/^\s*using\s+.*$/gm, '')
+                    .replace(/\/\/.*$/gm, '')
+                    .replace(/\/\*[\s\S]*?\*\//g, '')
+                    // TypeScript type stripping (basic)
+                    .replace(/:\s*(?:number|string|boolean|any|void|unknown|never|null|undefined|[\w<>[\]]+)/g, '')
+                    .replace(/as\s+[\w<>[\]]+/g, '');
             }
             return b;
         };
@@ -63,13 +81,44 @@ class UniversalRunner {
                 mainRegex: /if\s+__name__\s*==\s*["']__main__["']\s*:([\s\S]*)/
             },
             java: {
-                // Captures body until the first closing brace at the start of a line with 4 spaces
-                funcRegex: /public\s+static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^    \}/gm,
-                mainRegex: /public\s+static\s+void\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^    \}/m
+                funcRegex: /public\s+static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^\s+\}/gm,
+                mainRegex: /public\s+static\s+void\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s+\}/m
             },
             cpp: {
-                funcRegex: /[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^}/gm,
-                mainRegex: /int\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^}/m
+                funcRegex: /[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /int\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/m
+            },
+            csharp: {
+                funcRegex: /static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^\s+\}/gm,
+                mainRegex: /static\s+void\s+Main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s+\}/m
+            },
+            go: {
+                funcRegex: /func\s+(\w+)\s*\(([^)]*)\)\s*(?:[\w<>[\]]+)?\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /func\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/m
+            },
+            rust: {
+                funcRegex: /fn\s+(\w+)\s*\(([^)]*)\)\s*(?:->\s*[\s\S]*?)?\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /fn\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/m
+            },
+            php: {
+                funcRegex: /function\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /(?:<\?php)?([\s\S]*?)(?:\?>|$)/m
+            },
+            ruby: {
+                funcRegex: /def\s+(\w+)\s*(?:\(([^)]*)\))?([\s\S]*?)end/gm,
+                mainRegex: /[\s\S]*/
+            },
+            swift: {
+                funcRegex: /func\s+(\w+)\s*\(([^)]*)\)\s*(?:->\s*[\s\S]*?)?\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /[\s\S]*/
+            },
+            kotlin: {
+                funcRegex: /fun\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[\s\S]*?)?\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /fun\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^\s*\}/m
+            },
+            typescript: {
+                funcRegex: /function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[\s\S]*?)?\s*{\s*([\s\S]*?)\s*^\s*\}/gm,
+                mainRegex: /[\s\S]*/
             }
         };
 
@@ -163,9 +212,16 @@ class CodeSandbox {
         const output = [];
         const print_to_output = (...args) => output.push(args.join(' '));
 
+        // Basic Python-like built-ins
+        const py_builtins = {
+            sum: (arr) => Array.isArray(arr) ? arr.reduce((a, b) => a + b, 0) : 0,
+            len: (obj) => obj?.length ?? 0,
+            range: (n) => [...Array(n).keys()]
+        };
+
         try {
-            const runCode = new Function('print_to_output', 'input', transpiled.js + transpiled.main);
-            runCode(print_to_output, input);
+            const runCode = new Function('print_to_output', 'input', 'sum', 'len', 'range', transpiled.js + transpiled.main);
+            runCode(print_to_output, input, py_builtins.sum, py_builtins.len, py_builtins.range);
             return {
                 output: output.join('\n'),
                 error: '',
