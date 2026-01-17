@@ -47,7 +47,11 @@ class UniversalRunner {
                     .replace(/fmt\.Println\s*\(/g, 'print_to_output(')
                     .replace(/println!\s*\(/g, 'print_to_output(')
                     .replace(/cout\s*<<\s*/g, 'print_to_output(').replace(/<<\s*endl\s*;/g, ');').replace(/<<\s*"/g, ' + "')
-                    .replace(/(?:int|double|float|String|boolean|char|long|short|byte|var|auto)\s+(\w+)\s*(?=[=;]|\s+,)/g, 'let $1 ')
+                    // Keywords to ignore or convert
+                    .replace(/\bfinal\b|\bpublic\b|\bprivate\b|\bprotected\b|\bstatic\b/g, '')
+                    // Types to let
+                    .replace(/(?:\bint\b|\bdouble\b|\bfloat\b|\bString\b|\bboolean\b|\bchar\b|\blong\b|\bshort\b|\bbyte\b|\bvar\b|\bauto\b)\s+(\w+)\s*(?=[=;]|\s+[,:])/g, 'let $1 ')
+                    // for loops
                     .replace(/for\s*\(\s*(?:int|double|float|auto)\s+(\w+)/g, 'for (let $1');
             }
             return b;
@@ -59,12 +63,13 @@ class UniversalRunner {
                 mainRegex: /if\s+__name__\s*==\s*["']__main__["']\s*:([\s\S]*)/
             },
             java: {
-                funcRegex: /public\s+static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{([\s\S]*?^    \})/gm,
-                mainRegex: /public\s+static\s+void\s+main\s*\((?:[^)]*)\)\s*{([\s\S]*?^    \})/m
+                // Captures body until the first closing brace at the start of a line with 4 spaces
+                funcRegex: /public\s+static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^    \}/gm,
+                mainRegex: /public\s+static\s+void\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^    \}/m
             },
             cpp: {
-                funcRegex: /[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{([\s\S]*?^})/gm,
-                mainRegex: /int\s+main\s*\((?:[^)]*)\)\s*{([\s\S]*?^})/m
+                funcRegex: /[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{\s*([\s\S]*?)\s*^}/gm,
+                mainRegex: /int\s+main\s*\((?:[^)]*)\)\s*{\s*([\s\S]*?)\s*^}/m
             }
         };
 
