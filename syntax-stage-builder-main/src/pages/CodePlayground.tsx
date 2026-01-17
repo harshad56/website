@@ -326,6 +326,7 @@ const CodePlayground = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [babelStatus, setBabelStatus] = useState<string>("Initializing...");
   const [savedCode, setSavedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("output");
@@ -335,6 +336,22 @@ const CodePlayground = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const highlighterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const loadBabel = async () => {
+      if ((window as any).Babel) {
+        setBabelStatus("Ready");
+        return;
+      }
+      setBabelStatus("Loading Babel...");
+      const script = document.createElement('script');
+      script.src = "https://unpkg.com/@babel/standalone/babel.min.js";
+      script.onload = () => setBabelStatus("Ready");
+      script.onerror = () => setBabelStatus("Babel failed to load");
+      document.head.appendChild(script);
+    };
+    loadBabel();
+  }, []);
 
   // VFS State
   const [vfs, setVfs] = useState<(VFSFile | VFSFolder)[]>(() => {
@@ -352,17 +369,33 @@ const CodePlayground = () => {
     ];
   });
 
-  const [activeFile, setActiveFile] = useState<VFSFile>(() => {
-    const findFirstFile = (items: (VFSFile | VFSFolder)[]): VFSFile | null => {
+  const [activeFilePath, setActiveFilePath] = useState<string>(() => {
+    const findFirstFile = (items: (VFSFile | VFSFolder)[]): string | null => {
       for (const item of items) {
-        if ('content' in item) return item;
+        if ('content' in item) return item.path;
         const found = findFirstFile((item as VFSFolder).children);
         if (found) return found;
       }
       return null;
     };
-    return findFirstFile(vfs) || { name: "index.js", path: "/index.js", content: "", language: "javascript" };
+    return findFirstFile(vfs) || "/index.js";
   });
+
+  const getActiveFile = useCallback((items: (VFSFile | VFSFolder)[]): VFSFile => {
+    const findByPath = (nodes: (VFSFile | VFSFolder)[]): VFSFile | null => {
+      for (const node of nodes) {
+        if (node.path === activeFilePath && 'content' in node) return node as VFSFile;
+        if ('children' in node) {
+          const found = findByPath(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return findByPath(items) || { name: "index.js", path: "/index.js", content: LANGUAGES.javascript.starter, language: "javascript" };
+  }, [activeFilePath]);
+
+  const activeFile = getActiveFile(vfs);
 
   const [explorerWidth, setExplorerWidth] = useState(250);
   const [isExplorerVisible, setIsExplorerVisible] = useState(!isMobile);
@@ -375,32 +408,23 @@ const CodePlayground = () => {
   };
 
   const setCode = (content: string) => {
-    setActiveFile(prev => ({ ...prev, content }));
+    setVfs(prev => {
+      const updateNode = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+        return items.map(item => {
+          if (item.path === activeFilePath) {
+            return { ...item, content };
+          }
+          if ('children' in item) {
+            return { ...item, children: updateNode(item.children) };
+          }
+          return item;
+        });
+      };
+      const next = updateNode(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
   };
-
-  // Debounced Sync activeFile back to VFS
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!activeFile) return;
-      setVfs(prev => {
-        const updateNode = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-          return items.map(item => {
-            if (item.path === activeFile.path) {
-              return { ...item, content: activeFile.content, language: activeFile.language };
-            }
-            if ('children' in item) {
-              return { ...item, children: updateNode(item.children) };
-            }
-            return item;
-          });
-        };
-        const next = updateNode(prev);
-        localStorage.setItem('playground_vfs', JSON.stringify(next));
-        return next;
-      });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [activeFile.content, activeFile.language]);
 
   const handleMessage = useCallback((e: MessageEvent) => {
     if (e.data.type === 'console') {
@@ -418,20 +442,20 @@ const CodePlayground = () => {
   const selectedLanguage = activeFile.language as keyof typeof LANGUAGES;
 
   const setSelectedLanguage = (lang: keyof typeof LANGUAGES) => {
-    setActiveFile(prev => ({ ...prev, language: lang, content: LANGUAGES[lang].starter }));
-    const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      return items.map(item => {
-        if (item.path === activeFile.path) {
-          return { ...item, language: lang, content: LANGUAGES[lang].starter };
-        }
-        if ('children' in item) {
-          return { ...item, children: updateVFS(item.children) };
-        }
-        return item;
-      });
-    };
     setVfs(prev => {
-      const next = updateVFS(prev);
+      const updateNode = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+        return items.map(item => {
+          if (item.path === activeFilePath && !('children' in item)) {
+            // Update both language and starter code if it became empty
+            return { ...item, language: lang, content: (item as VFSFile).content || LANGUAGES[lang].starter };
+          }
+          if ('children' in item) {
+            return { ...item, children: updateNode(item.children) };
+          }
+          return item;
+        });
+      };
+      const next = updateNode(prev);
       localStorage.setItem('playground_vfs', JSON.stringify(next));
       return next;
     });
@@ -508,7 +532,7 @@ const CodePlayground = () => {
       return null;
     };
     const first = findFirstFile(newVfs);
-    if (first) setActiveFile(first);
+    if (first) setActiveFilePath(first.path);
     toast({ title: "Project Created", description: `New ${type} project started.` });
   };
 
@@ -602,7 +626,7 @@ const CodePlayground = () => {
         }
         return null;
       })(newVfs);
-      if (first) setActiveFile(first);
+      if (first) setActiveFilePath(first.path);
       toast({ title: "Project Imported", description: "Project state restored from ZIP." });
     } catch (err) {
       toast({ title: "Import Failed", description: "Could not read ZIP file.", variant: "destructive" });
@@ -650,7 +674,7 @@ const CodePlayground = () => {
       localStorage.setItem('playground_vfs', JSON.stringify(next));
       return next;
     });
-    setActiveFile(newFile);
+    setActiveFilePath(newFile.path);
   };
 
   const handleSaveCode = useCallback(() => {
@@ -670,6 +694,19 @@ const CodePlayground = () => {
         variant: "destructive",
       });
       return;
+    }
+    // Ensure Babel is loaded for transpilation
+    if (!(window as any).Babel && (selectedLanguage === 'javascript' || (selectedLanguage as string) === 'typescript' || activeFile.name.endsWith('.jsx') || activeFile.name.endsWith('.tsx'))) {
+      let retryCount = 0;
+      while (retryCount < 50 && !(window as any).Babel) {
+        await new Promise(r => setTimeout(r, 100));
+        retryCount++;
+      }
+      if (!(window as any).Babel) {
+        toast({ title: "Compiler not ready", description: "Babel is still loading. Please wait a moment.", variant: "destructive" });
+        setIsExecuting(false);
+        return;
+      }
     }
 
     setIsExecuting(true);
@@ -733,19 +770,27 @@ const CodePlayground = () => {
             const transpiledContent = transpile(f.content, f.name);
             const blob = new Blob([transpiledContent], { type: 'text/javascript' });
             const url = URL.createObjectURL(blob);
-            const relPath = f.path.startsWith('/') ? f.path.substring(1) : f.path;
-            const nameNoExt = f.name.replace(/\.[^/.]+$/, "");
-            const pathNoExt = f.path.replace(/\.[^/.]+$/, "");
 
-            imports[f.path] = url;
-            imports[`/${relPath}`] = url;
-            imports[`./${relPath}`] = url;
+            // Map every possible way this file could be referenced
+            const absPath = f.path.startsWith('/') ? f.path : '/' + f.path;
+            const relPathStr = absPath.substring(1);
+            const name = f.name;
+            const nameNoExt = name.replace(/\.[^/.]+$/, "");
+            const pathNoExt = absPath.replace(/\.[^/.]+$/, "");
+
+            imports[absPath] = url;
+            imports[relPathStr] = url;
+            imports[`./${relPathStr}`] = url;
             imports[pathNoExt] = url;
-            imports[`./${relPath.replace(/\.[^/.]+$/, "")}`] = url;
+            imports[`./${relPathStr.replace(/\.[^/.]+$/, "")}`] = url;
 
-            if (!relPath.includes('/')) {
-              imports[f.name] = url;
-              imports[`./${f.name}`] = url;
+            // Specifically handling the most common relative patterns
+            if (absPath === "/src/index.js") imports["./src/index.js"] = url;
+            if (absPath === "/src/App.js") imports["./App.js"] = url;
+
+            if (!relPathStr.includes('/')) {
+              imports[name] = url;
+              imports[`./${name}`] = url;
               imports[nameNoExt] = url;
               imports[`./${nameNoExt}`] = url;
             }
@@ -753,6 +798,7 @@ const CodePlayground = () => {
         });
 
         const importMap = `<script type="importmap">${JSON.stringify({ imports })}</script>`;
+        const baseTag = `<base href="${window.location.origin}/">`;
 
         const consoleBridge = `
           <script>
@@ -787,7 +833,7 @@ const CodePlayground = () => {
         let combinedContent = "";
         if (htmlFile.name.endsWith('.html')) {
           combinedContent = htmlFile.content;
-          const injection = `${consoleBridge}${importMap}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`;
+          const injection = `\n${baseTag}\n${importMap}\n${consoleBridge}\n${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`;
 
           if (combinedContent.includes('<head>')) {
             combinedContent = combinedContent.replace('<head>', `<head>${injection}`);
@@ -798,13 +844,13 @@ const CodePlayground = () => {
           // Force active file to run as module if JS/TS and not in HTML
           if ((selectedLanguage === 'javascript' || (selectedLanguage as string) === 'typescript') && !combinedContent.includes(activeFile.name)) {
             const transpiledCode = transpile(activeFile.content, activeFile.name);
-            combinedContent = combinedContent.replace('</body>', `<script type="module">${transpiledCode}</script></body>`);
+            combinedContent = combinedContent.replace('</body>', `<script type="module">${transpiledCode}</script>\n</body>`);
           }
         } else if (selectedLanguage === 'css') {
-          combinedContent = `<html><head>${consoleBridge}<style>${activeFile.content}</style></head><body><div style="padding: 2rem; color: white; font-family: sans-serif;">CSS Preview Mode</div></body></html>`;
+          combinedContent = `<html><head>${baseTag}${consoleBridge}<style>${activeFile.content}</style></head><body><div style="padding: 2rem; color: white; font-family: sans-serif;">CSS Preview Mode</div></body></html>`;
         } else if (selectedLanguage === 'javascript' || (selectedLanguage as string) === 'typescript') {
           const transpiledCode = transpile(activeFile.content, activeFile.name);
-          combinedContent = `<html><head>${consoleBridge}${importMap}</head><body><div id="root"></div><script type="module">${transpiledCode}</script></body></html>`;
+          combinedContent = `<!DOCTYPE html><html><head>${baseTag}${importMap}${consoleBridge}</head><body><div id="root"></div><script type="module">${transpiledCode}</script></body></html>`;
         }
 
         if (combinedContent) {
@@ -960,9 +1006,9 @@ const CodePlayground = () => {
 
   const FileItem = ({ file, level }: { file: VFSFile; level: number }) => (
     <div
-      className={`flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5 group ${activeFile.path === file.path ? 'bg-primary/20 text-primary border-l-2 border-primary' : 'text-slate-400'}`}
+      className={`flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5 group ${activeFilePath === file.path ? 'bg-primary/20 text-primary border-l-2 border-primary' : 'text-slate-400'}`}
       style={{ paddingLeft: `${level * 12 + 12}px` }}
-      onClick={() => setActiveFile(file)}
+      onClick={() => setActiveFilePath(file.path)}
     >
       {getFileIcon(file.name)}
       <span className="text-xs truncate flex-1">{file.name}</span>
@@ -1033,7 +1079,7 @@ const CodePlayground = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden selection:bg-primary/30">
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-100 selection:bg-primary/30 overflow-hidden font-sans">
       <SEO
         title="Code Playground - Interactive Online IDE | CodeAcademy Pro"
         description="Write, run, and test code in multiple programming languages instantly. Our free online code playground supports JavaScript, Python, Java, C++, Rust, Go and more. No installation required - start coding in your browser!"
@@ -1045,144 +1091,116 @@ const CodePlayground = () => {
       />
 
       {/* Header Toolbar */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-          <BackButton label={isMobile ? "" : "Home"} className="h-8 md:h-9 px-2 md:px-3 bg-slate-800 border-slate-700 hover:bg-slate-700" />
+      <div className="h-14 border-b border-white/5 bg-slate-900/50 backdrop-blur px-4 flex items-center justify-between z-20">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <BackButton label={isMobile ? "" : "Home"} className="h-9 px-3 bg-slate-800 border-slate-700 hover:bg-slate-700" />
           <div className="hidden md:flex items-center gap-2">
             <Code2 className="h-5 w-5 text-primary" />
-            <h1 className="font-semibold text-lg">Playground</h1>
+            <span className="font-bold text-lg tracking-tight">SyntaxStage</span>
           </div>
-          <div className="hidden md:block h-6 w-px bg-border" />
+
+          <div className="h-6 w-px bg-white/10 hidden md:block" />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="default" size="sm" className="gap-2 h-8 md:h-9 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+              <Button variant="default" size="sm" className="gap-2 h-9 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
                 <Plus className="h-4 w-4" />
-                <span>New Project</span>
+                <span className="hidden sm:inline">New Project</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-slate-900 border-slate-800 text-slate-200">
-              <DropdownMenuItem onClick={() => handleNewProject('react')} className="focus:bg-primary/20 focus:text-primary">
-                React Project
+            <DropdownMenuContent className="bg-slate-900 border-slate-800 text-slate-200 w-48">
+              <DropdownMenuItem onClick={() => handleNewProject('react')} className="gap-2 focus:bg-primary/20 focus:text-primary">
+                <Code2 className="h-4 w-4" /> React Project
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleNewProject('html')} className="focus:bg-primary/20 focus:text-primary">
-                HTML/CSS/JS Project
+              <DropdownMenuItem onClick={() => handleNewProject('html')} className="gap-2 focus:bg-primary/20 focus:text-primary">
+                <Languages className="h-4 w-4" /> HTML/CSS/JS Project
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleNewProject('standard')} className="focus:bg-primary/20 focus:text-primary">
-                Blank Project
+              <DropdownMenuItem onClick={() => handleNewProject('standard')} className="gap-2 focus:bg-primary/20 focus:text-primary">
+                <FileCode className="h-4 w-4" /> Blank Project
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden md:block h-6 w-px bg-border" />
-
           <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
-            <SelectTrigger className="w-[120px] md:w-[150px] h-8 md:h-9 text-xs md:text-sm bg-slate-100/10 border-white/10 dark:bg-slate-900/50">
+            <SelectTrigger className="w-[110px] md:w-[140px] h-9 bg-slate-800/50 border-white/5 hover:border-white/20 transition-all text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-900 border-slate-800">
               {Object.entries(LANGUAGES).map(([key, lang]) => (
-                <SelectItem key={key} value={key}>
+                <SelectItem key={key} value={key} className="focus:bg-primary/20 focus:text-primary">
                   <span className="flex items-center gap-2">
-                    <span>{lang.icon}</span>
-                    <span className="truncate">{lang.name}</span>
-                  </span>
+                    <span className="text-base">{lang.icon}</span>
+                    <span className="truncate font-medium">{lang.name}</span>
+                  </span >
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center gap-1 md:gap-2 ml-auto">
+        <div className="flex items-center gap-2">
+          {!isExplorerVisible && (
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white" onClick={() => setIsExplorerVisible(true)}>
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="default"
             onClick={handleRunCode}
             disabled={isExecuting}
             size="sm"
-            className="gap-1 md:gap-2 font-semibold shadow-sm h-8 md:h-9 px-3 text-xs md:text-sm bg-primary hover:bg-primary/90"
+            className="gap-2 font-bold shadow-lg shadow-primary/20 h-9 px-4 bg-primary hover:bg-primary/90"
           >
             {isExecuting ? (
               <>
-                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="hidden sm:inline">Running...</span>
               </>
             ) : (
               <>
-                <Play className="h-3 w-3 md:h-4 md:w-4 fill-current" />
-                <span className="sm:inline">Run</span>
+                <Play className="h-4 w-4 fill-current" />
+                <span>Run</span>
               </>
             )}
           </Button>
-        </div>
 
-        <div className="flex items-center gap-1 md:gap-2 ml-2">
+          <div className="h-6 w-px bg-white/10 mx-1 hidden sm:block" />
+
           <div className="hidden sm:flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => {
-              const lang = LANGUAGES[selectedLanguage];
-              setCode(lang.starter);
-            }} title="Reset Code">
-              <RefreshCw className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white" onClick={handleSaveCode} title="Save">
+              <Save className="h-4 w-4" />
             </Button>
-            {savedCode && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleLoadSaved} title="Load Saved">
-                <FileCode className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <div className="h-6 w-px bg-border hidden sm:block mx-1" />
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleSaveCode} title="Save">
-            <Save className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleShareCode} title="Share">
-            {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleDownloadZip} title="Download Project (ZIP)">
-            <Download className="h-4 w-4" />
-          </Button>
-          <div className="relative">
-            <input
-              type="file"
-              accept=".zip"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleImportZip(file);
-              }}
-              title="Open Local Project (.zip)"
-            />
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-              <FileCode className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white" onClick={handleShareCode} title="Share">
+              {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white" onClick={handleDownloadZip} title="Download ZIP">
+              <Download className="h-4 w-4" />
             </Button>
           </div>
+          {babelStatus !== "Ready" && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-slate-800/80 rounded-full border border-white/5 animate-pulse">
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <span className="text-[10px] text-slate-400 font-medium">{babelStatus}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup
-          direction="horizontal"
-          className="h-full rounded-none border-0"
-        >
-          {/* File Explorer Sidebar */}
+      {/* Main Workbench */}
+      <div className="flex-1 flex overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* File Explorer */}
           {isExplorerVisible && (
             <>
-              <ResizablePanel
-                defaultSize={20}
-                minSize={15}
-                maxSize={40}
-                className="bg-[#252526] border-r border-[#1e1e1e] flex flex-col"
-              >
-                <div className="p-3 border-b border-white/5 flex items-center justify-between">
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-slate-900/50 border-r border-white/5 flex flex-col">
+                <div className="h-10 px-4 border-b border-white/5 flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Explorer</span>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="New File" onClick={handleCreateFile}>
-                      <FilePlus className="w-4 h-4" />
+                  <div className="flex items-center gap-0.5">
+                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/5 text-slate-500 hover:text-white" onClick={handleCreateFile}>
+                      <Plus className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="New Folder" onClick={handleCreateFolder}>
-                      <FolderPlus className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 md:hidden text-slate-400 hover:text-white" onClick={() => setIsExplorerVisible(false)}>
-                      <X className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/5 text-slate-500 hover:text-white" onClick={() => setIsExplorerVisible(false)}>
+                      <X className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -1196,94 +1214,72 @@ const CodePlayground = () => {
                   </div>
                 </ScrollArea>
               </ResizablePanel>
-              <ResizableHandle withHandle className="bg-[#1e1e1e] border-[#1e1e1e] w-0.5 hover:bg-primary/50 transition-colors" />
+              <ResizableHandle withHandle className="bg-white/5 w-px hover:bg-primary/50 transition-colors" />
             </>
           )}
 
-          <ResizablePanel defaultSize={80} minSize={30}>
-            <ResizablePanelGroup
-              direction={isMobile ? "vertical" : "horizontal"}
-              className="h-full rounded-none border-0"
-            >
-
-              {/* Editor Panel */}
-              <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30} className="flex flex-col bg-slate-950">
-                {/* Editor Header with Breadcrumbs */}
-                <div className="flex flex-col border-b border-white/5 bg-slate-900/40">
-                  <div className="flex items-center gap-1 text-[10px] text-slate-400 px-4 py-1.5 border-b border-white/5 bg-slate-900/60">
-                    {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
-                      <React.Fragment key={i}>
-                        <span className={i === arr.length - 1 ? "text-primary/90 font-semibold" : "hover:text-slate-200 cursor-default"}>{part}</span>
-                        {i < arr.length - 1 && <ChevronRight className="h-2.5 w-2.5 mx-0.5 text-slate-600" />}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between px-4 h-10">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[10px] text-slate-400 hover:text-white hover:bg-white/5 gap-1"
+          {/* Main Editor + Tools area */}
+          <ResizablePanel defaultSize={80}>
+            <ResizablePanelGroup direction={isMobile ? "vertical" : "horizontal"} className="h-full">
+              {/* Editor Section */}
+              <ResizablePanel defaultSize={60} className="flex flex-col bg-slate-950">
+                <div className="flex-1 flex flex-col min-h-0">
+                  {/* Breadcrumbs & File Header */}
+                  <div className="flex flex-col border-b border-white/5 bg-slate-900/30">
+                    <div className="h-8 flex items-center gap-1 px-4 text-[10px] text-slate-500 bg-slate-950/40 border-b border-white/5">
+                      {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
+                        <React.Fragment key={i}>
+                          <span className={i === arr.length - 1 ? "text-primary/80 font-semibold" : ""}>{part}</span>
+                          {i < arr.length - 1 && <ChevronRight className="h-3 w-3 mx-0.5 opacity-50" />}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                    <div className="h-11 flex items-center justify-between px-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(activeFile.name)}
+                          <span className="text-sm font-semibold text-slate-200 tracking-tight">{activeFile.name}</span>
+                        </div>
+                        <div className="h-4 w-px bg-white/10" />
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                          {activeFile.content.split('\n').length} lines
+                        </span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2 border border-white/5 text-slate-400 hover:text-white"
                         onClick={() => {
                           navigator.clipboard.writeText(code);
-                          toast({ title: "Copied!", description: "Code copied to clipboard." });
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                        Copy
+                          toast({ title: "Copied!" });
+                        }}>
+                        <Copy className="h-3.5 w-3.5" /> Copy
                       </Button>
-                      <span className="text-[10px] md:text-xs text-slate-500 font-mono">
-                        {code.split('\n').length} L | {code.length} C
-                      </span>
                     </div>
                   </div>
-                  <div className="flex-1 relative overflow-hidden font-mono text-sm md:text-base">
-                    {/* Syntax Highlighting Layer */}
-                    <div
-                      ref={highlighterRef}
-                      className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto"
-                    >
+
+                  {/* Editor Layers */}
+                  <div className="flex-1 relative overflow-hidden bg-slate-950">
+                    <div ref={highlighterRef} className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto">
                       <SyntaxHighlighter
-                        language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'csharp' ? 'csharp' : selectedLanguage}
+                        language={selectedLanguage === 'cpp' ? 'cpp' : (selectedLanguage as string) === 'csharp' ? 'csharp' : selectedLanguage}
                         style={vscDarkPlus}
                         showLineNumbers={true}
-                        lineNumberStyle={{ minWidth: '3.5em', paddingRight: '1em', color: '#858585', textAlign: 'right', userSelect: 'none' }}
+                        lineNumberStyle={{ minWidth: '3.5rem', paddingRight: '1rem', color: '#333', textAlign: 'right', fontSize: '11px' }}
                         customStyle={{
                           margin: 0,
                           padding: '1rem',
-                          paddingLeft: '0',
                           background: 'transparent',
-                          fontSize: 'inherit',
-                          fontFamily: 'inherit',
-                          lineHeight: '1.5',
-                          overflow: 'visible',
-                          minHeight: '100%',
+                          fontSize: isMobile ? '12px' : '14px',
+                          lineHeight: '1.6',
                         }}
                       >
                         {code + (code.endsWith('\n') ? ' ' : '')}
                       </SyntaxHighlighter>
                     </div>
-
-                    {/* Invisible Editable Layer */}
                     <textarea
                       ref={textareaRef}
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       onScroll={syncScroll}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Tab') {
-                          e.preventDefault();
-                          const start = e.currentTarget.selectionStart;
-                          const end = e.currentTarget.selectionEnd;
-                          const newCode = code.substring(0, start) + "    " + code.substring(end);
-                          setCode(newCode);
-                          setTimeout(() => {
-                            e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
-                          }, 0);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-white outline-none resize-none font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-white/10"
-                      style={{ lineHeight: '1.5', whiteSpace: 'pre', overflowX: 'auto' }}
+                      className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-primary outline-none resize-none font-mono text-sm md:text-base leading-[1.6] scrollbar-thin scrollbar-thumb-white/5 selection:bg-primary/30"
                       placeholder="Write your code here..."
                       spellCheck={false}
                     />
@@ -1291,144 +1287,110 @@ const CodePlayground = () => {
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle withHandle className="bg-slate-800 border-slate-700 hover:bg-primary/50 transition-colors" />
+              <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors" />
 
-              {/* Tools Panel */}
-              <ResizablePanel defaultSize={isMobile ? 50 : 40} minSize={20}>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-slate-900 text-slate-200">
-                  <div className="border-b border-white/5 px-2 bg-slate-950/20">
-                    <TabsList className="h-10 w-full justify-start bg-transparent border-0 rounded-none overflow-x-auto scrollbar-hide">
-                      <TabsTrigger value="output" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+              {/* Tools Section (Output/Preview) */}
+              <ResizablePanel defaultSize={40} className="bg-slate-900/50">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                  <div className="h-10 border-b border-white/5 px-2 bg-slate-950/20">
+                    <TabsList className="h-full w-full justify-start bg-transparent border-0 rounded-none overflow-x-auto scrollbar-hide">
+                      <TabsTrigger value="output" className="h-full text-[11px] gap-2 px-4 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all uppercase font-bold tracking-widest">
                         <Terminal className="h-3.5 w-3.5" /> Output
                       </TabsTrigger>
                       {(selectedLanguage === 'html' || selectedLanguage === 'css' || previewCode) && (
-                        <TabsTrigger value="preview" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
-                          <Code2 className="h-3.5 w-3.5" /> Preview
+                        <TabsTrigger value="preview" className="h-full text-[11px] gap-2 px-4 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all uppercase font-bold tracking-widest">
+                          <Maximize2 className="h-3.5 w-3.5" /> Preview
                         </TabsTrigger>
                       )}
-                      <TabsTrigger value="stats" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                      <TabsTrigger value="stats" className="h-full text-[11px] gap-2 px-4 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all uppercase font-bold tracking-widest">
                         <Cpu className="h-3.5 w-3.5" /> Stats
                       </TabsTrigger>
-                      <TabsTrigger value="tips" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                      <TabsTrigger value="tips" className="h-full text-[11px] gap-2 px-4 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all uppercase font-bold tracking-widest">
                         <Lightbulb className="h-3.5 w-3.5" /> Tips
                       </TabsTrigger>
                     </TabsList>
                   </div>
 
-                  <div className="flex-1 overflow-hidden">
-                    <TabsContent value="output" className="h-full m-0 p-0 border-0 data-[state=active]:flex flex-col bg-slate-950/30">
-                      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-slate-900/40">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Console</h3>
-                        {output && (
-                          <Button variant="ghost" size="sm" className="h-6 text-[10px] text-slate-500 hover:text-slate-200 hover:bg-white/5" onClick={() => setOutput("")}>
-                            <Trash2 className="h-3 w-3 mr-1" /> Clear
-                          </Button>
-                        )}
-                      </div>
-                      <ScrollArea className="flex-1 w-full p-4">
-                        {error ? (
-                          <div className="mb-4 p-3 rounded border border-red-500/20 bg-red-500/10 text-red-400">
-                            <div className="flex items-center gap-2 mb-1">
-                              <AlertCircle className="h-4 w-4" />
-                              <span className="text-xs font-bold uppercase">Runtime Error</span>
+                  <div className="flex-1 overflow-hidden relative">
+                    <TabsContent value="output" className="absolute inset-0 m-0 flex flex-col bg-slate-950/40">
+                      <ScrollArea className="flex-1 p-4">
+                        {error && (
+                          <div className="mb-4 p-4 rounded-lg border border-red-500/20 bg-red-500/5 text-red-400">
+                            <div className="flex items-center gap-2 font-bold text-xs uppercase mb-2">
+                              <AlertCircle className="h-4 w-4" /> Runtime Error
                             </div>
-                            <pre className="font-mono text-xs whitespace-pre-wrap">{error}</pre>
+                            <pre className="font-mono text-xs whitespace-pre-wrap leading-relaxed">{error}</pre>
                           </div>
-                        ) : null}
+                        )}
                         {output ? (
-                          <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300 animate-in fade-in duration-300">{output}</pre>
-                        ) : (
-                          <div className="h-40 flex flex-col items-center justify-center text-slate-600">
-                            <Terminal className="h-10 w-10 mb-3 opacity-10" />
-                            <p className="text-xs">No output to display</p>
+                          <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300 leading-relaxed font-medium">{output}</pre>
+                        ) : !error && (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-30 mt-20">
+                            <Terminal className="h-12 w-12 mb-4" />
+                            <p className="text-xs font-bold uppercase tracking-widest">Ready to execute</p>
                           </div>
                         )}
                       </ScrollArea>
                     </TabsContent>
 
-                    <TabsContent value="preview" className="h-full m-0 p-0 overflow-hidden bg-white">
+                    <TabsContent value="preview" className="absolute inset-0 m-0 bg-white">
                       {previewCode ? (
-                        <iframe
-                          srcDoc={previewCode}
-                          title="Preview"
-                          className="w-full h-full border-0 bg-white"
-                          sandbox="allow-scripts allow-modals"
-                        />
+                        <iframe srcDoc={previewCode} className="w-full h-full border-0" sandbox="allow-scripts allow-modals" />
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-950/30">
-                          <Code2 className="h-10 w-10 mb-3 opacity-10" />
-                          <p className="text-xs">Click Run to see preview</p>
+                        <div className="h-full flex flex-col items-center justify-center text-slate-600 bg-slate-950/20">
+                          <Maximize2 className="h-10 w-10 mb-2 opacity-10" />
+                          <p className="text-xs">Run your code to see result</p>
                         </div>
                       )}
                     </TabsContent>
 
-                    <TabsContent value="stats" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
-                      <div className="grid gap-4 max-w-md mx-auto">
-                        <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
-                          <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
-                            <Cpu className="h-3 w-3" /> Performance
-                          </h4>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-400">Execution Status</span>
-                              <Badge variant="outline" className={`${error ? "border-red-500/50 text-red-400" : "border-green-500/50 text-green-400"} bg-transparent`}>
-                                {isExecuting ? "Processing..." : error ? "Execution Failed" : "Success"}
+                    <TabsContent value="stats" className="absolute inset-0 m-0 p-6 bg-slate-950/40 overflow-y-auto">
+                      <div className="grid gap-6">
+                        <div className="space-y-4">
+                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-1">Performance</h4>
+                          <div className="p-4 rounded-xl bg-slate-900/50 border border-white/5 space-y-4">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-400">Execution Status</span>
+                              <Badge variant="outline" className={error ? "border-red-500/30 text-red-500" : "border-green-500/30 text-green-500"}>
+                                {error ? "Failed" : "Success"}
                               </Badge>
                             </div>
-                            {executionTime !== null && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-slate-400">Execution Time</span>
-                                <span className="font-mono text-sm text-primary">{executionTime}ms</span>
-                              </div>
-                            )}
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-slate-400">Execution Time</span>
+                              <span className="font-mono text-primary font-bold">{executionTime || 0}ms</span>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
-                          <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
-                            <Code2 className="h-3 w-3" /> Code Metrics
-                          </h4>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-400">Language</span>
-                              <span className="text-sm font-medium">{LANGUAGES[selectedLanguage].name}</span>
+                        <div className="space-y-4">
+                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-1">Code Metrics</h4>
+                          <div className="p-4 rounded-xl bg-slate-900/50 border border-white/5 space-y-4 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Language</span>
+                              <span className="font-bold">{LANGUAGES[selectedLanguage].name}</span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-400">Lines of Code</span>
-                              <span className="font-mono text-sm text-slate-300">{code.split('\n').length}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-slate-400">Total Characters</span>
-                              <span className="font-mono text-sm text-slate-300">{code.length}</span>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Total Lines</span>
+                              <span className="font-mono text-slate-200">{code.split('\n').length}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="tips" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
-                      <div className="space-y-4 max-w-md mx-auto text-[10px] md:text-sm">
-                        <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
-                          <h4 className="font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
-                            <Maximize2 className="h-4 w-4" /> Shortcuts
+                    <TabsContent value="tips" className="absolute inset-0 m-0 p-6 bg-slate-950/40 overflow-y-auto">
+                      <div className="space-y-6">
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/20 to-indigo-500/5 border border-primary/20">
+                          <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4" /> Pro Tip
                           </h4>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-slate-400">
-                              <span>Run Code</span>
-                              <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + Enter</kbd>
-                            </div>
-                            <div className="flex items-center justify-between text-slate-400">
-                              <span>Save Project</span>
-                              <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + S</kbd>
-                            </div>
-                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            Use <kbd className="bg-slate-800 px-1 rounded text-primary">Ctrl + Enter</kbd> to quickly run your code without clicking the button.
+                          </p>
                         </div>
-
-                        <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
-                          <h4 className="font-bold uppercase text-slate-500 mb-2">Editor Info</h4>
-                          <p className="text-slate-400 leading-relaxed text-xs">
-                            This is a sandboxed environment for testing small snippets of {LANGUAGES[selectedLanguage].name} code.
-                            Files are treated as <code className="text-primary">main.{LANGUAGES[selectedLanguage].extension}</code>.
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Editor Information</h4>
+                          <p className="text-xs text-slate-400 leading-relaxed px-1">
+                            Your code is transpiled and executed locally in a sandboxed environment. Modern ES modules are supported for JS/React projects.
                           </p>
                         </div>
                       </div>
