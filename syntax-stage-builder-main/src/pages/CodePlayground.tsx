@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -683,51 +683,106 @@ const CodePlayground = () => {
           return files;
         };
         const allFiles = getAllFiles(vfs);
-        const htmlFile = allFiles.find(f => f.name.endsWith('.html')) || activeFile;
+        const htmlFile = allFiles.find(f => f.name === 'index.html') || allFiles.find(f => f.name.endsWith('.html')) || activeFile;
         const cssFiles = allFiles.filter(f => f.name.endsWith('.css'));
-        const jsFiles = allFiles.filter(f => f.name.endsWith('.js') && f.path !== htmlFile.path);
+
+        // Generate Import Map for ES Modules
+        const imports: Record<string, string> = {};
+        allFiles.forEach(f => {
+          if (f.name.endsWith('.js') || f.name.endsWith('.jsx') || f.name.endsWith('.ts') || f.name.endsWith('.tsx')) {
+            const blob = new Blob([f.content], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const relPath = f.path.startsWith('/') ? f.path.substring(1) : f.path;
+            const nameNoExt = f.name.replace(/\.[^/.]+$/, "");
+            const pathNoExt = f.path.replace(/\.[^/.]+$/, "");
+
+            imports[f.path] = url;
+            imports[`/${relPath}`] = url;
+            imports[`./${relPath}`] = url;
+            imports[pathNoExt] = url;
+            imports[`./${relPath.replace(/\.[^/.]+$/, "")}`] = url;
+
+            if (!relPath.includes('/')) {
+              imports[f.name] = url;
+              imports[`./${f.name}`] = url;
+              imports[nameNoExt] = url;
+              imports[`./${nameNoExt}`] = url;
+            }
+          }
+        });
+
+        const importMap = `<script type="importmap">${JSON.stringify({ imports })}</script>`;
+
+        const babelScript = `<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>`;
 
         const consoleBridge = `
           <script>
             (function() {
-              const originalLog = console.log;
-              const originalError = console.error;
-              const originalWarn = console.warn;
-              
               const sendToParent = (method, args) => {
-                window.parent.postMessage({ type: 'console', method, args: args.map(a => {
-                    try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
-                    catch(e) { return String(a); }
-                })}, '*');
+                window.parent.postMessage({ 
+                  type: 'console', 
+                  method, 
+                  args: args.map(a => {
+                    try {
+                      if (a instanceof Error) return a.message;
+                      return typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a);
+                    } catch(e) { return String(a); }
+                  })
+                }, '*');
               };
 
-              console.log = (...args) => { sendToParent('log', args); originalLog.apply(console, args); };
-              console.error = (...args) => { sendToParent('error', args); originalError.apply(console, args); };
-              console.warn = (...args) => { sendToParent('warn', args); originalWarn.apply(console, args); };
+              console.log = (...args) => sendToParent('log', args);
+              console.error = (...args) => sendToParent('error', args);
+              console.warn = (...args) => sendToParent('warn', args);
               
               window.onerror = (msg, url, line, col, error) => {
-                sendToParent('error', [msg + ' (line ' + line + ')']);
+                sendToParent('error', [\`\${msg} (\${line}:\${col})\`]);
+              };
+              window.onunhandledrejection = (event) => {
+                sendToParent('error', [\`Unhandled Rejection: \${event.reason}\`]);
               };
             })();
           </script>
         `;
 
         let combinedContent = "";
-        let shouldContinueToWorker = false;
-        if (selectedLanguage === 'html' || htmlFile.name.endsWith('.html')) {
-          combinedContent = htmlFile.content.replace('<head>', `<head>${consoleBridge}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`);
-          combinedContent = combinedContent.replace('</body>', `${jsFiles.map(f => `<script>${f.content}</script>`).join('')}</body>`);
-          if (!combinedContent.includes('<head>')) combinedContent = consoleBridge + combinedContent;
+        const isJSXOrTS = allFiles.some(f =>
+          f.name.endsWith('.jsx') || f.name.endsWith('.tsx') || f.name.endsWith('.ts') ||
+          (f.name.endsWith('.js') && (f.content.includes('React') || f.content.includes('React.') || f.content.includes('</')))
+        );
+        const scriptType = isJSXOrTS ? 'type="text/babel" data-type="module"' : 'type="module"';
+
+        if (htmlFile.name.endsWith('.html')) {
+          combinedContent = htmlFile.content;
+          const injection = `${consoleBridge}${babelScript}${importMap}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`;
+
+          if (combinedContent.includes('<head>')) {
+            combinedContent = combinedContent.replace('<head>', `<head>${injection}`);
+          } else {
+            combinedContent = injection + combinedContent;
+          }
+
+          if (isJSXOrTS) {
+            // Convert native module imports to Babel-ready scripts inside the HTML
+            combinedContent = combinedContent.replace(/<script\s+([^>]*?)type="module"([^>]*?)>/g, '<script $1 type="text/babel" data-type="module" $2>');
+            // Also handle scripts that don't have a type but need transpilation if they are local
+            combinedContent = combinedContent.replace(/<script\s+([^>]*?)src="\.\/([^"]+?)"([^>]*?)>/g, '<script $1 type="text/babel" data-type="module" src="./$2" $3>');
+          }
+
+          // If no scripts are present, or we want to force-run active JS
+          if (selectedLanguage === 'javascript' && !combinedContent.includes(activeFile.name)) {
+            combinedContent = combinedContent.replace('</body>', `<script ${scriptType}>${activeFile.content}</script></body>`);
+          }
         } else if (selectedLanguage === 'css') {
-          combinedContent = `<html><head>${consoleBridge}<style>${code}</style></head><body><div class="p-8 text-white">CSS Preview Mode</div></body></html>`;
-        } else {
-          shouldContinueToWorker = true;
+          combinedContent = `<html><head>${consoleBridge}<style>${code}</style></head><body><div style="padding: 2rem; color: white; font-family: sans-serif;">CSS Preview Mode</div></body></html>`;
+        } else if (selectedLanguage === 'javascript' || selectedLanguage === 'typescript') {
+          combinedContent = `<html><head>${consoleBridge}${babelScript}${importMap}</head><body><div id="root"></div><script ${scriptType}>${code}</script></body></html>`;
         }
 
-        if (!shouldContinueToWorker) {
+        if (combinedContent) {
           setPreviewCode(combinedContent);
           setActiveTab("preview");
-          setOutput("Rendering preview...");
+          setOutput("Building and rendering preview...");
           setIsExecuting(false);
           return;
         }
@@ -860,13 +915,28 @@ const CodePlayground = () => {
     "programmingLanguage": Object.keys(LANGUAGES),
   };
 
+  const getFileIcon = (name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'js': return <FileCode className="w-4 h-4 text-yellow-400" />;
+      case 'jsx': return <FileCode className="w-4 h-4 text-blue-400" />;
+      case 'ts': return <FileCode className="w-4 h-4 text-blue-500" />;
+      case 'tsx': return <FileCode className="w-4 h-4 text-blue-600" />;
+      case 'html': return <File className="w-4 h-4 text-orange-500" />;
+      case 'css': return <File className="w-4 h-4 text-blue-300" />;
+      case 'json': return <FileCode className="w-4 h-4 text-yellow-600" />;
+      case 'py': return <FileCode className="w-4 h-4 text-green-500" />;
+      default: return <File className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
   const FileItem = ({ file, level }: { file: VFSFile; level: number }) => (
     <div
       className={`flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5 group ${activeFile.path === file.path ? 'bg-primary/20 text-primary border-l-2 border-primary' : 'text-slate-400'}`}
       style={{ paddingLeft: `${level * 12 + 12}px` }}
       onClick={() => setActiveFile(file)}
     >
-      <File className="w-4 h-4" />
+      {getFileIcon(file.name)}
       <span className="text-xs truncate flex-1">{file.name}</span>
       <button
         className="opacity-0 group-hover:opacity-100 h-4 w-4 text-slate-500 hover:text-red-400 p-0.5 rounded hover:bg-white/10"
@@ -993,25 +1063,45 @@ const CodePlayground = () => {
               ))}
             </SelectContent>
           </Select>
+        </div>
 
-          <Button
-            onClick={handleRunCode}
-            disabled={isExecuting}
-            size="sm"
-            className="gap-1 md:gap-2 font-semibold shadow-sm h-8 md:h-9 px-3 text-xs md:text-sm ml-auto md:ml-0 bg-primary hover:bg-primary/90"
-          >
-            {isExecuting ? (
-              <>
-                <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" />
-                <span className="hidden sm:inline">Running...</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-3 w-3 md:h-4 md:w-4 fill-current" />
-                <span className="sm:inline">Run</span>
-              </>
-            )}
-          </Button>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-center gap-1 text-[10px] text-slate-500 px-3 py-0.5 bg-slate-900/50 border-b border-white/5">
+            {activeFile.path.split('/').filter(Boolean).map((part, i, arr) => (
+              <React.Fragment key={i}>
+                <span>{part}</span>
+                {i < arr.length - 1 && <ChevronRight className="h-2 w-2" />}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 px-3 h-10">
+            <h2 className="text-xs md:text-sm font-medium flex items-center gap-2 text-slate-200">
+              {getFileIcon(activeFile.name)}
+              {activeFile.name}
+              <span className="text-slate-500 font-normal px-2 py-0.5 rounded bg-white/5 text-[10px] uppercase">{activeFile.language}</span>
+            </h2>
+            <div className="flex items-center gap-1 md:gap-2 ml-auto">
+              <Button
+                variant="default"
+                onClick={handleRunCode}
+                disabled={isExecuting}
+                size="sm"
+                className="gap-1 md:gap-2 font-semibold shadow-sm h-7 md:h-8 px-3 text-[10px] md:text-sm bg-primary hover:bg-primary/90"
+              >
+                {isExecuting ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Running...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3 w-3 fill-current" />
+                    <span>Run</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 md:gap-2 ml-2">
