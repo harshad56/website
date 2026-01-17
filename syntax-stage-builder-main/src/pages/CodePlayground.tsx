@@ -1336,19 +1336,29 @@ const CodePlayground = () => {
                   </div>
 
                   {/* Editor Layers */}
-                  <div className="flex-1 relative overflow-hidden bg-slate-950">
+                  <div className="flex-1 relative overflow-hidden bg-slate-950 font-mono">
                     <div ref={highlighterRef} className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto">
                       <SyntaxHighlighter
                         language={selectedLanguage === 'cpp' ? 'cpp' : (selectedLanguage as string) === 'csharp' ? 'csharp' : selectedLanguage}
                         style={vscDarkPlus}
                         showLineNumbers={true}
-                        lineNumberStyle={{ minWidth: '3.5rem', paddingRight: '1rem', color: '#333', textAlign: 'right', fontSize: '11px' }}
+                        lineNumberStyle={{
+                          minWidth: '3rem',
+                          paddingRight: '1rem',
+                          color: '#475569',
+                          textAlign: 'right',
+                          fontSize: isMobile ? '12px' : '14px',
+                          userSelect: 'none',
+                          opacity: 0.5
+                        }}
                         customStyle={{
                           margin: 0,
                           padding: '1rem',
+                          paddingLeft: '0',
                           background: 'transparent',
                           fontSize: isMobile ? '12px' : '14px',
                           lineHeight: '1.6',
+                          fontFamily: 'inherit',
                         }}
                       >
                         {code + (code.endsWith('\n') ? ' ' : '')}
@@ -1359,7 +1369,14 @@ const CodePlayground = () => {
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       onScroll={syncScroll}
-                      className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-primary outline-none resize-none font-mono text-sm md:text-base leading-[1.6] scrollbar-thin scrollbar-thumb-white/5 selection:bg-primary/30"
+                      className="absolute inset-0 w-full h-full p-4 pl-[4rem] bg-transparent text-transparent caret-primary outline-none resize-none font-mono text-[14px] leading-[1.6] placeholder:text-slate-700 scrollbar-thin scrollbar-thumb-white/5 selection:bg-primary/30"
+                      style={{
+                        fontSize: isMobile ? '12px' : '14px',
+                        lineHeight: '1.6',
+                        fontFamily: 'inherit',
+                        tabSize: 4,
+                        WebkitTextFillColor: 'transparent',
+                      }}
                       placeholder="Write your code here..."
                       spellCheck={false}
                     />
