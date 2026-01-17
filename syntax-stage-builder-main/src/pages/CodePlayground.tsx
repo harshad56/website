@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,11 +40,34 @@ import {
   Trash2,
   FileCode,
   Copy,
-  Languages
+  Languages,
+  FolderPlus,
+  FilePlus,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  File,
+  X,
+  MoreVertical,
+  Plus
 } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import SEO from "@/components/SEO";
+
+interface VFSFile {
+  name: string;
+  content: string;
+  language: string;
+  path: string;
+}
+
+interface VFSFolder {
+  name: string;
+  path: string;
+  children: (VFSFile | VFSFolder)[];
+  isOpen?: boolean;
+}
 
 // Language configurations
 const LANGUAGES = {
@@ -293,8 +322,6 @@ body {
 };
 
 const CodePlayground = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof LANGUAGES>("javascript");
-  const [code, setCode] = useState(LANGUAGES.javascript.starter);
   const [output, setOutput] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
@@ -309,11 +336,63 @@ const CodePlayground = () => {
   const isMobile = useIsMobile();
   const highlighterRef = useRef<HTMLDivElement>(null);
 
+  // VFS State
+  const [vfs, setVfs] = useState<(VFSFile | VFSFolder)[]>(() => {
+    const saved = localStorage.getItem('playground_vfs');
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        name: "src",
+        path: "/src",
+        children: [
+          { name: "App.js", path: "/src/App.js", content: LANGUAGES.javascript.starter, language: "javascript" }
+        ],
+        isOpen: true
+      }
+    ];
+  });
+
+  const [activeFile, setActiveFile] = useState<VFSFile>(() => {
+    const findFirstFile = (items: (VFSFile | VFSFolder)[]): VFSFile | null => {
+      for (const item of items) {
+        if ('content' in item) return item;
+        const found = findFirstFile((item as VFSFolder).children);
+        if (found) return found;
+      }
+      return null;
+    };
+    return findFirstFile(vfs) || { name: "index.js", path: "/index.js", content: "", language: "javascript" };
+  });
+
+  const [explorerWidth, setExplorerWidth] = useState(250);
+  const [isExplorerVisible, setIsExplorerVisible] = useState(!isMobile);
+
   const syncScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (highlighterRef.current) {
       highlighterRef.current.scrollTop = e.currentTarget.scrollTop;
       highlighterRef.current.scrollLeft = e.currentTarget.scrollLeft;
     }
+  };
+
+  const setCode = (content: string) => {
+    setActiveFile(prev => ({ ...prev, content }));
+    // Update content in VFS
+    const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      return items.map(item => {
+        if (item.path === activeFile.path) {
+          return { ...item, content };
+        }
+        if ('children' in item) {
+          return { ...item, children: updateVFS(item.children) };
+        }
+        return item;
+      });
+    };
+    setVfs(prev => {
+      const next = updateVFS(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
   };
 
   const handleMessage = useCallback((e: MessageEvent) => {
@@ -327,6 +406,129 @@ const CodePlayground = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [handleMessage]);
+
+  const code = activeFile.content;
+  const selectedLanguage = activeFile.language as keyof typeof LANGUAGES;
+
+  const setSelectedLanguage = (lang: keyof typeof LANGUAGES) => {
+    setActiveFile(prev => ({ ...prev, language: lang }));
+    const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      return items.map(item => {
+        if (item.path === activeFile.path) {
+          return { ...item, language: lang };
+        }
+        if ('children' in item) {
+          return { ...item, children: updateVFS(item.children) };
+        }
+        return item;
+      });
+    };
+    setVfs(prev => {
+      const next = updateVFS(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleNewProject = (type: 'react' | 'html' | 'standard') => {
+    let newVfs: (VFSFile | VFSFolder)[] = [];
+    if (type === 'react') {
+      newVfs = [
+        {
+          name: "src", path: "/src", isOpen: true, children: [
+            { name: "App.js", path: "/src/App.js", language: "javascript" as const, content: `import React from 'https://esm.sh/react';\n\nexport default function App() {\n  return <h1>Hello from React!</h1>;\n}` },
+            { name: "index.js", path: "/src/index.js", language: "javascript" as const, content: `import React from 'https://esm.sh/react';\nimport ReactDOM from 'https://esm.sh/react-dom';\nimport App from './App.js';\n\nReactDOM.render(<App />, document.getElementById('root'));` }
+          ]
+        },
+        { name: "index.html", path: "/index.html", language: "html" as const, content: `<!DOCTYPE html>\n<html>\n<body>\n  <div id="root"></div>\n  <script type="module" src="./src/index.js"></script>\n</body>\n</html>` }
+      ];
+    } else if (type === 'html') {
+      newVfs = [
+        { name: "index.html", path: "/index.html", language: "html" as const, content: LANGUAGES.html.starter },
+        { name: "style.css", path: "/style.css", language: "css" as const, content: LANGUAGES.css.starter },
+        { name: "script.js", path: "/script.js", language: "javascript" as const, content: LANGUAGES.javascript.starter }
+      ];
+    } else {
+      newVfs = [
+        { name: "main.js", path: "/main.js", language: "javascript" as const, content: LANGUAGES.javascript.starter }
+      ];
+    }
+    setVfs(newVfs);
+    localStorage.setItem('playground_vfs', JSON.stringify(newVfs));
+
+    const findFirstFile = (items: (VFSFile | VFSFolder)[]): VFSFile | null => {
+      for (const item of items) {
+        if ('content' in item) return item as VFSFile;
+        const found = findFirstFile((item as VFSFolder).children);
+        if (found) return found;
+      }
+      return null;
+    };
+    const first = findFirstFile(newVfs);
+    if (first) setActiveFile(first);
+    toast({ title: "Project Created", description: `New ${type} project started.` });
+  };
+
+  const handleCreateFile = () => {
+    const name = prompt("Enter file name (e.g., main.js):");
+    if (!name) return;
+    const extension = name.split('.').pop();
+    let language = "javascript";
+    for (const [key, lang] of Object.entries(LANGUAGES)) {
+      if (lang.extension === extension) {
+        language = key;
+        break;
+      }
+    }
+    const newFile: VFSFile = {
+      name,
+      path: `/src/${name}`,
+      content: "",
+      language
+    };
+
+    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      return items.map(item => {
+        if (item.name === "src" && 'children' in item) {
+          return { ...item, children: [...item.children, newFile], isOpen: true };
+        }
+        return item;
+      });
+    };
+
+    setVfs(prev => {
+      const next = addToSrc(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
+    setActiveFile(newFile);
+  };
+
+  const handleCreateFolder = () => {
+    const name = prompt("Enter folder name:");
+    if (!name) return;
+    const newFolder: VFSFolder = {
+      name,
+      path: `/src/${name}`,
+      children: [],
+      isOpen: true
+    };
+
+    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+      return items.map(item => {
+        if (item.name === "src" && 'children' in item) {
+          return { ...item, children: [...item.children, newFolder], isOpen: true };
+        }
+        return item;
+      });
+    };
+
+    setVfs(prev => {
+      const next = addToSrc(prev);
+      localStorage.setItem('playground_vfs', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const handleSaveCode = useCallback(() => {
     localStorage.setItem(`playground_${selectedLanguage}`, code);
@@ -357,7 +559,20 @@ const CodePlayground = () => {
     const startTime = Date.now();
 
     try {
-      if (selectedLanguage === 'html' || selectedLanguage === 'css') {
+      if (selectedLanguage === 'html' || selectedLanguage === 'css' || selectedLanguage === 'javascript') {
+        const getAllFiles = (items: (VFSFile | VFSFolder)[]): VFSFile[] => {
+          let files: VFSFile[] = [];
+          for (const item of items) {
+            if ('content' in item) files.push(item);
+            else files = [...files, ...getAllFiles(item.children)];
+          }
+          return files;
+        };
+        const allFiles = getAllFiles(vfs);
+        const htmlFile = allFiles.find(f => f.name.endsWith('.html')) || activeFile;
+        const cssFiles = allFiles.filter(f => f.name.endsWith('.css'));
+        const jsFiles = allFiles.filter(f => f.name.endsWith('.js') && f.path !== htmlFile.path);
+
         const consoleBridge = `
           <script>
             (function() {
@@ -366,7 +581,10 @@ const CodePlayground = () => {
               const originalWarn = console.warn;
               
               const sendToParent = (method, args) => {
-                window.parent.postMessage({ type: 'console', method, args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)) }, '*');
+                window.parent.postMessage({ type: 'console', method, args: args.map(a => {
+                    try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+                    catch(e) { return String(a); }
+                })}, '*');
               };
 
               console.log = (...args) => { sendToParent('log', args); originalLog.apply(console, args); };
@@ -380,15 +598,25 @@ const CodePlayground = () => {
           </script>
         `;
 
-        const fullPreview = selectedLanguage === 'html'
-          ? code.replace('<head>', '<head>' + consoleBridge)
-          : `<html><head>${consoleBridge}<style>${code}</style></head><body><div class="p-8 text-white">CSS Preview Mode</div></body></html>`;
+        let combinedContent = "";
+        let shouldContinueToWorker = false;
+        if (selectedLanguage === 'html' || htmlFile.name.endsWith('.html')) {
+          combinedContent = htmlFile.content.replace('<head>', `<head>${consoleBridge}${cssFiles.map(f => `<style>${f.content}</style>`).join('')}`);
+          combinedContent = combinedContent.replace('</body>', `${jsFiles.map(f => `<script>${f.content}</script>`).join('')}</body>`);
+          if (!combinedContent.includes('<head>')) combinedContent = consoleBridge + combinedContent;
+        } else if (selectedLanguage === 'css') {
+          combinedContent = `<html><head>${consoleBridge}<style>${code}</style></head><body><div class="p-8 text-white">CSS Preview Mode</div></body></html>`;
+        } else {
+          shouldContinueToWorker = true;
+        }
 
-        setPreviewCode(fullPreview);
-        setActiveTab("preview");
-        setOutput("Rendering preview...");
-        setIsExecuting(false);
-        return;
+        if (!shouldContinueToWorker) {
+          setPreviewCode(combinedContent);
+          setActiveTab("preview");
+          setOutput("Rendering preview...");
+          setIsExecuting(false);
+          return;
+        }
       }
 
       const result = await codeExecutor.executeCode(selectedLanguage, code);
@@ -424,22 +652,9 @@ const CodePlayground = () => {
     } finally {
       setIsExecuting(false);
     }
-  }, [code, selectedLanguage, toast, isMobile]);
+  }, [code, vfs, activeFile, selectedLanguage, toast, isMobile]);
 
-  // Update code when language changes
-  useEffect(() => {
-    const lang = LANGUAGES[selectedLanguage];
-    setCode(lang.starter);
-    setOutput("");
-    setError(null);
-    setExecutionTime(null);
-  }, [selectedLanguage]);
 
-  // Load saved code from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(`playground_${selectedLanguage}`);
-    setSavedCode(saved || null);
-  }, [selectedLanguage]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -531,8 +746,82 @@ const CodePlayground = () => {
     "programmingLanguage": Object.keys(LANGUAGES),
   };
 
+  const FileItem = ({ file, level }: { file: VFSFile; level: number }) => (
+    <div
+      className={`flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5 group ${activeFile.path === file.path ? 'bg-primary/20 text-primary border-l-2 border-primary' : 'text-slate-400'}`}
+      style={{ paddingLeft: `${level * 12 + 12}px` }}
+      onClick={() => setActiveFile(file)}
+    >
+      <File className="w-4 h-4" />
+      <span className="text-xs truncate flex-1">{file.name}</span>
+      <button
+        className="opacity-0 group-hover:opacity-100 h-4 w-4 text-slate-500 hover:text-red-400 p-0.5 rounded hover:bg-white/10"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm(`Delete ${file.name}?`)) {
+            const deleteFromVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+              return items.filter(item => item.path !== file.path).map(item => {
+                if ('children' in item) {
+                  return { ...item, children: deleteFromVFS(item.children) };
+                }
+                return item;
+              });
+            };
+            setVfs(prev => {
+              const next = deleteFromVFS(prev);
+              localStorage.setItem('playground_vfs', JSON.stringify(next));
+              return next;
+            });
+          }
+        }}
+      >
+        <Trash2 className="h-3 w-3" />
+      </button>
+    </div>
+  );
+
+  const FolderItem = ({ folder, level }: { folder: VFSFolder; level: number }) => {
+    const toggleFolder = () => {
+      const updateVFS = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
+        return items.map(item => {
+          if (item.path === folder.path) {
+            return { ...item, isOpen: !(item as VFSFolder).isOpen };
+          }
+          if ('children' in item) {
+            return { ...item, children: updateVFS(item.children) };
+          }
+          return item;
+        });
+      };
+      setVfs(updateVFS);
+    };
+
+    return (
+      <div>
+        <div
+          className="flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5 text-slate-300"
+          style={{ paddingLeft: `${level * 12 + 12}px` }}
+          onClick={toggleFolder}
+        >
+          {folder.isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <Folder className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs font-medium truncate">{folder.name}</span>
+        </div>
+        {folder.isOpen && (
+          <div>
+            {folder.children.map((child, i) => (
+              'children' in child ?
+                <FolderItem key={i} folder={child as VFSFolder} level={level + 1} /> :
+                <FileItem key={i} file={child as VFSFile} level={level + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background overflow-hidden selection:bg-primary/30">
       <SEO
         title="Code Playground - Interactive Online IDE | CodeAcademy Pro"
         description="Write, run, and test code in multiple programming languages instantly. Our free online code playground supports JavaScript, Python, Java, C++, Rust, Go and more. No installation required - start coding in your browser!"
@@ -546,11 +835,33 @@ const CodePlayground = () => {
       {/* Header Toolbar */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-2 flex items-center justify-between z-10">
         <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-          <BackButton label={isMobile ? "" : "Home"} className="h-8 md:h-9 px-2 md:px-3 bg-indigo-500/10 border-indigo-500/20" />
+          <BackButton label={isMobile ? "" : "Home"} className="h-8 md:h-9 px-2 md:px-3 bg-slate-800 border-slate-700 hover:bg-slate-700" />
           <div className="hidden md:flex items-center gap-2">
             <Code2 className="h-5 w-5 text-primary" />
             <h1 className="font-semibold text-lg">Playground</h1>
           </div>
+          <div className="hidden md:block h-6 w-px bg-border" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 h-8 md:h-9 bg-slate-800 border-slate-700">
+                <Plus className="h-4 w-4" />
+                <span>New Project</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-slate-800 text-slate-200">
+              <DropdownMenuItem onClick={() => handleNewProject('react')} className="focus:bg-primary/20 focus:text-primary">
+                React Project
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewProject('html')} className="focus:bg-primary/20 focus:text-primary">
+                HTML/CSS/JS Project
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNewProject('standard')} className="focus:bg-primary/20 focus:text-primary">
+                Blank Project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="hidden md:block h-6 w-px bg-border" />
 
           <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as keyof typeof LANGUAGES)}>
@@ -619,234 +930,278 @@ const CodePlayground = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup
-          direction={isMobile ? "vertical" : "horizontal"}
+          direction="horizontal"
           className="h-full rounded-none border-0"
         >
-
-          {/* Editor Panel */}
-          <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30}>
-            <div className="h-full flex flex-col bg-[#1e1e1e]">
-              <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/5">
-                <span className="text-[10px] md:text-xs text-slate-400 font-mono flex items-center gap-2">
-                  <FileCode className="h-3 w-3" />
-                  main.{LANGUAGES[selectedLanguage].extension}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-[10px] text-slate-400 hover:text-white hover:bg-white/5 gap-1"
-                    onClick={() => {
-                      navigator.clipboard.writeText(code);
-                      toast({ title: "Copied!", description: "Code copied to clipboard." });
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                    Copy
-                  </Button>
-                  <span className="text-[10px] md:text-xs text-slate-500 font-mono">
-                    {code.split('\n').length} L | {code.length} C
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 relative overflow-hidden font-mono text-sm md:text-base">
-                {/* Syntax Highlighting Layer */}
-                <div
-                  ref={highlighterRef}
-                  className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto"
-                >
-                  <SyntaxHighlighter
-                    language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'csharp' ? 'csharp' : selectedLanguage}
-                    style={vscDarkPlus}
-                    showLineNumbers={true}
-                    lineNumberStyle={{ minWidth: '3.5em', paddingRight: '1em', color: '#858585', textAlign: 'right', userSelect: 'none' }}
-                    customStyle={{
-                      margin: 0,
-                      padding: '1rem',
-                      paddingLeft: '0',
-                      background: 'transparent',
-                      fontSize: 'inherit',
-                      fontFamily: 'inherit',
-                      lineHeight: '1.5',
-                      overflow: 'visible',
-                      minHeight: '100%',
-                    }}
-                  >
-                    {code + (code.endsWith('\n') ? ' ' : '')}
-                  </SyntaxHighlighter>
-                </div>
-
-                {/* Invisible Editable Layer */}
-                <textarea
-                  ref={textareaRef}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  onScroll={syncScroll}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Tab') {
-                      e.preventDefault();
-                      const start = e.currentTarget.selectionStart;
-                      const end = e.currentTarget.selectionEnd;
-                      const newCode = code.substring(0, start) + "    " + code.substring(end);
-                      setCode(newCode);
-                      setTimeout(() => {
-                        e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
-                      }, 0);
-                    }
-                  }}
-                  className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-white outline-none resize-none font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-white/10"
-                  style={{ lineHeight: '1.5', whiteSpace: 'pre', overflowX: 'auto' }}
-                  placeholder="Write your code here..."
-                  spellCheck={false}
-                />
-              </div>
-            </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle className="bg-slate-800 border-slate-700 hover:bg-primary/50 transition-colors" />
-
-          {/* Tools Panel */}
-          <ResizablePanel defaultSize={isMobile ? 50 : 40} minSize={20}>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-slate-900 text-slate-200">
-              <div className="border-b border-white/5 px-2 bg-slate-950/20">
-                <TabsList className="h-10 w-full justify-start bg-transparent border-0 rounded-none overflow-x-auto scrollbar-hide">
-                  <TabsTrigger value="output" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
-                    <Terminal className="h-3.5 w-3.5" /> Output
-                  </TabsTrigger>
-                  {(selectedLanguage === 'html' || selectedLanguage === 'css' || previewCode) && (
-                    <TabsTrigger value="preview" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
-                      <Code2 className="h-3.5 w-3.5" /> Preview
-                    </TabsTrigger>
-                  )}
-                  <TabsTrigger value="stats" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
-                    <Cpu className="h-3.5 w-3.5" /> Stats
-                  </TabsTrigger>
-                  <TabsTrigger value="tips" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
-                    <Lightbulb className="h-3.5 w-3.5" /> Tips
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                <TabsContent value="output" className="h-full m-0 p-0 border-0 data-[state=active]:flex flex-col bg-slate-950/30">
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-slate-900/40">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Console</h3>
-                    {output && (
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px] text-slate-500 hover:text-slate-200 hover:bg-white/5" onClick={() => setOutput("")}>
-                        <Trash2 className="h-3 w-3 mr-1" /> Clear
-                      </Button>
-                    )}
+          {/* File Explorer Sidebar */}
+          {isExplorerVisible && (
+            <>
+              <ResizablePanel
+                defaultSize={20}
+                minSize={15}
+                maxSize={40}
+                className="bg-[#252526] border-r border-[#1e1e1e] flex flex-col"
+              >
+                <div className="p-3 border-b border-white/5 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Explorer</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/10" title="New File" onClick={handleCreateFile}>
+                      <FilePlus className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="w-6 h-6 hover:bg-white/10" title="New Folder" onClick={handleCreateFolder}>
+                      <FolderPlus className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="w-6 h-6 md:hidden" onClick={() => setIsExplorerVisible(false)}>
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
-                  <ScrollArea className="flex-1 w-full p-4">
-                    {error ? (
-                      <div className="mb-4 p-3 rounded border border-red-500/20 bg-red-500/10 text-red-400">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="text-xs font-bold uppercase">Runtime Error</span>
-                        </div>
-                        <pre className="font-mono text-xs whitespace-pre-wrap">{error}</pre>
-                      </div>
-                    ) : null}
-                    {output ? (
-                      <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300 animate-in fade-in duration-300">{output}</pre>
-                    ) : (
-                      <div className="h-40 flex flex-col items-center justify-center text-slate-600">
-                        <Terminal className="h-10 w-10 mb-3 opacity-10" />
-                        <p className="text-xs">No output to display</p>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </TabsContent>
+                </div>
+                <ScrollArea className="flex-1">
+                  <div className="py-2">
+                    {vfs.map((item, i) => (
+                      'children' in item ?
+                        <FolderItem key={i} folder={item as VFSFolder} level={0} /> :
+                        <FileItem key={i} file={item as VFSFile} level={0} />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </ResizablePanel>
+              <ResizableHandle withHandle className="bg-[#1e1e1e] border-[#1e1e1e] w-0.5 hover:bg-primary/50 transition-colors" />
+            </>
+          )}
 
-                <TabsContent value="preview" className="h-full m-0 p-0 overflow-hidden bg-white">
-                  {previewCode ? (
-                    <iframe
-                      srcDoc={previewCode}
-                      title="Preview"
-                      className="w-full h-full border-0 bg-white"
-                      sandbox="allow-scripts allow-modals"
-                    />
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-950/30">
-                      <Code2 className="h-10 w-10 mb-3 opacity-10" />
-                      <p className="text-xs">Click Run to see preview</p>
+          <ResizablePanel defaultSize={80} minSize={30}>
+            <ResizablePanelGroup
+              direction={isMobile ? "vertical" : "horizontal"}
+              className="h-full rounded-none border-0"
+            >
+
+              {/* Editor Panel */}
+              <ResizablePanel defaultSize={isMobile ? 50 : 60} minSize={30}>
+                <div className="h-full flex flex-col bg-[#1e1e1e]">
+                  <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/5">
+                    <span className="text-[10px] md:text-xs text-slate-400 font-mono flex items-center gap-2">
+                      <FileCode className="h-3 w-3" />
+                      main.{LANGUAGES[selectedLanguage].extension}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[10px] text-slate-400 hover:text-white hover:bg-white/5 gap-1"
+                        onClick={() => {
+                          navigator.clipboard.writeText(code);
+                          toast({ title: "Copied!", description: "Code copied to clipboard." });
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copy
+                      </Button>
+                      <span className="text-[10px] md:text-xs text-slate-500 font-mono">
+                        {code.split('\n').length} L | {code.length} C
+                      </span>
                     </div>
-                  )}
-                </TabsContent>
+                  </div>
+                  <div className="flex-1 relative overflow-hidden font-mono text-sm md:text-base">
+                    {/* Syntax Highlighting Layer */}
+                    <div
+                      ref={highlighterRef}
+                      className="absolute inset-0 pointer-events-none select-none scrollbar-hide overflow-auto"
+                    >
+                      <SyntaxHighlighter
+                        language={selectedLanguage === 'cpp' ? 'cpp' : selectedLanguage === 'csharp' ? 'csharp' : selectedLanguage}
+                        style={vscDarkPlus}
+                        showLineNumbers={true}
+                        lineNumberStyle={{ minWidth: '3.5em', paddingRight: '1em', color: '#858585', textAlign: 'right', userSelect: 'none' }}
+                        customStyle={{
+                          margin: 0,
+                          padding: '1rem',
+                          paddingLeft: '0',
+                          background: 'transparent',
+                          fontSize: 'inherit',
+                          fontFamily: 'inherit',
+                          lineHeight: '1.5',
+                          overflow: 'visible',
+                          minHeight: '100%',
+                        }}
+                      >
+                        {code + (code.endsWith('\n') ? ' ' : '')}
+                      </SyntaxHighlighter>
+                    </div>
 
-                <TabsContent value="stats" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
-                  <div className="grid gap-4 max-w-md mx-auto">
-                    <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
-                      <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
-                        <Cpu className="h-3 w-3" /> Performance
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Execution Status</span>
-                          <Badge variant="outline" className={`${error ? "border-red-500/50 text-red-400" : "border-green-500/50 text-green-400"} bg-transparent`}>
-                            {isExecuting ? "Processing..." : error ? "Execution Failed" : "Success"}
-                          </Badge>
-                        </div>
-                        {executionTime !== null && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-400">Execution Time</span>
-                            <span className="font-mono text-sm text-primary">{executionTime}ms</span>
-                          </div>
+                    {/* Invisible Editable Layer */}
+                    <textarea
+                      ref={textareaRef}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      onScroll={syncScroll}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          const start = e.currentTarget.selectionStart;
+                          const end = e.currentTarget.selectionEnd;
+                          const newCode = code.substring(0, start) + "    " + code.substring(end);
+                          setCode(newCode);
+                          setTimeout(() => {
+                            e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
+                          }, 0);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full p-4 pl-[4.5rem] bg-transparent text-transparent caret-white outline-none resize-none font-mono text-sm md:text-base scrollbar-thin scrollbar-thumb-white/10"
+                      style={{ lineHeight: '1.5', whiteSpace: 'pre', overflowX: 'auto' }}
+                      placeholder="Write your code here..."
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle className="bg-slate-800 border-slate-700 hover:bg-primary/50 transition-colors" />
+
+              {/* Tools Panel */}
+              <ResizablePanel defaultSize={isMobile ? 50 : 40} minSize={20}>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-slate-900 text-slate-200">
+                  <div className="border-b border-white/5 px-2 bg-slate-950/20">
+                    <TabsList className="h-10 w-full justify-start bg-transparent border-0 rounded-none overflow-x-auto scrollbar-hide">
+                      <TabsTrigger value="output" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                        <Terminal className="h-3.5 w-3.5" /> Output
+                      </TabsTrigger>
+                      {(selectedLanguage === 'html' || selectedLanguage === 'css' || previewCode) && (
+                        <TabsTrigger value="preview" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                          <Code2 className="h-3.5 w-3.5" /> Preview
+                        </TabsTrigger>
+                      )}
+                      <TabsTrigger value="stats" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                        <Cpu className="h-3.5 w-3.5" /> Stats
+                      </TabsTrigger>
+                      <TabsTrigger value="tips" className="text-xs gap-2 px-4 data-[state=active]:bg-white/5 data-[state=active]:text-primary rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all">
+                        <Lightbulb className="h-3.5 w-3.5" /> Tips
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden">
+                    <TabsContent value="output" className="h-full m-0 p-0 border-0 data-[state=active]:flex flex-col bg-slate-950/30">
+                      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-slate-900/40">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Console</h3>
+                        {output && (
+                          <Button variant="ghost" size="sm" className="h-6 text-[10px] text-slate-500 hover:text-slate-200 hover:bg-white/5" onClick={() => setOutput("")}>
+                            <Trash2 className="h-3 w-3 mr-1" /> Clear
+                          </Button>
                         )}
                       </div>
-                    </div>
+                      <ScrollArea className="flex-1 w-full p-4">
+                        {error ? (
+                          <div className="mb-4 p-3 rounded border border-red-500/20 bg-red-500/10 text-red-400">
+                            <div className="flex items-center gap-2 mb-1">
+                              <AlertCircle className="h-4 w-4" />
+                              <span className="text-xs font-bold uppercase">Runtime Error</span>
+                            </div>
+                            <pre className="font-mono text-xs whitespace-pre-wrap">{error}</pre>
+                          </div>
+                        ) : null}
+                        {output ? (
+                          <pre className="font-mono text-sm whitespace-pre-wrap text-slate-300 animate-in fade-in duration-300">{output}</pre>
+                        ) : (
+                          <div className="h-40 flex flex-col items-center justify-center text-slate-600">
+                            <Terminal className="h-10 w-10 mb-3 opacity-10" />
+                            <p className="text-xs">No output to display</p>
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
 
-                    <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
-                      <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
-                        <Code2 className="h-3 w-3" /> Code Metrics
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Language</span>
-                          <span className="text-sm font-medium">{LANGUAGES[selectedLanguage].name}</span>
+                    <TabsContent value="preview" className="h-full m-0 p-0 overflow-hidden bg-white">
+                      {previewCode ? (
+                        <iframe
+                          srcDoc={previewCode}
+                          title="Preview"
+                          className="w-full h-full border-0 bg-white"
+                          sandbox="allow-scripts allow-modals"
+                        />
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-950/30">
+                          <Code2 className="h-10 w-10 mb-3 opacity-10" />
+                          <p className="text-xs">Click Run to see preview</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Lines of Code</span>
-                          <span className="font-mono text-sm text-slate-300">{code.split('\n').length}</span>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="stats" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
+                      <div className="grid gap-4 max-w-md mx-auto">
+                        <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
+                          <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
+                            <Cpu className="h-3 w-3" /> Performance
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-slate-400">Execution Status</span>
+                              <Badge variant="outline" className={`${error ? "border-red-500/50 text-red-400" : "border-green-500/50 text-green-400"} bg-transparent`}>
+                                {isExecuting ? "Processing..." : error ? "Execution Failed" : "Success"}
+                              </Badge>
+                            </div>
+                            {executionTime !== null && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-slate-400">Execution Time</span>
+                                <span className="font-mono text-sm text-primary">{executionTime}ms</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Total Characters</span>
-                          <span className="font-mono text-sm text-slate-300">{code.length}</span>
+
+                        <div className="bg-slate-900/50 rounded-xl border border-white/5 p-4">
+                          <h4 className="text-xs font-bold uppercase text-slate-500 mb-4 flex items-center gap-2">
+                            <Code2 className="h-3 w-3" /> Code Metrics
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-slate-400">Language</span>
+                              <span className="text-sm font-medium">{LANGUAGES[selectedLanguage].name}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-slate-400">Lines of Code</span>
+                              <span className="font-mono text-sm text-slate-300">{code.split('\n').length}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-slate-400">Total Characters</span>
+                              <span className="font-mono text-sm text-slate-300">{code.length}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                    </TabsContent>
 
-                <TabsContent value="tips" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
-                  <div className="space-y-4 max-w-md mx-auto text-[10px] md:text-sm">
-                    <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
-                      <h4 className="font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
-                        <Maximize2 className="h-4 w-4" /> Shortcuts
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-slate-400">
-                          <span>Run Code</span>
-                          <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + Enter</kbd>
+                    <TabsContent value="tips" className="h-full m-0 p-4 overflow-y-auto bg-slate-950/30">
+                      <div className="space-y-4 max-w-md mx-auto text-[10px] md:text-sm">
+                        <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
+                          <h4 className="font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
+                            <Maximize2 className="h-4 w-4" /> Shortcuts
+                          </h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-slate-400">
+                              <span>Run Code</span>
+                              <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + Enter</kbd>
+                            </div>
+                            <div className="flex items-center justify-between text-slate-400">
+                              <span>Save Project</span>
+                              <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + S</kbd>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-slate-400">
-                          <span>Save Project</span>
-                          <kbd className="h-5 px-1.5 bg-slate-800 border border-slate-700 rounded text-[10px]">⌘ + S</kbd>
+
+                        <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
+                          <h4 className="font-bold uppercase text-slate-500 mb-2">Editor Info</h4>
+                          <p className="text-slate-400 leading-relaxed text-xs">
+                            This is a sandboxed environment for testing small snippets of {LANGUAGES[selectedLanguage].name} code.
+                            Files are treated as <code className="text-primary">main.{LANGUAGES[selectedLanguage].extension}</code>.
+                          </p>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-white/5 bg-slate-900/50">
-                      <h4 className="font-bold uppercase text-slate-500 mb-2">Editor Info</h4>
-                      <p className="text-slate-400 leading-relaxed text-xs">
-                        This is a sandboxed environment for testing small snippets of {LANGUAGES[selectedLanguage].name} code.
-                        Files are treated as <code className="text-primary">main.{LANGUAGES[selectedLanguage].extension}</code>.
-                      </p>
-                    </div>
+                    </TabsContent>
                   </div>
-                </TabsContent>
-              </div>
-            </Tabs>
+                </Tabs>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
