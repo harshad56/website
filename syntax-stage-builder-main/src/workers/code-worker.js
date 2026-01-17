@@ -25,6 +25,73 @@ const SUPPORTED_LANGUAGES = {
 };
 
 // Code execution sandbox
+class UniversalRunner {
+    static transpile(language, code) {
+        let output = { js: "", main: "" };
+        const cleanBody = (body, isPython = false) => {
+            let b = body;
+            if (isPython) {
+                // Basic Python to JS conversion
+                b = b.replace(/print\s*\((.*?)\)/g, 'print_to_output($1)')
+                    .replace(/def\s+(\w+)\s*\((.*?)\):/g, 'function $1($2) {')
+                    .replace(/elif\s+/g, '} else if ')
+                    .replace(/if\s+(.*?):/g, 'if ($1) {')
+                    .replace(/else:/g, '} else {')
+                    .replace(/for\s+(\w+)\s+in\s+range\((.*?)\):/g, 'for (let $1 = 0; $1 < $2; $1++) {')
+                    .replace(/True/g, 'true')
+                    .replace(/False/g, 'false')
+                    .replace(/None/g, 'null');
+            } else {
+                b = b.replace(/System\.out\.println\s*\(/g, 'print_to_output(')
+                    .replace(/Console\.WriteLine\s*\(/g, 'print_to_output(')
+                    .replace(/fmt\.Println\s*\(/g, 'print_to_output(')
+                    .replace(/println!\s*\(/g, 'print_to_output(')
+                    .replace(/cout\s*<<\s*/g, 'print_to_output(').replace(/<<\s*endl\s*;/g, ');').replace(/<<\s*"/g, ' + "')
+                    .replace(/(?:int|double|float|String|boolean|char|long|short|byte|var|auto)\s+(\w+)\s*(?=[=;]|\s+,)/g, 'let $1 ')
+                    .replace(/for\s*\(\s*(?:int|double|float|auto)\s+(\w+)/g, 'for (let $1');
+            }
+            return b;
+        };
+
+        const languagePatterns = {
+            python: {
+                funcRegex: /def\s+(\w+)\s*\((.*?)\):([\s\S]*?)(?=def|\w+\s*=|$)/gm,
+                mainRegex: /if\s+__name__\s*==\s*["']__main__["']\s*:([\s\S]*)/
+            },
+            java: {
+                funcRegex: /public\s+static\s+[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{([\s\S]*?^    \})/gm,
+                mainRegex: /public\s+static\s+void\s+main\s*\((?:[^)]*)\)\s*{([\s\S]*?^    \})/m
+            },
+            cpp: {
+                funcRegex: /[\w<>[\]]+\s+(\w+)\s*\(([^)]*)\)\s*{([\s\S]*?^})/gm,
+                mainRegex: /int\s+main\s*\((?:[^)]*)\)\s*{([\s\S]*?^})/m
+            }
+        };
+
+        const pattern = languagePatterns[language.toLowerCase()];
+        if (!pattern) return null;
+
+        let match;
+        while ((match = pattern.funcRegex.exec(code)) !== null) {
+            const [full, name, params, body] = match;
+            if (name === "main" || (language === 'python' && full.includes('__main__'))) continue;
+            const cleanParams = params.split(',').map(p => p.trim().split(/\s+/).pop()).join(', ');
+            output.js += `function ${name}(${cleanParams}) {\n${cleanBody(body, language === 'python')}\n}\n\n`;
+        }
+
+        const mainMatch = code.match(pattern.mainRegex);
+        if (mainMatch) {
+            output.main = cleanBody(mainMatch[1], language === 'python');
+            if (output.main.trim().startsWith('{')) {
+                output.main = output.main.substring(output.main.indexOf('{') + 1, output.main.lastIndexOf('}'));
+            }
+        } else if (language === 'python') {
+            output.main = cleanBody(code.replace(pattern.funcRegex, ''), true);
+        }
+        return output;
+    }
+}
+
 class CodeSandbox {
     constructor() {
         this.timeout = 10000; // 10 seconds
@@ -81,299 +148,91 @@ class CodeSandbox {
     }
 
     async createExecutionEnvironment(language, code, input) {
-        // For now, simulate execution with language-specific logic
-        // In production, this would connect to actual language runtimes
+        if (language === 'javascript') return this.executeJavaScript(code, input);
 
-        switch (language) {
-            case 'python':
-                return this.executePython(code, input);
-            case 'javascript':
-                return this.executeJavaScript(code, input);
-            case 'java':
-                return this.executeJava(code, input);
-            case 'cpp':
-                return this.executeCpp(code, input);
-            case 'csharp':
-                return this.executeCSharp(code, input);
-            case 'go':
-                return this.executeGo(code, input);
-            case 'rust':
-                return this.executeRust(code, input);
-            default:
-                return this.executeGeneric(code, input);
+        const transpiled = UniversalRunner.transpile(language, code);
+        if (!transpiled || (!transpiled.main && !transpiled.js)) {
+            return this.executeGeneric(code, input, language);
         }
-    }
 
-    async executePython(code, input) {
-        // Simulate Python execution
         const output = [];
-        const errors = [];
+        const print_to_output = (...args) => output.push(args.join(' '));
 
         try {
-            // Basic Python syntax validation
-            if (code.includes('import os') || code.includes('import sys')) {
-                throw new Error('System imports are not allowed for security reasons');
-            }
-
-            // Simulate print statements
-            const printMatches = code.match(/print\s*\([^)]*\)/g) || [];
-            for (const printStmt of printMatches) {
-                const content = printStmt.replace(/print\s*\(/, '').replace(/\)$/, '');
-                // Handle both quoted and unquoted content safely
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else if (content.startsWith("'") && content.endsWith("'")) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    output.push(content);
-                }
-            }
-
-            // Simulate basic operations
-            if (code.includes('input()')) {
-                output.push(input);
-            }
-
+            const runCode = new Function('print_to_output', 'input', transpiled.js + transpiled.main);
+            runCode(print_to_output, input);
             return {
                 output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 10 + 5
+                error: '',
+                memoryUsage: Math.random() * 20 + 10
             };
         } catch (error) {
             return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
+                output: output.join('\n'),
+                error: `Runtime Simulation Error: ${error.message}`,
+                memoryUsage: 5
             };
         }
     }
 
+
     async executeJavaScript(code, input) {
         try {
-            // Create a safe execution context
             const sandbox = {
                 console: {
                     log: (...args) => this.outputBuffer += args.join(' ') + '\n',
                     error: (...args) => this.errorBuffer += args.join(' ') + '\n',
                     warn: (...args) => this.outputBuffer += args.join(' ') + '\n'
                 },
-                setTimeout: () => { },
-                setInterval: () => { },
-                fetch: () => Promise.reject(new Error('Network requests not allowed')),
-                XMLHttpRequest: () => { throw new Error('Network requests not allowed'); }
+                input
             };
-
-            // Execute code in sandbox
             const func = new Function('console', 'input', code);
             func(sandbox.console, input);
-
-            return {
-                output: this.outputBuffer,
-                error: this.errorBuffer,
-                memoryUsage: Math.random() * 15 + 8
-            };
+            return { output: this.outputBuffer, error: this.errorBuffer, memoryUsage: 10 };
         } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
+            return { output: '', error: error.message, memoryUsage: 0 };
         }
     }
 
-    async executeJava(code, input) {
-        // Simulate Java execution
+
+
+    async executeGeneric(code, input, language) {
+        // Fallback for languages not yet handled by UniversalRunner or basic patterns
         const output = [];
-        const errors = [];
-
-        try {
-            // Basic Java syntax validation
-            if (!code.includes('public class')) {
-                throw new Error('Java code must contain a public class');
-            }
-
-            // Simulate System.out.println statements
-            const printMatches = code.match(/System\.out\.println\s*\([^)]*\)/g) || [];
-            for (const printStmt of printMatches) {
-                const content = printStmt.replace(/System\.out\.println\s*\(/, '').replace(/\)$/, '');
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else if (content.startsWith("'") && content.endsWith("'")) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    output.push(content);
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 20 + 15
-            };
-        } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
-        }
-    }
-
-    async executeCpp(code, input) {
-        // Simulate C++ execution
-        const output = [];
-        const errors = [];
-
-        try {
-            // Basic C++ syntax validation
-            if (!code.includes('#include')) {
-                throw new Error('C++ code should include necessary headers');
-            }
-
-            // Simulate cout statements
-            const coutMatches = code.match(/cout\s*<<[^;]*;/g) || [];
-            for (const coutStmt of coutMatches) {
-                const content = coutStmt.replace(/cout\s*<<\s*/, '').replace(/;.*$/, '');
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else if (content.startsWith("'") && content.endsWith("'")) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    // Handle common endl or \n
-                    const clean = content.replace(/<<\s*endl/g, '').replace(/<<\s*"/g, '').trim();
-                    output.push(clean.replace(/^"|"$/g, ''));
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 12 + 6
-            };
-        } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
-        }
-    }
-
-    async executeCSharp(code, input) {
-        // Simulate C# execution
-        const output = [];
-        const errors = [];
-
-        try {
-            // Basic C# syntax validation
-            if (!code.includes('using System')) {
-                throw new Error('C# code should include necessary using statements');
-            }
-
-            // Simulate Console.WriteLine statements
-            const writeMatches = code.match(/Console\.WriteLine\s*\([^)]*\)/g) || [];
-            for (const writeStmt of writeMatches) {
-                const content = writeStmt.replace(/Console\.WriteLine\s*\(/, '').replace(/\)$/, '');
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    output.push(content);
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 18 + 10
-            };
-        } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
-        }
-    }
-
-    async executeGo(code, input) {
-        // Simulate Go execution
-        const output = [];
-        const errors = [];
-
-        try {
-            // Basic Go syntax validation
-            if (!code.includes('package main')) {
-                throw new Error('Go code must start with package main');
-            }
-
-            // Simulate fmt.Println statements
-            const printMatches = code.match(/fmt\.Println\s*\([^)]*\)/g) || [];
-            for (const printStmt of printMatches) {
-                const content = printStmt.replace(/fmt\.Println\s*\(/, '').replace(/\)$/, '');
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    output.push(content);
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 8 + 4
-            };
-        } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
-        }
-    }
-
-    async executeRust(code, input) {
-        // Simulate Rust execution
-        const output = [];
-        const errors = [];
-
-        try {
-            // Basic Rust syntax validation
-            if (!code.includes('fn main()')) {
-                throw new Error('Rust code must contain a main function');
-            }
-
-            // Simulate println! macro calls
-            const printMatches = code.match(/println!\s*\([^)]*\)/g) || [];
-            for (const printStmt of printMatches) {
-                const content = printStmt.replace(/println!\s*\(/, '').replace(/\)$/, '');
-                // Rust println! usually has a format string first
-                if (content.startsWith('"') && content.endsWith('"')) {
-                    output.push(content.substring(1, content.length - 1));
-                } else {
-                    output.push(content);
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                error: errors.join('\n'),
-                memoryUsage: Math.random() * 6 + 3
-            };
-        } catch (error) {
-            return {
-                output: '',
-                error: error.message,
-                memoryUsage: 0
-            };
-        }
-    }
-
-    async executeGeneric(code, input) {
-        return {
-            output: `Code execution for this language is not yet fully implemented.\nInput received: ${input}`,
-            error: '',
-            memoryUsage: Math.random() * 5 + 2
+        const regexes = {
+            python: /print\s*\((.*?)\)/g,
+            java: /System\.out\.println\s*\((.*?)\)/g,
+            cpp: /cout\s*<<\s*(.*?)(?:<<\s*endl|;)/g,
+            csharp: /Console\.WriteLine\s*\((.*?)\)/g,
+            go: /fmt\.Println\s*\((.*?)\)/g,
+            rust: /println!\s*\((.*?)\)/g
         };
+
+        const relLang = language ? language.toLowerCase() : "";
+        const pattern = regexes[relLang];
+        if (pattern) {
+            let match;
+            while ((match = pattern.exec(code)) !== null) {
+                const content = match[1].trim();
+                try {
+                    // Try to evaluate as simple JS or just clean up
+                    const result = new Function('return ' + content.replace(/False/g, 'false').replace(/True/g, 'true'))();
+                    output.push(result);
+                } catch (e) {
+                    output.push(content.replace(/^["']|["']$/g, ''));
+                }
+            }
+        }
+
+        if (output.length === 0) {
+            return {
+                output: `Simulation for ${language || 'this language'} is active. Use standard print commands to see results.`,
+                error: '',
+                memoryUsage: 2
+            };
+        }
+
+        return { output: output.join('\n'), error: '', memoryUsage: 5 };
     }
 }
 
