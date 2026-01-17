@@ -119,7 +119,14 @@ class CodeSandbox {
             const printMatches = code.match(/print\s*\([^)]*\)/g) || [];
             for (const printStmt of printMatches) {
                 const content = printStmt.replace(/print\s*\(/, '').replace(/\)$/, '');
-                output.push(eval(`"${content}"`));
+                // Handle both quoted and unquoted content safely
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else if (content.startsWith("'") && content.endsWith("'")) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    output.push(content);
+                }
             }
 
             // Simulate basic operations
@@ -189,7 +196,13 @@ class CodeSandbox {
             const printMatches = code.match(/System\.out\.println\s*\([^)]*\)/g) || [];
             for (const printStmt of printMatches) {
                 const content = printStmt.replace(/System\.out\.println\s*\(/, '').replace(/\)$/, '');
-                output.push(eval(`"${content}"`));
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else if (content.startsWith("'") && content.endsWith("'")) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    output.push(content);
+                }
             }
 
             return {
@@ -221,7 +234,15 @@ class CodeSandbox {
             const coutMatches = code.match(/cout\s*<<[^;]*;/g) || [];
             for (const coutStmt of coutMatches) {
                 const content = coutStmt.replace(/cout\s*<<\s*/, '').replace(/;.*$/, '');
-                output.push(eval(`"${content}"`));
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else if (content.startsWith("'") && content.endsWith("'")) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    // Handle common endl or \n
+                    const clean = content.replace(/<<\s*endl/g, '').replace(/<<\s*"/g, '').trim();
+                    output.push(clean.replace(/^"|"$/g, ''));
+                }
             }
 
             return {
@@ -253,7 +274,11 @@ class CodeSandbox {
             const writeMatches = code.match(/Console\.WriteLine\s*\([^)]*\)/g) || [];
             for (const writeStmt of writeMatches) {
                 const content = writeStmt.replace(/Console\.WriteLine\s*\(/, '').replace(/\)$/, '');
-                output.push(eval(`"${content}"`));
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    output.push(content);
+                }
             }
 
             return {
@@ -285,7 +310,11 @@ class CodeSandbox {
             const printMatches = code.match(/fmt\.Println\s*\([^)]*\)/g) || [];
             for (const printStmt of printMatches) {
                 const content = printStmt.replace(/fmt\.Println\s*\(/, '').replace(/\)$/, '');
-                output.push(eval(`"${content}"`));
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    output.push(content);
+                }
             }
 
             return {
@@ -317,7 +346,12 @@ class CodeSandbox {
             const printMatches = code.match(/println!\s*\([^)]*\)/g) || [];
             for (const printStmt of printMatches) {
                 const content = printStmt.replace(/println!\s*\(/, '').replace(/\)$/, '');
-                output.push(eval(`"${content}"`));
+                // Rust println! usually has a format string first
+                if (content.startsWith('"') && content.endsWith('"')) {
+                    output.push(content.substring(1, content.length - 1));
+                } else {
+                    output.push(content);
+                }
             }
 
             return {
