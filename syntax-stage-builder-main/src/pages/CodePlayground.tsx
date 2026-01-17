@@ -552,7 +552,7 @@ const CodePlayground = () => {
       const newVfs: (VFSFile | VFSFolder)[] = [];
       const folders: Record<string, VFSFolder> = {};
 
-      for (const [path, zipEntry] of Object.entries(zip.files)) {
+      for (const [path, zipEntry] of Object.entries(zip.files) as [string, any][]) {
         if (zipEntry.dir) {
           const parts = path.split('/').filter(Boolean);
           let currentPath = "";
@@ -642,32 +642,6 @@ const CodePlayground = () => {
       return next;
     });
     setActiveFile(newFile);
-  };
-
-  const handleCreateFolder = () => {
-    const name = prompt("Enter folder name:");
-    if (!name) return;
-    const newFolder: VFSFolder = {
-      name,
-      path: `/src/${name}`,
-      children: [],
-      isOpen: true
-    };
-
-    const addToSrc = (items: (VFSFile | VFSFolder)[]): (VFSFile | VFSFolder)[] => {
-      return items.map(item => {
-        if (item.name === "src" && 'children' in item) {
-          return { ...item, children: [...item.children, newFolder], isOpen: true };
-        }
-        return item;
-      });
-    };
-
-    setVfs(prev => {
-      const next = addToSrc(prev);
-      localStorage.setItem('playground_vfs', JSON.stringify(next));
-      return next;
-    });
   };
 
   const handleSaveCode = useCallback(() => {
